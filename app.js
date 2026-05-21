@@ -3,14 +3,14 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-import redisClient from "./config/redis.js";
+import redisClient from "./src/config/redis.js";
 
 import {
   authRoutes,
   userRoutes,
-  photoRoutes,
-  providerRoutes,
-} from "./routes/index.js";
+  // photoRoutes,
+  // providerRoutes,
+} from "./src/routes/index.js";
 
 dotenv.config();
 
@@ -21,24 +21,59 @@ app.use(express.json());
 
 const services = {};
 
-mongoose
-  .connect(process.env.MONGO_URL)
-  .then(() => {
-    console.log("mongodb connected");
-  })
-  .catch((error) => {
-    console.log(error);
-  });
+// MongoDB connection
+try {
+  await mongoose.connect(process.env.MONGO_URL);
+  console.log("MongoDB connected successfully");
+} catch (error) {
+  console.log("MongoDB connection failed:", error.message);
+}
 
-services.redis = await redisClient(process.env.REDIS_URL);
+// Redis connection
+try {
+  services.redis = await redisClient(process.env.REDIS_URL);
+  console.log("Redis connected successfully");
+} catch (error) {
+  console.log("Redis connection failed:", error.message);
+}
+
+// Test route
+app.get("/health", async (req, res) => {
+  try {
+    let redisStatus = "Redis not connected";
+
+    if (services.redis) {
+      await services.redis.set("test_key", "Redis working");
+      const value = await services.redis.get("test_key");
+
+      if (value === "Redis working") {
+        redisStatus = "Redis connected";
+      }
+    }
+
+    res.json({
+      server: "Running",
+      mongo:
+        mongoose.connection.readyState === 1
+          ? "MongoDB connected"
+          : "MongoDB not connected",
+      redis: redisStatus,
+    });
+  } catch (error) {
+    res.status(500).json({
+      server: "Running",
+      error: error.message,
+    });
+  }
+});
 
 app.use("/api/auth", authRoutes(services));
 app.use("/api/users", userRoutes(services));
-app.use("/api/photos", photoRoutes(services));
-app.use("/api/providers", providerRoutes(services));
+// app.use("/api/photos", photoRoutes(services));
+// app.use("/api/providers", providerRoutes(services));
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`server running on ${PORT}`);
+  console.log(`Server running on ${PORT}`);
 });

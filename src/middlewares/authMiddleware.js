@@ -1,17 +1,10 @@
 import { verifyToken } from "../utils/jwt.js";
 
-// strip "Bearer " if present
 const extractToken = (header) => {
   if (!header) return null;
   return header.startsWith("Bearer ") ? header.slice(7) : header;
 };
 
-/*
- * function name: AuthMiddleware
- * function Description: validates JWT signature, then checks Redis for active session
- * arguments: services
- * return: middleware function
- */
 const AuthMiddleware = (services) => {
   return async (req, res, next) => {
     try {
@@ -21,22 +14,34 @@ const AuthMiddleware = (services) => {
         return res.status(401).json({ message: "unauthorized request" });
       }
 
-      // verify JWT signature and expiry
+      // verify JWT
       const decoded = verifyToken(token, process.env.SECRET);
       if (!decoded) {
         return res.status(401).json({ message: "invalid or expired token" });
       }
 
+      const blacklisted = await services.redis.get(`blacklist:${token}`);
+      if (blacklisted) {
+        return res.status(401).json({ message: "token revoked" });
+      }
+
       // check active session in redis
-      const loggedUser = await services.redis.get(token);
-      if (!loggedUser) {
+      const sessionRaw = await services.redis.get(token);
+      if (!sessionRaw) {
         return res
           .status(401)
           .json({ message: "session expired, please login again" });
       }
 
-      req.user = JSON.parse(loggedUser);
+      const sessionData = JSON.parse(sessionRaw);
+
+      req.user = sessionData.user;
       req.user.token = token;
+      req.session = {
+        loginAt: sessionData.loginAt,
+        ip: sessionData.ip,
+        userAgent: sessionData.userAgent,
+      };
 
       // enforce that the JWT subject matches the cached session
       if (String(req.user._id) !== String(decoded.id)) {

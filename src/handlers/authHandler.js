@@ -2,19 +2,21 @@ import { User, UserModel } from "../internal/db/user.js";
 import { createToken } from "../utils/jwt.js";
 import { registerSchema, loginSchema } from "../validators/authValidators.js";
 
-const TOKEN_TTL_SECONDS = 60 * 60; // 1 hour, matches JWT expiry
+const TOKEN_TTL_SECONDS = 60 * 60;
+const BLACKLIST_TTL_SECONDS = 60 * 60;
 
 const extractToken = (header) => {
   if (!header) return null;
   return header.startsWith("Bearer ") ? header.slice(7) : header;
 };
 
-/*
- * function name: RegisterUser
- * function Description: validates input, creates user with hashed password, auto-logs in
- * arguments: services
- * return: express handler
- */
+const buildSessionData = (user, req) => ({
+  user,
+  loginAt: new Date().toISOString(),
+  ip: req.ip || req.headers["x-forwarded-for"] || "unknown",
+  userAgent: req.headers["user-agent"] || "unknown",
+});
+
 const RegisterUser = (services) => {
   return async (req, res) => {
     const parsed = registerSchema.safeParse(req.body);
@@ -28,7 +30,10 @@ const RegisterUser = (services) => {
     const { name, email, password, location, role } = parsed.data;
 
     try {
-      const existing = await UserModel.findOne({ email, isDeleted: false }).lean();
+      const existing = await UserModel.findOne({
+        email,
+        isDeleted: false,
+      }).lean();
       if (existing) {
         return res.status(409).json({ message: "email already registered" });
       }
@@ -39,10 +44,11 @@ const RegisterUser = (services) => {
       const token = createToken(
         savedUser._id,
         savedUser.email,
-        process.env.SECRET
+        process.env.SECRET,
       );
 
-      await services.redis.set(token, JSON.stringify(savedUser), {
+      const sessionData = buildSessionData(savedUser, req);
+      await services.redis.set(token, JSON.stringify(sessionData), {
         EX: TOKEN_TTL_SECONDS,
       });
 
@@ -61,12 +67,6 @@ const RegisterUser = (services) => {
   };
 };
 
-/*
- * function name: LoginUser
- * function Description: validates credentials, issues JWT, caches session in Redis
- * arguments: services
- * return: express handler
- */
 const LoginUser = (services) => {
   return async (req, res) => {
     const parsed = loginSchema.safeParse(req.body);
@@ -90,10 +90,11 @@ const LoginUser = (services) => {
       const token = createToken(
         loggedUser._id,
         loggedUser.email,
-        process.env.SECRET
+        process.env.SECRET,
       );
 
-      await services.redis.set(token, JSON.stringify(loggedUser), {
+      const sessionData = buildSessionData(loggedUser, req);
+      await services.redis.set(token, JSON.stringify(sessionData), {
         EX: TOKEN_TTL_SECONDS,
       });
 
@@ -105,12 +106,6 @@ const LoginUser = (services) => {
   };
 };
 
-/*
- * function name: LogoutUser
- * function Description: invalidates the session by removing the token from Redis
- * arguments: services
- * return: express handler
- */
 const LogoutUser = (services) => {
   return async (req, res) => {
     try {
@@ -119,7 +114,14 @@ const LogoutUser = (services) => {
         return res.status(400).json({ message: "no token provided" });
       }
 
+      // remove active session
       await services.redis.del(token);
+
+      // add to blacklist
+      await services.redis.set(`blacklist:${token}`, "1", {
+        EX: BLACKLIST_TTL_SECONDS,
+      });
+
       return res.json({ message: "logout successful" });
     } catch (error) {
       console.log("LogoutUser error:", error);

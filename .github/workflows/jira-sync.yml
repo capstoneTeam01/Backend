@@ -1,0 +1,88 @@
+name: Jira Status Sync
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+  pull_request:
+    types: [opened, reopened, closed]
+
+jobs:
+  jira-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract Jira Issue Key
+        id: extract
+        shell: bash
+        run: |
+          TEXT="${{ github.event.head_commit.message }} ${{ github.event.pull_request.title }} ${{ github.event.pull_request.head.ref }}"
+          ISSUE=$(echo "$TEXT" | grep -oE 'FIXBEE-[0-9]+' | head -1 || true)
+          echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
+          echo "Found Jira issue: $ISSUE"
+
+      - name: Stop if no Jira key found
+        if: steps.extract.outputs.issue == ''
+        run: |
+          echo "No FIXBEE issue key found. Use FIXBEE-57 style key in branch, commit, or PR title."
+          exit 0
+
+      - name: Get current Jira status
+        if: steps.extract.outputs.issue != ''
+        id: jira_status
+        shell: bash
+        run: |
+          RESPONSE=$(curl --silent --show-error \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}" \
+            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Accept: application/json")
+
+          STATUS=$(echo "$RESPONSE" | python3 -c 'import sys, json; print(json.load(sys.stdin)["fields"]["status"]["name"])')
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "Current Jira status: $STATUS"
+
+      - name: Move ticket to In Progress
+        if: >
+          github.event_name == 'push' &&
+          steps.extract.outputs.issue != '' &&
+          steps.jira_status.outputs.status != 'Done' &&
+          steps.jira_status.outputs.status != 'In Review' &&
+          steps.jira_status.outputs.status != 'In Progress'
+        run: |
+          curl --request POST \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}/transitions" \
+            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data "{\"transition\":{\"id\":\"${{ secrets.JIRA_IN_PROGRESS_ID }}\"}}"
+
+      - name: Move ticket to In Review
+        if: >
+          github.event_name == 'pull_request' &&
+          (github.event.action == 'opened' || github.event.action == 'reopened') &&
+          steps.extract.outputs.issue != '' &&
+          steps.jira_status.outputs.status != 'Done' &&
+          steps.jira_status.outputs.status != 'In Review'
+        run: |
+          curl --request POST \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}/transitions" \
+            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data "{\"transition\":{\"id\":\"${{ secrets.JIRA_REVIEW_ID }}\"}}"
+
+      - name: Move ticket to Done
+        if: >
+          github.event_name == 'pull_request' &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.merged == true &&
+          steps.extract.outputs.issue != '' &&
+          steps.jira_status.outputs.status != 'Done'
+        run: |
+          curl --request POST \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}/transitions" \
+            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data "{\"transition\":{\"id\":\"${{ secrets.JIRA_DONE_ID }}\"}}"

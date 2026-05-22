@@ -8,8 +8,8 @@ import redisClient from "./src/config/redis.js";
 import {
   authRoutes,
   userRoutes,
-  // photoRoutes,
-  // providerRoutes,
+  photoRoutes,
+  providerRoutes,
 } from "./src/routes/index.js";
 
 dotenv.config();
@@ -69,7 +69,7 @@ app.get("/health", async (req, res) => {
 
 app.use("/api/auth", authRoutes(services));
 app.use("/api/users", userRoutes(services));
-// app.use("/api/photos", photoRoutes(services));
+app.use("/api/photos", photoRoutes(services));
 // app.use("/api/providers", providerRoutes(services));
 
 const PORT = process.env.PORT || 5000;

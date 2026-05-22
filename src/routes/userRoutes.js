@@ -1,36 +1,22 @@
 import express from "express";
-
 import {
   GetAllUsers,
   GetUser,
   UpdateUser,
   DeleteUser,
 } from "../handlers/userHandler.js";
-
 import { AuthMiddleware } from "../middlewares/authMiddleware.js";
 
 const userRoutes = (services) => {
   const router = express.Router();
 
-  router.get("/", GetAllUsers());
+  // all user routes require authentication
+  router.use(AuthMiddleware(services));
 
-  router.get(
-    "/me",
-    AuthMiddleware(services),
-    GetUser()
-  );
-
-  router.put(
-    "/update",
-    AuthMiddleware(services),
-    UpdateUser()
-  );
-
-  router.delete(
-    "/delete",
-    AuthMiddleware(services),
-    DeleteUser(services)
-  );
+  router.get("/", GetAllUsers(services));
+  router.get("/me", GetUser(services));
+  router.put("/update", UpdateUser(services));
+  router.delete("/delete", DeleteUser(services));
 
   return router;
 };

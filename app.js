@@ -10,6 +10,7 @@ import {
   userRoutes,
   photoRoutes,
   providerRoutes,
+  analysisRoutes,
 } from "./src/routes/index.js";
 
 dotenv.config();
@@ -71,6 +72,7 @@ app.use("/api/auth", authRoutes(services));
 app.use("/api/users", userRoutes(services));
 app.use("/api/photos", photoRoutes(services));
 // app.use("/api/providers", providerRoutes(services));
+app.use("/api/analysis", analysisRoutes(services));
 
 const PORT = process.env.PORT || 5000;
 

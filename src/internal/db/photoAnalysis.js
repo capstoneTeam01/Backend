@@ -20,6 +20,10 @@ const PhotoAnalysisSchema = new mongoose.Schema({
     data: Buffer,
     contentType: String,
   },
+  imageUrl: {
+    type: String,
+    required: false,
+  },
   detectedObject: {
     type: String,
     required: false,
@@ -41,18 +45,28 @@ const PhotoAnalysisSchema = new mongoose.Schema({
 const PhotoAnalysisModel = mongoose.model("PhotoAnalysis", PhotoAnalysisSchema);
 
 class PhotoAnalysis {
-  constructor(userId, image, detectedObject, categoryId = null, issueId = null, aiResponse = "") {
+  constructor(
+    userId,
+    image = null,
+    detectedObject = null,
+    categoryId = null,
+    issueId = null,
+    aiResponse = "",
+    imageUrl = null
+  ) {
     this.userId = userId;
     this.image = image;
     this.detectedObject = detectedObject;
     this.categoryId = categoryId;
     this.issueId = issueId;
     this.aiResponse = aiResponse;
+    this.imageUrl = imageUrl;
   }
 
   async save() {
     const photoAnalysis = new PhotoAnalysisModel(this);
-    await photoAnalysis.save();
+    const saved = await photoAnalysis.save();
+    return saved;
   }
 
   static async getAllByUserId(userId) {

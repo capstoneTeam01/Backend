@@ -1,12 +1,16 @@
-import { PhotoAnalysis } from "../internal/models/photoAnalysis.js";
+import { PhotoAnalysis } from "../internal/db/photoAnalysis.js";
 import { uploadToBlob } from "../services/blobStorage.js";
+import { validateImage } from "../utils/imageValidation.js";
 
 const UploadPhoto = () => {
   return async (req, res) => {
     try {
-      if (!req.file) {
+      const validation = await validateImage(req.file);
+
+      if (!validation.valid) {
         return res.status(400).json({
-          message: "No image file provided",
+          error: "VALIDATION_FAILED",
+          message: validation.message,
         });
       }
 
@@ -26,21 +30,15 @@ const UploadPhoto = () => {
         req.file.mimetype
       );
 
-      const photo = new PhotoAnalysis(
-        userId,
-        null,
-        null,
-        null,
-        null,
-        "",
-        blob.url
-      );
+      const photo = new PhotoAnalysis(userId, null, null, null, null, "", blob.url);
       const saved = await photo.save();
 
       return res.status(201).json({
         message: "Image uploaded successfully",
         url: blob.url,
         id: saved._id,
+        width: validation.width,
+        height: validation.height,
       });
     } catch (error) {
       console.error("Upload error:", error);

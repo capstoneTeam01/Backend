@@ -19,6 +19,14 @@ const ProviderSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  websiteUrl: {
+    type: String,
+    required: false,
+  },
+  sourceWebsite: {
+    type: String,
+    required: false,
+  },
   phone: {
     type: String,
     required: false,

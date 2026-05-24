@@ -1,4 +1,4 @@
-import { PhotoAnalysisModel } from "../internal/models/photoAnalysis.js";
+import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
 
 const AnalyzeImage = () => {

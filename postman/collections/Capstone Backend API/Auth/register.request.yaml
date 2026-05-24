@@ -1,0 +1,28 @@
+$kind: http-request
+name: Register
+method: POST
+url: '{{baseUrl}}/api/auth/register'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "password": "password123",
+      "location": "Vancouver, BC",
+      "role": "user"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Auto-save token after registration
+      const json = pm.response.json();
+      if (json && json.token) {
+        pm.environment.set("token", json.token);
+        console.log("Token saved from Register:", json.token);
+      }

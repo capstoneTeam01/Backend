@@ -97,6 +97,12 @@ async function google(cityInfo) {
     maxResultCount: limitPerCity
   };
 
+  let response = await axios.post('https://places.googleapis.com/v1/places:searchText', body, { headers: headers });
+
+  let places = response.data.places || [];
+  console.log (places)
+
+  
 }
 
 

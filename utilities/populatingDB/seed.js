@@ -91,7 +91,11 @@ async function google(cityInfo) {
     'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri'
   };
 
-
+  let searchText = category + ' in ' + cityInfo.name + ' ' + province + ' ' + country;
+  let body = {
+    textQuery: searchText,
+    maxResultCount: limitPerCity
+  };
 
 }
 

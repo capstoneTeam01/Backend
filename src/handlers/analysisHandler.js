@@ -1,5 +1,6 @@
 import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
+import { assignUrgencyLevel } from "../services/recommendationService.js";
 
 const AnalyzeImage = () => {
   return async (req, res) => {
@@ -42,16 +43,24 @@ const AnalyzeImage = () => {
 
       const analysisResult = await analyzeImageWithAI(finalImageUrl);
 
+      const urgencyResult = assignUrgencyLevel(analysisResult);
+
+      const finalAnalysisResult = {
+        ...analysisResult,
+        urgency: urgencyResult.urgency,
+        urgencyDescription: urgencyResult.urgencyDescription,
+      };
+
       if (photo) {
         photo.detectedObject = analysisResult.detectedObject;
-        photo.aiResponse = JSON.stringify(analysisResult);
+        photo.aiResponse = JSON.stringify(finalAnalysisResult);
         await photo.save();
       }
 
       return res.status(200).json({
         success: true,
         message: "Image analysis completed",
-        analysis: analysisResult,
+        analysis: finalAnalysisResult,
       });
     } catch (error) {
       console.error("Image analysis error:", error);

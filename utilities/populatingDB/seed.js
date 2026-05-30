@@ -40,6 +40,7 @@ async function run() {
     console.log('city: ' + cityInfo.name);
     await foursquare(cityInfo);
     await google(cityInfo);
+    await yelp(cityInfo);
   }
 
   await client.close();
@@ -176,6 +177,45 @@ let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
       limit: limitPerCity
     }
   });
+    let businesses = response.data.businesses || [];
+    console.log(businesses)
+
+  for (let i = 0; i < businesses.length; i++) {
+    let business = businesses[i];
+    let address = '';
+    let latitude = null;
+    let longitude = null;
+
+    if (business.location) {
+      address = business.location.display_address.join(', ');
+    }
+
+    if (business.coordinates) {
+      latitude = business.coordinates.latitude;
+      longitude = business.coordinates.longitude;
+    }
+
+    let plumber = {
+      source: 'yelp',
+      sourceId: business.id,
+      businessName: business.name,
+      phone: business.display_phone,
+      website: business.url,
+      address: address,
+      city: cityInfo.name,
+      province: province,
+      country: country,
+      category: category,
+      rating: business.rating,
+      reviewCount: business.review_count,
+      latitude: latitude,
+      longitude: longitude,
+      sourceUrl: business.url,
+      createdAt: new Date()
+    };
+    console.log(plumber)
+    await save(plumber);
+  }
 
 }
 

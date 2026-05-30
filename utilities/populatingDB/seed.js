@@ -82,6 +82,19 @@ async function foursquare(cityInfo) {
   }
 }
 
+async function google(cityInfo) {
+
+  
+  let headers = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
+    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri'
+  };
+
+
+
+}
+
 
 async function save(plumber) {
   await col.insertOne(plumber);

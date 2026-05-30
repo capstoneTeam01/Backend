@@ -25,6 +25,29 @@ let cities = [
   { name: 'Vancouver', lat: 49.2827, lng: -123.1207 }
 ];
 
+run();
+
+async function run() {
+  let client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+
+  let db = client.db(dbName);
+  col = db.collection(process.env.COL_NAME);
+
+   for (let i = 0; i < cities.length; i++) {
+    let cityInfo = cities[i];
+
+    console.log('city: ' + cityInfo.name);
+    await foursquare(cityInfo);
+    await google(cityInfo);
+  }
+
+  await client.close();
+  console.log('done');
+}
+
+
+
 async function foursquare(cityInfo) {
   let response = await axios.get('https://places-api.foursquare.com/places/search', {
     headers: {
@@ -142,29 +165,13 @@ async function google(cityInfo) {
   }
 }
 
+async function yelp(cityInfo) {
+
+
+}
 
 async function save(plumber) {
   await col.insertOne(plumber);
   console.log('saved ' + plumber.source + ' - ' + plumber.businessName);
 }
 
-async function run() {
-  let client = new MongoClient(process.env.MONGODB_URI);
-  await client.connect();
-
-  let db = client.db(dbName);
-  col = db.collection(process.env.COL_NAME);
-
-   for (let i = 0; i < cities.length; i++) {
-    let cityInfo = cities[i];
-
-    console.log('city: ' + cityInfo.name);
-    await foursquare(cityInfo);
-    await google(cityInfo);
-  }
-
-  await client.close();
-  console.log('done');
-}
-
-run();

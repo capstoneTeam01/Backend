@@ -219,6 +219,11 @@ let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
 
 }
 
+async function apify(cityInfo) {
+
+
+}
+
 async function save(plumber) {
   await col.insertOne(plumber);
   console.log('saved ' + plumber.source + ' - ' + plumber.businessName);

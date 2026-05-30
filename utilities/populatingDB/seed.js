@@ -2,7 +2,8 @@ require('dotenv').config();
 let MongoClient = require('mongodb').MongoClient;
 let dbName = process.env.DB_NAME;
 let axios = require('axios');
-
+let province = 'BC';
+let country = 'Canada';
 let category = 'plumber';
 let limitPerCity = 1;
 
@@ -41,8 +42,51 @@ async function foursquare(cityInfo) {
   let places = response.data.results || [];
 
   console.log (places)
+
+
+  for (let i = 0; i < places.length; i++) {
+    let place = places[i];
+    let address = '';
+    let latitude = null;
+    let longitude = null;
+
+    if (place.location) {
+      address = place.location.formatted_address;
+    }
+
+    if (place.latitude) {
+      latitude = place.latitude;
+      longitude = place.longitude;
+    }
+
+    let plumber = {
+      source: 'foursquare',
+      sourceId: place.fsq_place_id,
+      businessName: place.name,
+      phone: place.tel,
+      website: null,
+      address: address,
+      city: cityInfo.name,
+      province: province,
+      country: country,
+      category: category,
+      rating: null,
+      reviewCount: null,
+      latitude: latitude,
+      longitude: longitude,
+      sourceUrl: place.link,
+      createdAt: new Date()
+    };
+    console.log(plumber)
+    await save(plumber);
+  }
 }
 
+
+async function save(plumber) {
+  await col.insertOne(plumber);
+  console.log('saved ' + plumber.source + ' - ' + plumber.businessName);
+}
 
 async function run() {
   let client = new MongoClient(process.env.MONGODB_URI);

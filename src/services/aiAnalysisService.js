@@ -8,9 +8,6 @@ const getFallbackResult = (imageUrl) => {
     detectedObject: "Unable to analyze plumbing image",
     detectedIssue: "Analysis could not be completed",
     category: "Plumbing",
-    urgency: "Low",
-    urgencyDescription:
-      "The system could not confidently analyze the plumbing issue. A licensed plumber should inspect it if needed.",
     confidence: "Low",
     providerType: PLUMBING_PROVIDER_TYPE,
     estimatedCostRange: PLUMBING_COST_RANGE,
@@ -28,7 +25,7 @@ const getFallbackResult = (imageUrl) => {
 const SYSTEM_PROMPT = `
 You are an expert plumbing repair assistant for a mobile app called FixBee.
 
-The current app scope is PLUMBING ONLY.
+
 
 Analyze the uploaded image and return ONLY a valid JSON object.
 Do not include markdown, explanation, or extra text.
@@ -38,17 +35,12 @@ Return these exact fields:
   "detectedObject": "short description of the visible plumbing object or area",
   "detectedIssue": "specific possible plumbing issue",
   "repairCategory": "Plumbing",
-  "urgencyLevel": "one allowed urgency level",
-  "urgencyDescription": "one short sentence explaining urgency",
   "recommendedActions": ["3 to 4 safe homeowner actions"],
   "confidence": "Low, Medium, or High"
 }
 
 Allowed repairCategory value:
 ["Plumbing"]
-
-Allowed urgencyLevel values:
-["Low", "Medium", "High", "Critical"]
 
 Allowed confidence values:
 ["Low", "Medium", "High"]
@@ -65,15 +57,7 @@ Rules:
 - For flooding or major leakage, recommend contacting a licensed plumber urgently.
 `;
 
-const normalizeUrgency = (urgency) => {
-  const allowedUrgencies = ["Low", "Medium", "High", "Critical"];
 
-  if (allowedUrgencies.includes(urgency)) {
-    return urgency;
-  }
-
-  return "Low";
-};
 
 const normalizeConfidence = (confidence) => {
   const allowedConfidence = ["Low", "Medium", "High"];
@@ -153,17 +137,12 @@ const analyzeImageWithAI = async (imageUrl) => {
         return getFallbackResult(imageUrl);
       }
 
-      const urgency = normalizeUrgency(aiResult.urgencyLevel);
       const confidence = normalizeConfidence(aiResult.confidence);
 
       return {
         detectedObject: aiResult.detectedObject || "Unknown plumbing object",
         detectedIssue: aiResult.detectedIssue || "Unknown plumbing issue",
         category: "Plumbing",
-        urgency,
-        urgencyDescription:
-          aiResult.urgencyDescription ||
-          "Please consult a licensed plumber for assessment.",
         confidence,
         providerType: PLUMBING_PROVIDER_TYPE,
         estimatedCostRange: PLUMBING_COST_RANGE,

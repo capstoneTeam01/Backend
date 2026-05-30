@@ -102,7 +102,43 @@ async function google(cityInfo) {
   let places = response.data.places || [];
   console.log (places)
 
-  
+
+  for (let i = 0; i < places.length; i++) {
+    let place = places[i];
+    let businessName = '';
+    let latitude = null;
+    let longitude = null;
+
+    if (place.displayName) {
+      businessName = place.displayName.text;
+    }
+
+    if (place.location) {
+      latitude = place.location.latitude;
+      longitude = place.location.longitude;
+    }
+
+    let plumber = {
+      source: 'google',
+      sourceId: place.id,
+      businessName: businessName,
+      phone: place.nationalPhoneNumber,
+      website: place.websiteUri,
+      address: place.formattedAddress,
+      city: cityInfo.name,
+      province: province,
+      country: country,
+      category: category,
+      rating: place.rating,
+      reviewCount: place.userRatingCount,
+      latitude: latitude,
+      longitude: longitude,
+      sourceUrl: place.googleMapsUri,
+      createdAt: new Date()
+    };
+
+    console.log(plumber)
+    await save(plumber);
 }
 
 

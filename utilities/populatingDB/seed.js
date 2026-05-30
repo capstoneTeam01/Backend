@@ -166,7 +166,16 @@ async function google(cityInfo) {
 }
 
 async function yelp(cityInfo) {
-
+let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
+    headers: {
+      Authorization: 'Bearer ' + process.env.YELP_API_KEY
+    },
+    params: {
+      term: category,
+      location: cityInfo.name + ', ' + province + ', ' + country,
+      limit: limitPerCity
+    }
+  });
 
 }
 

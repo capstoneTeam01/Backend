@@ -221,6 +221,29 @@ let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
 
 async function apify(cityInfo) {
 
+  let searchText = category + ' in ' + cityInfo.name + ' ' + province + ' ' + country;
+  let actor = 'compass~google-maps-extractor';
+  let url = 'https://api.apify.com/v2/acts/' + actor + '/runs?waitForFinish=90';
+
+  let body = {
+    searchStringsArray: [searchText],
+    maxCrawledPlacesPerSearch: limitPerCity,
+    maxItems: limitPerCity
+  };    
+
+  let response = await axios.post(url, body, {
+    headers: {
+      Authorization: 'Bearer ' + process.env.APIFY_TOKEN,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  let datasetId = response.data.data.defaultDatasetId;
+  let itemUrl = 'https://api.apify.com/v2/datasets/' + datasetId + '/items?clean=true&limit=' + limitPerCity;
+  let response2 = await axios.get(itemUrl);
+  let places = response2.data || [];
+
+  console.log(places)
 
 }
 

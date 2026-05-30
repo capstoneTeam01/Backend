@@ -1,5 +1,6 @@
 import { PhotoAnalysis } from "../internal/db/photoAnalysis.js";
 import { uploadToBlob } from "../services/blobStorage.js";
+import { preprocessImageForAI } from "../utils/imagePreprocessing.js";
 import { validateImage } from "../utils/imageValidation.js";
 
 const UploadPhoto = () => {
@@ -20,14 +21,15 @@ const UploadPhoto = () => {
         });
       }
 
+      const preprocessed = await preprocessImageForAI(req.file.buffer);
+
       const userId = req.user._id || req.user.id;
-      const extension = req.file.mimetype.split("/")[1];
-      const pathname = `uploads/${userId}/${Date.now()}.${extension}`;
+      const pathname = `uploads/${userId}/${Date.now()}.${preprocessed.extension}`;
 
       const blob = await uploadToBlob(
-        req.file.buffer,
+        preprocessed.buffer,
         pathname,
-        req.file.mimetype
+        preprocessed.mimetype
       );
 
       const photo = new PhotoAnalysis(userId, null, null, null, null, "", blob.url);
@@ -37,8 +39,10 @@ const UploadPhoto = () => {
         message: "Image uploaded successfully",
         url: blob.url,
         id: saved._id,
-        width: validation.width,
-        height: validation.height,
+        width: preprocessed.width,
+        height: preprocessed.height,
+        originalWidth: validation.width,
+        originalHeight: validation.height,
       });
     } catch (error) {
       console.error("Upload error:", error);

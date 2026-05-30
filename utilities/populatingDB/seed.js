@@ -139,6 +139,7 @@ async function google(cityInfo) {
 
     console.log(plumber)
     await save(plumber);
+  }
 }
 
 
@@ -159,6 +160,7 @@ async function run() {
 
     console.log('city: ' + cityInfo.name);
     await foursquare(cityInfo);
+    await google(cityInfo);
   }
 
   await client.close();

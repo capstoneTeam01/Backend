@@ -7,7 +7,7 @@ async function main() {
    
   const client = new MongoClient(process.env.mongoDBURI)
   await client.connect()  
-  await client.close()    
+     
   const database = client.db(process.env.DB_NAME)
   const providersCol = database.collection(process.env.COL_NAME)
   const cacheCol = database.collection(process.env.COL_CACHE)
@@ -63,12 +63,14 @@ async function main() {
       continue
     }
 
+    await client.close() 
+    console.log('\n MongoDb closed')
     
   }
+  
 
-  console.log('\n MongoDb closed')
-}
 
+//FIXBEE-197
 function makeWebsite(provider) {
   let website = provider.directWebsiteUrl || 
                 provider.websiteUrl || 
@@ -91,5 +93,6 @@ function makeDomain(website) {
     .split('/')[0]
     .split('?')[0]
 }
+
 
 //FIXBEE-197

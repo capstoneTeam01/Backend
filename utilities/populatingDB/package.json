@@ -1,0 +1,15 @@
+{
+  "name": "populatingDB",
+  "version": "1.0.0",
+  "main": "seed.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "seed": "node seed.js",
+    "start": "node seed.js"
+  },
+  "dependencies": {
+    "axios": "latest",
+    "dotenv": "latest",
+    "mongodb": "latest"
+  }
+}

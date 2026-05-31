@@ -1,3 +1,5 @@
+import { estimateRepairCost } from "./costEstimationService.js";
+
 const urgentKeywords = [
   "flood",
   "flooding",
@@ -74,4 +76,26 @@ const assignUrgencyLevel = (analysisResult) => {
   };
 };
 
-export { assignUrgencyLevel };
+
+
+const generateRecommendation = async (
+  analysisResult,
+  location = "Vancouver, BC, Canada"
+) => {
+  const urgencyResult = assignUrgencyLevel(analysisResult);
+
+  const costEstimate = await estimateRepairCost(
+    analysisResult,
+    urgencyResult.urgency,
+    location
+  );
+
+  return {
+    ...analysisResult,
+    urgency: urgencyResult.urgency,
+    urgencyDescription: urgencyResult.urgencyDescription,
+    ...costEstimate,
+  };
+};
+
+export { assignUrgencyLevel, generateRecommendation };

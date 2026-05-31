@@ -1,7 +1,11 @@
-import OpenAI from "openai";
+import { getProvider, createAIClient } from "./aiClientService.js";
 
-const PLUMBING_COST_RANGE = "$150 - $400";
-const PLUMBING_PROVIDER_TYPE = "Licensed Plumber";
+const GROQ_VISION_MODEL =
+  process.env.GROQ_VISION_MODEL ||
+  "meta-llama/llama-4-scout-17b-16e-instruct";
+
+const OPENAI_VISION_MODEL =
+  process.env.OPENAI_VISION_MODEL || "gpt-4o-mini";
 
 const getFallbackResult = (imageUrl) => {
   return {
@@ -9,8 +13,6 @@ const getFallbackResult = (imageUrl) => {
     detectedIssue: "Analysis could not be completed",
     category: "Plumbing",
     confidence: "Low",
-    providerType: PLUMBING_PROVIDER_TYPE,
-    estimatedCostRange: PLUMBING_COST_RANGE,
     recommendedActions: [
       "Try uploading a clearer photo with better lighting.",
       "Make sure the pipe, sink, drain, toilet, faucet, or leak area is fully visible.",
@@ -24,8 +26,6 @@ const getFallbackResult = (imageUrl) => {
 
 const SYSTEM_PROMPT = `
 You are an expert plumbing repair assistant for a mobile app called FixBee.
-
-
 
 Analyze the uploaded image and return ONLY a valid JSON object.
 Do not include markdown, explanation, or extra text.
@@ -51,13 +51,11 @@ Rules:
 - Do NOT invent final repair prices.
 - Do NOT include dollar amounts.
 - Do NOT claim certainty if the image is unclear.
-- If the image is unclear, unrelated, or not enough information is visible, still return repairCategory "Plumbing", urgencyLevel "Low", and confidence "Low".
+- If the image is unclear, unrelated, or not enough information is visible, still return repairCategory "Plumbing" and confidence "Low".
 - Keep recommendedActions practical and safe.
 - For active leaks, recommend turning off the nearby water supply if safe.
 - For flooding or major leakage, recommend contacting a licensed plumber urgently.
 `;
-
-
 
 const normalizeConfidence = (confidence) => {
   const allowedConfidence = ["Low", "Medium", "High"];
@@ -69,20 +67,33 @@ const normalizeConfidence = (confidence) => {
   return "Low";
 };
 
+const getModelForProvider = (provider) => {
+  if (provider === "groq") {
+    return GROQ_VISION_MODEL;
+  }
+
+  if (provider === "openai") {
+    return OPENAI_VISION_MODEL;
+  }
+
+  return null;
+};
+
 const analyzeImageWithAI = async (imageUrl) => {
   if (!imageUrl) {
     console.error("No image URL provided for analysis");
     return getFallbackResult(imageUrl);
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    console.error("OpenAI API key is not configured");
+  const provider = getProvider();
+
+  if (!provider) {
+    console.error("No AI image analysis API key is configured");
     return getFallbackResult(imageUrl);
   }
 
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  const aiClient = createAIClient(provider);
+  const model = getModelForProvider(provider);
 
   let attempt = 0;
   const maxRetries = 2;
@@ -90,10 +101,12 @@ const analyzeImageWithAI = async (imageUrl) => {
   while (attempt <= maxRetries) {
     try {
       attempt += 1;
-      console.log(`AI plumbing analysis attempt ${attempt}`);
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      console.log(`${provider} plumbing image analysis attempt ${attempt}`);
+      console.log("Using image analysis model:", model);
+
+      const response = await aiClient.chat.completions.create({
+        model,
         messages: [
           {
             role: "system",
@@ -103,14 +116,14 @@ const analyzeImageWithAI = async (imageUrl) => {
             role: "user",
             content: [
               {
+                type: "text",
+                text: "Analyze this plumbing repair image and return only the JSON object.",
+              },
+              {
                 type: "image_url",
                 image_url: {
                   url: imageUrl,
                 },
-              },
-              {
-                type: "text",
-                text: "Analyze this plumbing repair image and return only the JSON object.",
               },
             ],
           },
@@ -118,13 +131,14 @@ const analyzeImageWithAI = async (imageUrl) => {
         response_format: {
           type: "json_object",
         },
+        temperature: 0.2,
         max_tokens: 600,
       });
 
       const content = response.choices?.[0]?.message?.content;
 
       if (!content) {
-        console.error("OpenAI returned empty content");
+        console.error(`${provider} returned empty content`);
         return getFallbackResult(imageUrl);
       }
 
@@ -133,7 +147,7 @@ const analyzeImageWithAI = async (imageUrl) => {
       try {
         aiResult = JSON.parse(content);
       } catch (error) {
-        console.error("AI returned invalid JSON:", content);
+        console.error(`${provider} returned invalid JSON:`, content);
         return getFallbackResult(imageUrl);
       }
 
@@ -144,8 +158,6 @@ const analyzeImageWithAI = async (imageUrl) => {
         detectedIssue: aiResult.detectedIssue || "Unknown plumbing issue",
         category: "Plumbing",
         confidence,
-        providerType: PLUMBING_PROVIDER_TYPE,
-        estimatedCostRange: PLUMBING_COST_RANGE,
         recommendedActions: Array.isArray(aiResult.recommendedActions)
           ? aiResult.recommendedActions
           : ["Consult a licensed plumber for inspection."],
@@ -154,18 +166,18 @@ const analyzeImageWithAI = async (imageUrl) => {
       };
     } catch (error) {
       if (error?.status === 429 && attempt <= maxRetries) {
-        console.warn("OpenAI rate limit reached. Retrying in 3 seconds...");
+        console.warn(`${provider} rate limit reached. Retrying in 3 seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 3000));
         continue;
       }
 
       if (error?.status >= 500 && attempt <= maxRetries) {
-        console.warn("OpenAI server error. Retrying in 2 seconds...");
+        console.warn(`${provider} server error. Retrying in 2 seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 2000));
         continue;
       }
 
-      console.error("AI plumbing analysis failed after retries:", error.message);
+      console.error(`${provider} image analysis failed after retries:`, error.message);
       return getFallbackResult(imageUrl);
     }
   }

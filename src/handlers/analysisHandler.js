@@ -1,6 +1,6 @@
 import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
-import { assignUrgencyLevel } from "../services/recommendationService.js";
+import { generateRecommendation } from "../services/recommendationService.js";
 
 const AnalyzeImage = () => {
   return async (req, res) => {
@@ -43,13 +43,10 @@ const AnalyzeImage = () => {
 
       const analysisResult = await analyzeImageWithAI(finalImageUrl);
 
-      const urgencyResult = assignUrgencyLevel(analysisResult);
-
-      const finalAnalysisResult = {
-        ...analysisResult,
-        urgency: urgencyResult.urgency,
-        urgencyDescription: urgencyResult.urgencyDescription,
-      };
+      const finalAnalysisResult = await generateRecommendation(
+        analysisResult,
+        req.body.location
+      );
 
       if (photo) {
         photo.detectedObject = analysisResult.detectedObject;

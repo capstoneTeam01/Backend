@@ -245,6 +245,37 @@ async function apify(cityInfo) {
 
   console.log(places)
 
+  for (let i = 0; i < places.length; i++) {
+    let place = places[i];
+    let latitude = null;
+    let longitude = null;
+
+    if (place.location) {
+      latitude = place.location.lat;
+      longitude = place.location.lng;
+    }
+
+    let plumber = {
+      source: 'apify',
+      sourceId: place.placeId,
+      businessName: place.title,
+      phone: place.phone,
+      website: place.website,
+      address: place.address,
+      city: cityInfo.name,
+      province: province,
+      country: country,
+      category: category,
+      rating: place.totalScore,
+      reviewCount: place.reviewsCount,
+      latitude: latitude,
+      longitude: longitude,
+      sourceUrl: place.url,
+      createdAt: new Date()
+    };
+    console.log(plumber)
+    await save(plumber);
+
 }
 
 async function save(plumber) {

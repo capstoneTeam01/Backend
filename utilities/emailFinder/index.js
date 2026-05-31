@@ -63,6 +63,8 @@ async function main() {
       continue
     }
 
+    const emails = await getEmailsFromWebsite(website)
+
     await client.close() 
     console.log('\n MongoDb closed')
     
@@ -95,4 +97,28 @@ function makeDomain(website) {
 }
 
 
+async function getEmailsFromWebsite(website) {
+  const pages = [
+    website,
+    website + '/contact',
+    website + '/contact-us',
+    website + '/about'
+  ]
+
+  let emails = []
+
+  for (const pageUrl of pages) {
+    console.log('  page:', pageUrl)
+    const html = await readPage(pageUrl)
+    const pageEmails = findEmails(html)
+
+    for (const email of pageEmails) {
+      if (!emails.includes(email)) {
+        emails.push(email)
+      }
+    }
+  }
+
+  return emails
+}
 //FIXBEE-197

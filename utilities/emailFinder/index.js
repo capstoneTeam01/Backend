@@ -38,6 +38,30 @@ async function main() {
   for (const provider of providers) {
     const website = makeWebsite(provider)
     const domain = makeDomain(website)
+    const now = new Date()
+    console.log('\nchecking:', provider.businessName)
+
+    const savedCache = await cacheCol.findOne({ domain: domain })
+    const cachedEmail = savedCache && (savedCache.email || savedCache.selectedEmail)
+
+      if (cachedEmail) {
+      await providersCol.updateOne(
+        { _id: provider._id },
+        {
+          $set: {
+            email: cachedEmail,
+            businessEmail: cachedEmail,
+            emailStatus: 'found',
+            emailSource: 'cache',
+            emailDomain: domain,
+            emailCheckedAt: now
+          }
+        }
+      )
+
+      console.log('  found from cache:', cachedEmail)
+      continue
+    }
 
     
   }

@@ -37,6 +37,7 @@ async function main() {
 
   for (const provider of providers) {
     const website = makeWebsite(provider)
+    const domain = makeDomain(website)
 
     
   }
@@ -56,6 +57,15 @@ function makeWebsite(provider) {
   }
 
   return website.replace(/\/$/, '')
+}
+
+function makeDomain(website) {
+  return website
+    .replace('https://', '')
+    .replace('http://', '')
+    .replace('www.', '')
+    .split('/')[0]
+    .split('?')[0]
 }
 
 //FIXBEE-197

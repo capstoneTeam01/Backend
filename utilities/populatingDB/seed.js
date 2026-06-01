@@ -5,7 +5,7 @@ let axios = require('axios');
 let province = 'BC';
 let country = 'Canada';
 let category = 'plumber';
-let limitPerCity = 1;
+let limitPerCity = 5;
 
 let cities = [
   { name: 'Burnaby', lat: 49.2488, lng: -122.9805 },
@@ -109,7 +109,6 @@ async function foursquare(cityInfo) {
 
 async function google(cityInfo) {
 
-  
   let headers = {
     'Content-Type': 'application/json',
     'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
@@ -168,16 +167,17 @@ async function google(cityInfo) {
 }
 
 async function yelp(cityInfo) {
-let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
-    headers: {
-      Authorization: 'Bearer ' + process.env.YELP_API_KEY
-    },
-    params: {
-      term: category,
-      location: cityInfo.name + ', ' + province + ', ' + country,
-      limit: limitPerCity
-    }
-  });
+   let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
+       headers: {
+         Authorization: 'Bearer ' + process.env.YELP_API_KEY
+       },
+       params: {
+         term: category,
+         location: cityInfo.name + ', ' + province + ', ' + country,
+         limit: limitPerCity
+       }
+     });
+  
     let businesses = response.data.businesses || [];
     console.log(businesses)
 
@@ -217,8 +217,9 @@ let response = await axios.get('https://api.yelp.com/v3/businesses/search', {
     console.log(plumber)
     await save(plumber);
   }
-
 }
+
+
 
 async function apify(cityInfo) {
 
@@ -276,7 +277,7 @@ async function apify(cityInfo) {
     };
     console.log(plumber)
     await save(plumber);
-
+}
 }
 
 async function save(plumber) {

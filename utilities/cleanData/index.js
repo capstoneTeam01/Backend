@@ -3,7 +3,7 @@ import 'dotenv/config';
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 const sourceColName = process.env.COL_NAME;
-const cacheColName = process.env.COL_CACHE;
+const targetColName = process.env.COL_NAME2;
 
 
 if (!uri || !dbName || !sourceColName || !targetColName) {
@@ -14,5 +14,17 @@ if (!uri || !dbName || !sourceColName || !targetColName) {
 main();
 
 async function main() {
+
+  const client = new MongoClient(uri);
+  await client.connect();
+
+  const db = client.db(dbName);
+  const sourceCol = db.collection(sourceColName);
+  const targetCol = db.collection(targetColName);
+
+  console.log('Connected');
+  console.log('DB:', dbName);
+  console.log('Source collection:', sourceColName);
+  console.log('Target collection:', targetColName);
 
 }

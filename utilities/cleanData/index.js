@@ -27,4 +27,10 @@ async function main() {
   console.log('Source collection:', sourceColName);
   console.log('Target collection:', targetColName);
 
+
+  const sourceDocs = await sourceCol.find({ email: { $exists: true, $ne: "" } }).toArray();
+  console.log('Source docs:', sourceDocs.length);
+
+  await client.close();
+
 }

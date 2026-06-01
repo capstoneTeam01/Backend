@@ -72,6 +72,25 @@ async function main() {
 
 
     const emails = await getEmailsFromWebsite(website)
+    const bestEmail = pickEmail(emails, domain)
+
+    if (bestEmail) {
+      await providersCol.updateOne(
+
+      )
+
+      await cacheCol.updateOne(
+
+      )
+
+      
+    } else {
+      await providersCol.updateOne(
+
+      )
+
+      console.log('  not found')
+    }
 
     await client.close() 
     console.log('\n MongoDb closed')
@@ -152,7 +171,7 @@ async function readPage(pageUrl) {
     return ''
   }
 }
-
+//https://stackoverflow.com/questions/201323/how-can-i-validate-an-email-address-using-a-regular-expression
 function findEmails(text) {
   const found = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || []
   const emails = []
@@ -176,4 +195,16 @@ function findEmails(text) {
 
   return emails
 }
+
+function pickEmail(emails, domain) {
+  for (const email of emails) {
+    if (email.endsWith('@' + domain)) {
+      return email
+    }
+  }
+
+  return emails[0] || ''
+}
+
+
 //FIXBEE-197

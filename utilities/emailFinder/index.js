@@ -13,24 +13,7 @@ async function main() {
   const cacheCol = database.collection(process.env.COL_CACHE)
 
   const providers = await providersCol.find({
-    isDeleted: { $ne: true },
-    $and: [
-      {
-        $or: [
-          { businessEmail: { $exists: false } },
-          { businessEmail: null },
-          { businessEmail: '' }
-        ]
-      },
-      {
-        $or: [
-          { directWebsiteUrl: { $exists: true, $ne: '' } },
-          { websiteUrl: { $exists: true, $ne: '' } },
-          { website: { $exists: true, $ne: '' } },
-          { websiteDomain: { $exists: true, $ne: '' } }
-        ]
-      }
-    ]
+    isDeleted: { $ne: true }
   }).limit(limit).toArray()
 
   console.log('providers:', providers.length)    
@@ -40,11 +23,12 @@ async function main() {
     const domain = makeDomain(website)
     const now = new Date()
     console.log('\nchecking:', provider.businessName)
-
+    
     const savedCache = await cacheCol.findOne({ domain: domain })
     const cachedEmail = savedCache && (savedCache.email || savedCache.selectedEmail)
+    
 
-      if (cachedEmail) {
+    if (cachedEmail) {
       await providersCol.updateOne(
         { _id: provider._id },
         {
@@ -63,12 +47,14 @@ async function main() {
       continue
     }
 
+
     const emails = await getEmailsFromWebsite(website)
 
     await client.close() 
     console.log('\n MongoDb closed')
     
   }
+}
   
 
 
@@ -80,6 +66,10 @@ function makeWebsite(provider) {
                 provider.websiteDomain || ''
   website = String(website).trim()
 
+  if (!website) {
+    return ''
+  }
+  
   if (website && !website.startsWith('http')) {
     website = 'https://' + website
   }

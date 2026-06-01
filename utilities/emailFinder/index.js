@@ -23,10 +23,33 @@ async function main() {
     const domain = makeDomain(website)
     const now = new Date()
     console.log('\nchecking:', provider.businessName)
+
+
+
+    const oldEmail = provider.email || provider.businessEmail
+    if (oldEmail) {
+      console.log('  already has email:', oldEmail)
+      continue
+    }
+
+    if (!website) {
+      console.log('  no website')
+
+      await providersCol.updateOne(
+        { _id: provider._id },
+        {
+          $set: {
+            emailStatus: 'no_website',
+            emailCheckedAt: now
+          }
+        }
+      )
+
+      continue
+    }
     
     const savedCache = await cacheCol.findOne({ domain: domain })
     const cachedEmail = savedCache && (savedCache.email || savedCache.selectedEmail)
-    
 
     if (cachedEmail) {
       await providersCol.updateOne(
@@ -106,6 +129,48 @@ async function getEmailsFromWebsite(website) {
       if (!emails.includes(email)) {
         emails.push(email)
       }
+    }
+  }
+
+  return emails
+}
+
+async function readPage(pageUrl) {
+  console.log('  page:', pageUrl)
+
+  try {
+    const response = await fetch(pageUrl, {
+      headers: {
+        'User-Agent': 'FixBee student project'
+      }
+    })
+
+    const text = await response.text()
+    return text
+  } catch (error) {
+    console.log('  page skipped')
+    return ''
+  }
+}
+
+function findEmails(text) {
+  const found = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || []
+  const emails = []
+
+  for (const item of found) {
+    const email = item.toLowerCase()
+
+    if (email.includes('.png')) continue
+    if (email.includes('.jpg')) continue
+    if (email.includes('.jpeg')) continue
+    if (email.includes('.gif')) continue
+    if (email.includes('example.com')) continue
+    if (email.includes('domain.com')) continue
+    if (email.includes('noreply')) continue
+    if (email.includes('no-reply')) continue
+
+    if (!emails.includes(email)) {
+      emails.push(email)
     }
   }
 

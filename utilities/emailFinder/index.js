@@ -76,17 +76,43 @@ async function main() {
 
     if (bestEmail) {
       await providersCol.updateOne(
-
+        { _id: provider._id },
+        {
+          $set: {
+            email: bestEmail,
+            businessEmail: bestEmail,
+            emailStatus: 'found',
+            emailSource: 'website',
+            emailDomain: domain,
+            emailCheckedAt: now
+          }
+        }
       )
 
       await cacheCol.updateOne(
-
+        { domain: domain },
+        {
+          $set: {
+            domain: domain,
+            email: bestEmail,
+            source: 'website',
+            checkedAt: now,
+            businessName: provider.businessName
+          }
+        },
+        { upsert: true }
       )
-
       
     } else {
       await providersCol.updateOne(
-
+        { _id: provider._id },
+        {
+          $set: {
+            emailStatus: 'not_found',
+            emailDomain: domain,
+            emailCheckedAt: now
+          }
+        }
       )
 
       console.log('  not found')

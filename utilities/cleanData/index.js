@@ -31,6 +31,46 @@ async function main() {
   const sourceDocs = await sourceCol.find({ email: { $exists: true, $ne: "" } }).toArray();
   console.log('Source docs:', sourceDocs.length);
 
+
+  const groups = {};
+
+  for (const doc of sourceDocs) {
+    const key = makeGroupKey(doc);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(doc);
+  }
+
   await client.close();
 
+}
+
+
+function makeGroupKey(doc) {
+  const name = lower(doc.businessName || doc.name);
+  const city = lower(cleanCity(doc.city, getAddress(doc)));
+  const phone = onlyNumbers(getPhone(doc));
+  const website = cleanDomain(getWebsite(doc));
+
+  if (website) return 'web:' + website;
+  if (phone) return 'phone:' + phone;
+  return 'name-city:' + name + ':' + city;
+}
+
+
+function lower(value) {
+  return text(value).toLowerCase();
+}
+
+
+function onlyNumbers(value) {
+  return text(value).replace(/[^0-9]/g, '');
+}
+
+
+function cleanDomain(website) {
+  return lower(website)
+    .replace('https://', '')
+    .replace('http://', '')
+    .replace('www.', '')
+    .split('/')[0];
 }

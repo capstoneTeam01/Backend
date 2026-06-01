@@ -42,4 +42,39 @@ async function run() {
     cursor = cursor.limit(Number(limitValue));
   }
 
+
+  let scanned = 0;
+  let copied = 0;
+  const now = new Date();
+
+  while (await cursor.hasNext()) {
+    const oldDoc = await cursor.next();
+
+    const newDoc = {
+      ...oldDoc,
+      [createdField]: now
+    };
+
+    scanned++;
+
+    if (!dryRun) {
+      await targetCol.replaceOne(
+        { _id: newDoc._id },
+        newDoc,
+        { upsert: true }
+      );
+    }
+
+    copied++;
+  }
+
+  console.log("Copy Summary");
+  console.log("Scanned:", scanned);
+  console.log("Copied/Updated:", copied);
+  console.log("Dry run:", dryRun);
+  console.log("created field used:", createdField);
+
+
+  await client1.close();
+  await client2.close();
 }

@@ -23,5 +23,23 @@ if (!mongo1 || !mongo2 || !db1Name || !db2Name || !col1Name || !col2Name) {
 run();
 
 async function run() {
+  await client1.connect();
+  await client2.connect();
+
+  const sourceCol = client1.db(db1Name).collection(col1Name);
+  const targetCol = client2.db(db2Name).collection(col2Name);
+
+  console.log("From:", db1Name + "." + col1Name);
+  console.log("To:", db2Name + "." + col2Name);
+  console.log("Dry run:", dryRun);
+  console.log("Limit:", limitValue || "all");
+  console.log("Changing field:", createdField, "=> now");
+
+
+  let cursor = sourceCol.find({});
+
+  if (limitValue) {
+    cursor = cursor.limit(Number(limitValue));
+  }
 
 }

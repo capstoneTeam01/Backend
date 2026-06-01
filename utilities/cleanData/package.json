@@ -1,0 +1,15 @@
+{
+  "name": "cleanData",
+  "version": "1.0.0",
+  "description": "Clean original service provider records and copy them into desired FixBee collection format.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "clean": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongodb": "^6.12.0"
+  }
+}

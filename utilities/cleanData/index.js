@@ -10,3 +10,9 @@ if (!uri || !dbName || !sourceColName || !targetColName) {
   console.log('Missing .env value. Required: MONGODB_URI, DB_NAME, COL_NAME, COL_NAME2');
   process.exit(1);
 }
+
+main();
+
+async function main() {
+
+}

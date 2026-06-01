@@ -117,11 +117,11 @@ async function main() {
 
       console.log('  not found')
     }
+    
+  }
 
     await client.close() 
     console.log('\n MongoDb closed')
-    
-  }
 }
   
 

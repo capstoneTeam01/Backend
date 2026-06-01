@@ -4,7 +4,7 @@ require('dotenv').config()
 main()
 
 async function main() {
-   
+  const limit = Number(process.argv[2] || 10) 
   const client = new MongoClient(process.env.MONGODB_URI)
   await client.connect()  
      

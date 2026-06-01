@@ -5,7 +5,7 @@ main()
 
 async function main() {
    
-  const client = new MongoClient(process.env.mongoDBURI)
+  const client = new MongoClient(process.env.MONGODB_URI)
   await client.connect()  
      
   const database = client.db(process.env.DB_NAME)

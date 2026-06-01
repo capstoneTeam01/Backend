@@ -1,0 +1,14 @@
+{
+  "name": "migrateData",
+  "version": "1.0.0",
+  "description": "migrate one MongoDB collection to another MongoDB whilst updating date n time",
+  "main": "copyCollection.js",
+  "scripts": {
+    "copy": "node copyCollection.js",
+    "start": "node copyCollection.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongodb": "^6.12.0"
+  }
+}

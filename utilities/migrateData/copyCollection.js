@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const { MongoClient } = require("mongodb");
 
 const mongo1 = process.env.mongo1;
 const mongo2 = process.env.mongo2;
@@ -23,6 +23,8 @@ if (!mongo1 || !mongo2 || !db1Name || !db2Name || !col1Name || !col2Name) {
 run();
 
 async function run() {
+  const client1 = new MongoClient(mongo1);
+  const client2 = new MongoClient(mongo2);
   await client1.connect();
   await client2.connect();
 

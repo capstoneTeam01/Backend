@@ -1,0 +1,29 @@
+$kind: http-request
+name: Upload Photo
+method: POST
+url: '{{baseUrl}}/api/photos/upload'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+body:
+  type: formdata
+  content:
+    - key: image
+      type: file
+      src: ''
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Auto-save photoId after upload
+      const json = pm.response.json();
+      if (json && json.photo && json.photo._id) {
+        pm.environment.set("photoId", json.photo._id);
+        console.log("photoId saved:", json.photo._id);
+      } else if (json && json._id) {
+        pm.environment.set("photoId", json._id);
+        console.log("photoId saved:", json._id);
+      }

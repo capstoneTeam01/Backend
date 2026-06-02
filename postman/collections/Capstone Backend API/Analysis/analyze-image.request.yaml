@@ -1,0 +1,20 @@
+$kind: http-request
+name: Analyze Image
+method: POST
+url: '{{baseUrl}}/api/analysis/'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "photoId": "{{photoId}}",
+      "imageUrl": ""
+    }

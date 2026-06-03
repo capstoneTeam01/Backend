@@ -1,26 +1,74 @@
 name: Jira Status Sync
 
 on:
+  create:
+
   push:
     branches-ignore:
       - main
 
   pull_request:
-    types: [opened, reopened, synchronize, edited, closed]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - ready_for_review
+      - review_requested
+      - closed
+
+  pull_request_review:
+    types:
+      - submitted
+
+  issue_comment:
+    types:
+      - created
+      - edited
+
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Jira issue key, example FIXBEE-84"
+        required: true
+      status:
+        description: "Target Jira status"
+        required: true
+        default: "In Progress"
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
 
 jobs:
   jira-sync:
     runs-on: ubuntu-latest
 
+    env:
+      JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      # Optional GitHub repository variables.
+      # If you do not create these vars, the defaults below will be used.
+      JIRA_PROJECT_KEY: ${{ vars.JIRA_PROJECT_KEY }}
+      JIRA_WORK_BASE_BRANCH: ${{ vars.JIRA_WORK_BASE_BRANCH }}
+      JIRA_STATUS_FLOW: ${{ vars.JIRA_STATUS_FLOW }}
+
     steps:
-      - name: Extract Jira Issue Key Flexibly
-        id: extract
+      - name: Collect Jira tickets and decide target status
+        id: collect
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ISSUE=$(python3 <<'PY'
+          python3 <<'PY'
           import json
           import os
           import re
+          import urllib.request
+          import urllib.error
 
           event_name = os.environ.get("GITHUB_EVENT_NAME", "")
           event_path = os.environ.get("GITHUB_EVENT_PATH", "")
@@ -28,107 +76,454 @@ jobs:
           with open(event_path, "r", encoding="utf-8") as f:
               event = json.load(f)
 
+          project_key = (os.environ.get("JIRA_PROJECT_KEY") or "FIXBEE").upper()
+          work_base_branch = os.environ.get("JIRA_WORK_BASE_BRANCH") or "pre-beta"
+
+          status_flow_text = os.environ.get("JIRA_STATUS_FLOW") or "To Do,In Progress,In Review,Testing,Done"
+          status_flow = [s.strip() for s in status_flow_text.split(",") if s.strip()]
+
+          status_in_progress = "In Progress"
+          status_in_review = "In Review"
+          status_testing = "Testing"
+          status_done = "Done"
+
+          for item in status_flow:
+              if item.lower() == "in progress":
+                  status_in_progress = item
+              elif item.lower() == "in review":
+                  status_in_review = item
+              elif item.lower() == "testing":
+                  status_testing = item
+              elif item.lower() == "done":
+                  status_done = item
+
           texts = []
 
-          # Always scan branch/ref name
-          texts.append(os.environ.get("GITHUB_REF_NAME", ""))
+          def add(value):
+              if value:
+                  texts.append(str(value))
 
-          if event_name == "push":
-              head_commit = event.get("head_commit") or {}
-              texts.append(head_commit.get("message") or "")
+          def github_get(path):
+              token = os.environ.get("GITHUB_TOKEN")
+              api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com")
+              url = api_url.rstrip("/") + path
 
-              for commit in event.get("commits", []):
-                  texts.append(commit.get("message") or "")
+              req = urllib.request.Request(
+                  url,
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "Authorization": f"Bearer {token}",
+                      "X-GitHub-Api-Version": "2022-11-28"
+                  }
+              )
 
-          if event_name == "pull_request":
-              pr = event.get("pull_request") or {}
+              try:
+                  with urllib.request.urlopen(req) as res:
+                      return json.loads(res.read().decode("utf-8"))
+              except urllib.error.HTTPError as e:
+                  print("GitHub API error:", e.code)
+                  print(e.read().decode("utf-8"))
+                  return None
 
-              texts.append(pr.get("title") or "")
-              texts.append(pr.get("body") or "")
+          def collect_pr_commits(pr_number):
+              repo = os.environ.get("GITHUB_REPOSITORY")
+
+              if not repo or not pr_number:
+                  return
+
+              page = 1
+
+              while page <= 5:
+                  data = github_get(f"/repos/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}")
+
+                  if not data:
+                      break
+
+                  for item in data:
+                      commit = item.get("commit") or {}
+                      add(commit.get("message"))
+
+                  if len(data) < 100:
+                      break
+
+                  page += 1
+
+          def collect_pr_details(pr_number):
+              repo = os.environ.get("GITHUB_REPOSITORY")
+
+              if not repo or not pr_number:
+                  return
+
+              pr = github_get(f"/repos/{repo}/pulls/{pr_number}")
+
+              if not pr:
+                  return
+
+              add(pr.get("title"))
+              add(pr.get("body"))
 
               head = pr.get("head") or {}
               base = pr.get("base") or {}
 
-              texts.append(head.get("ref") or "")
-              texts.append(base.get("ref") or "")
+              add(head.get("ref"))
+              add(base.get("ref"))
 
-          combined_text = " ".join(texts)
+              collect_pr_commits(pr_number)
 
-          # Accepts FIXBEE-57, fixbee-57, FIXBEE_57, fixbee 57, FIXBEE57
-          match = re.search(r"\bFIXBEE[\s_-]*(\d+)\b", combined_text, re.IGNORECASE)
+          def comment_target(body):
+              body = body or ""
 
-          if match:
-              print(f"FIXBEE-{match.group(1)}")
-          else:
-              print("")
+              options = [
+                  (r"/jira\s+in[\s_-]*progress", status_in_progress),
+                  (r"/jira\s+progress", status_in_progress),
+                  (r"/jira\s+in[\s_-]*review", status_in_review),
+                  (r"/jira\s+review", status_in_review),
+                  (r"/jira\s+testing", status_testing),
+                  (r"/jira\s+test", status_testing),
+                  (r"/jira\s+done", status_done),
+              ]
+
+              for pattern, status in options:
+                  if re.search(pattern, body, re.IGNORECASE):
+                      return status
+
+              return ""
+
+          add(os.environ.get("GITHUB_REF_NAME"))
+          add(os.environ.get("GITHUB_REF"))
+
+          target_status = ""
+
+          if event_name == "workflow_dispatch":
+              inputs = event.get("inputs") or {}
+              add(inputs.get("issue"))
+              target_status = inputs.get("status") or status_in_progress
+
+          elif event_name == "create":
+              add(event.get("ref"))
+              add(event.get("ref_type"))
+
+              if event.get("ref_type") == "branch":
+                  target_status = status_in_progress
+
+          elif event_name == "push":
+              add(event.get("ref"))
+
+              head_commit = event.get("head_commit") or {}
+              add(head_commit.get("message"))
+
+              for commit in event.get("commits", []):
+                  add(commit.get("message"))
+
+              target_status = status_in_progress
+
+          elif event_name == "pull_request":
+              action = event.get("action")
+              pr = event.get("pull_request") or {}
+
+              add(pr.get("title"))
+              add(pr.get("body"))
+
+              head = pr.get("head") or {}
+              base = pr.get("base") or {}
+
+              head_branch = head.get("ref") or ""
+              base_branch = base.get("ref") or ""
+
+              add(head_branch)
+              add(base_branch)
+
+              collect_pr_commits(pr.get("number"))
+
+              # Important:
+              # Only PRs going INTO pre-beta control review/testing/done.
+              if base_branch == work_base_branch:
+                  if action in ["opened", "reopened", "synchronize", "edited", "ready_for_review", "review_requested"]:
+                      target_status = status_in_review
+
+                  elif action == "closed" and pr.get("merged") is True:
+                      target_status = status_done
+
+          elif event_name == "pull_request_review":
+              review = event.get("review") or {}
+              pr = event.get("pull_request") or {}
+
+              add(review.get("body"))
+              add(pr.get("title"))
+              add(pr.get("body"))
+
+              head = pr.get("head") or {}
+              base = pr.get("base") or {}
+
+              head_branch = head.get("ref") or ""
+              base_branch = base.get("ref") or ""
+
+              add(head_branch)
+              add(base_branch)
+
+              collect_pr_commits(pr.get("number"))
+
+              if base_branch == work_base_branch:
+                  state = (review.get("state") or "").lower()
+
+                  if state == "approved":
+                      target_status = status_testing
+
+                  elif state == "changes_requested":
+                      target_status = status_in_review
+
+          elif event_name == "issue_comment":
+              comment = event.get("comment") or {}
+              issue = event.get("issue") or {}
+
+              body = comment.get("body") or ""
+
+              add(body)
+              add(issue.get("title"))
+              add(issue.get("body"))
+
+              target_status = comment_target(body)
+
+              if issue.get("pull_request"):
+                  collect_pr_details(issue.get("number"))
+
+          combined = " ".join(texts)
+
+          pattern = rf"\b{re.escape(project_key)}[\s_-]*(\d+)\b"
+          matches = re.findall(pattern, combined, re.IGNORECASE)
+
+          issues = []
+          seen = set()
+
+          for number in matches:
+              key = f"{project_key}-{number}"
+
+              if key not in seen:
+                  seen.add(key)
+                  issues.append(key)
+
+          print("Event:", event_name)
+          print("Project key:", project_key)
+          print("Work base branch:", work_base_branch)
+          print("Target status:", target_status)
+          print("Issues:", ",".join(issues))
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"issues={','.join(issues)}\n")
+              out.write(f"target={target_status}\n")
           PY
-          )
 
-          echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
-          echo "Found Jira issue: $ISSUE"
-
-      - name: Stop if no Jira key found
-        if: steps.extract.outputs.issue == ''
+      - name: Stop if no Jira update is needed
+        if: steps.collect.outputs.issues == '' || steps.collect.outputs.target == ''
         run: |
-          echo "No Jira issue key found."
-          echo "Add FIXBEE-57 somewhere in the branch, commit, PR title, or PR description."
+          echo "No Jira update needed."
+          echo "Issues found: '${{ steps.collect.outputs.issues }}'"
+          echo "Target status: '${{ steps.collect.outputs.target }}'"
+          echo ""
+          echo "Make sure the Jira key is in branch name, commit message, PR title, PR body, or PR comment."
+          echo "Example: FIXBEE-84 provider setup api added"
           exit 0
 
-      - name: Get current Jira status
-        if: steps.extract.outputs.issue != ''
-        id: jira_status
+      - name: Move Jira tickets through status flow
         shell: bash
         run: |
-          RESPONSE=$(curl --silent --show-error \
-            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}" \
-            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            --header "Accept: application/json")
+          python3 <<'PY'
+          import base64
+          import json
+          import os
+          import sys
+          import time
+          import urllib.request
+          import urllib.error
 
-          STATUS=$(echo "$RESPONSE" | python3 -c 'import sys, json; print(json.load(sys.stdin)["fields"]["status"]["name"])')
-          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
-          echo "Current Jira status: $STATUS"
+          issue_text = "${{ steps.collect.outputs.issues }}"
+          target_status = "${{ steps.collect.outputs.target }}"
 
-      - name: Move ticket to In Progress
-        if: >
-          github.event_name == 'push' &&
-          steps.extract.outputs.issue != '' &&
-          steps.jira_status.outputs.status != 'Done' &&
-          steps.jira_status.outputs.status != 'In Review' &&
-          steps.jira_status.outputs.status != 'In Progress'
-        run: |
-          curl --request POST \
-            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}/transitions" \
-            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            --header "Accept: application/json" \
-            --header "Content-Type: application/json" \
-            --data "{\"transition\":{\"id\":\"${{ secrets.JIRA_IN_PROGRESS_ID }}\"}}"
+          jira_base_url = os.environ["JIRA_BASE_URL"].rstrip("/")
+          jira_email = os.environ["JIRA_EMAIL"]
+          jira_token = os.environ["JIRA_API_TOKEN"]
 
-      - name: Move ticket to In Review
-        if: >
-          github.event_name == 'pull_request' &&
-          (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event.action == 'edited') &&
-          steps.extract.outputs.issue != '' &&
-          steps.jira_status.outputs.status != 'Done' &&
-          steps.jira_status.outputs.status != 'In Review'
-        run: |
-          curl --request POST \
-            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}/transitions" \
-            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            --header "Accept: application/json" \
-            --header "Content-Type: application/json" \
-            --data "{\"transition\":{\"id\":\"${{ secrets.JIRA_REVIEW_ID }}\"}}"
+          flow_text = os.environ.get("JIRA_STATUS_FLOW") or "To Do,In Progress,In Review,Testing,Done"
+          status_flow = [s.strip() for s in flow_text.split(",") if s.strip()]
 
-      - name: Move ticket to Done
-        if: >
-          github.event_name == 'pull_request' &&
-          github.event.action == 'closed' &&
-          github.event.pull_request.merged == true &&
-          steps.extract.outputs.issue != '' &&
-          steps.jira_status.outputs.status != 'Done'
-        run: |
-          curl --request POST \
-            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract.outputs.issue }}/transitions" \
-            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            --header "Accept: application/json" \
-            --header "Content-Type: application/json" \
-            --data "{\"transition\":{\"id\":\"${{ secrets.JIRA_DONE_ID }}\"}}"
+          issues = [s.strip() for s in issue_text.split(",") if s.strip()]
+
+          def norm(value):
+              return (value or "").strip().lower()
+
+          def jira_request(method, path, data=None):
+              url = f"{jira_base_url}{path}"
+
+              auth_text = f"{jira_email}:{jira_token}"
+              auth_token = base64.b64encode(auth_text.encode("utf-8")).decode("utf-8")
+
+              headers = {
+                  "Authorization": f"Basic {auth_token}",
+                  "Accept": "application/json",
+                  "Content-Type": "application/json"
+              }
+
+              body = None
+
+              if data is not None:
+                  body = json.dumps(data).encode("utf-8")
+
+              req = urllib.request.Request(
+                  url=url,
+                  data=body,
+                  headers=headers,
+                  method=method
+              )
+
+              try:
+                  with urllib.request.urlopen(req) as res:
+                      text = res.read().decode("utf-8")
+
+                      if text:
+                          return json.loads(text)
+
+                      return {}
+
+              except urllib.error.HTTPError as e:
+                  print("")
+                  print("Jira API error")
+                  print("Status:", e.code)
+                  print("URL:", url)
+                  print("Response:", e.read().decode("utf-8"))
+                  raise
+
+          def get_status(issue):
+              data = jira_request(
+                  "GET",
+                  f"/rest/api/3/issue/{issue}?fields=status"
+              )
+
+              return data["fields"]["status"]["name"]
+
+          def get_transitions(issue):
+              data = jira_request(
+                  "GET",
+                  f"/rest/api/3/issue/{issue}/transitions"
+              )
+
+              return data.get("transitions", [])
+
+          def find_transition(transitions, wanted_status):
+              wanted = norm(wanted_status)
+
+              for transition in transitions:
+                  to_status = transition.get("to") or {}
+
+                  if norm(to_status.get("name")) == wanted:
+                      return transition
+
+              for transition in transitions:
+                  if norm(transition.get("name")) == wanted:
+                      return transition
+
+              return None
+
+          def move_step(issue, next_status):
+              transitions = get_transitions(issue)
+              transition = find_transition(transitions, next_status)
+
+              if not transition:
+                  print("")
+                  print(f"{issue}: cannot move to '{next_status}'")
+                  print("Available transitions:")
+
+                  if not transitions:
+                      print("- none")
+                  else:
+                      for item in transitions:
+                          to_status = (item.get("to") or {}).get("name")
+                          print(f"- {item.get('name')} -> {to_status}")
+
+                  return False
+
+              print(f"{issue}: moving to {next_status}")
+
+              jira_request(
+                  "POST",
+                  f"/rest/api/3/issue/{issue}/transitions",
+                  {
+                      "transition": {
+                          "id": transition["id"]
+                      }
+                  }
+              )
+
+              time.sleep(1)
+
+              return True
+
+          def move_issue(issue):
+              current_status = get_status(issue)
+
+              print("")
+              print("================================")
+              print("Issue:", issue)
+              print("Current:", current_status)
+              print("Target:", target_status)
+              print("Flow:", " -> ".join(status_flow))
+
+              if norm(current_status) == norm(target_status):
+                  print("Already in target status.")
+                  return True
+
+              flow_norm = [norm(s) for s in status_flow]
+
+              if norm(current_status) not in flow_norm:
+                  print("Current status is not in configured flow.")
+                  print("Trying direct transition only.")
+                  return move_step(issue, target_status)
+
+              if norm(target_status) not in flow_norm:
+                  print("Target status is not in configured flow.")
+                  return False
+
+              current_index = flow_norm.index(norm(current_status))
+              target_index = flow_norm.index(norm(target_status))
+
+              if current_index > target_index:
+                  print("Ticket is already ahead of target status.")
+                  print("No backward movement will be done.")
+                  return True
+
+              next_statuses = status_flow[current_index + 1:target_index + 1]
+
+              for next_status in next_statuses:
+                  ok = move_step(issue, next_status)
+
+                  if not ok:
+                      return False
+
+              final_status = get_status(issue)
+
+              print("Final:", final_status)
+
+              return norm(final_status) == norm(target_status)
+
+          failed = []
+
+          for issue in issues:
+              try:
+                  ok = move_issue(issue)
+
+                  if not ok:
+                      failed.append(issue)
+
+              except Exception:
+                  failed.append(issue)
+
+          if failed:
+              print("")
+              print("Failed Jira updates:")
+              for issue in failed:
+                  print("-", issue)
+
+              sys.exit(1)
+
+          print("")
+          print("All Jira tickets updated successfully.")
+          PY

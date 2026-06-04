@@ -1,10 +1,17 @@
 import mongoose from "mongoose";
 
+const NOTIFICATION_TYPES = [
+  "appointment_reminder",
+  "appointment_confirmed",
+  "general",
+];
+
 const NotificationSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+    index: true,
   },
   title: {
     type: String,
@@ -14,7 +21,27 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  type: {
+    type: String,
+    enum: NOTIFICATION_TYPES,
+    default: "general",
+  },
+  // frontend uses this to route the user (e.g. "/my-services")
+  redirectTo: {
+    type: String,
+    required: false,
+    default: "",
+  },
+  // optional reference to the related analysis/issue for context
+  relatedId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+  },
   isRead: {
+    type: Boolean,
+    default: false,
+  },
+  isDeleted: {
     type: Boolean,
     default: false,
   },
@@ -27,28 +54,72 @@ const NotificationSchema = new mongoose.Schema({
 const NotificationModel = mongoose.model("Notification", NotificationSchema);
 
 class Notification {
-  constructor(userId, title, message) {
+  constructor(
+    userId,
+    title,
+    message,
+    type = "general",
+    redirectTo = "",
+    relatedId = null,
+  ) {
     this.userId = userId;
     this.title = title;
     this.message = message;
+    this.type = type;
+    this.redirectTo = redirectTo;
+    this.relatedId = relatedId;
   }
 
   async save() {
     const notification = new NotificationModel(this);
-    await notification.save();
+    const saved = await notification.save();
+    return saved;
   }
 
   static async getAllByUser(userId) {
     return NotificationModel.find({
-      userId: userId,
+      userId,
+      isDeleted: false,
     }).sort({ createdAt: -1 });
   }
 
-  static async markAsRead(id) {
-    await NotificationModel.findByIdAndUpdate(id, {
-      isRead: true,
+  static async getById(id) {
+    return NotificationModel.findOne({
+      _id: id,
+      isDeleted: false,
     });
+  }
+
+  static async countUnread(userId) {
+    return NotificationModel.countDocuments({
+      userId,
+      isRead: false,
+      isDeleted: false,
+    });
+  }
+
+  static async markAsRead(id, userId) {
+    // scope by userId so a user can only mark their own notifications
+    return NotificationModel.findOneAndUpdate(
+      { _id: id, userId, isDeleted: false },
+      { isRead: true },
+      { new: true },
+    );
+  }
+
+  static async markAllAsRead(userId) {
+    await NotificationModel.updateMany(
+      { userId, isRead: false, isDeleted: false },
+      { isRead: true },
+    );
+  }
+
+  static async softDelete(id, userId) {
+    await NotificationModel.findOneAndUpdate(
+      { _id: id, userId },
+      { isDeleted: true },
+    );
   }
 }
 
-export { Notification, NotificationModel };
+export { Notification, NotificationModel, NOTIFICATION_TYPES };

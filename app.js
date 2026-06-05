@@ -12,6 +12,7 @@ import {
   providerRoutes,
   analysisRoutes,
   notificationRoutes,
+  businessDirectoryProviderRoutes,
 } from "./src/routes/index.js";
 
 dotenv.config();
@@ -74,6 +75,7 @@ app.use("/api/users", userRoutes(services));
 app.use("/api/photos", photoRoutes(services));
 // app.use("/api/providers", providerRoutes(services));
 app.use("/api/analysis", analysisRoutes(services));
+app.use("/api/business-directory/providers", businessDirectoryProviderRoutes(services));
 app.use("/api/notifications", notificationRoutes(services));
 
 const PORT = process.env.PORT || 5000;

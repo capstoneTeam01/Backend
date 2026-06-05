@@ -1,13 +1,13 @@
 import express from "express";
-import bdHealth from "../handlers/businessDirectoryProviderHandler.js";
+import { bdHealth, bdSync, bdDebug } from "../handlers/businessDirectoryProviderHandler.js";
 
 
 const businessDirectoryProviderRoutes = () => {
     const router = express.Router();
 
-      router.get("/health", );
-      router.get("/sync", );
-      router.get("/debug", );
+    router.get("/health", bdHealth);
+    router.get("/sync", bdSync);
+    router.get("/debug", bdDebug);
 
       return router;
 }

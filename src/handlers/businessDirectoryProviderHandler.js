@@ -4,4 +4,13 @@ const bdHealth = async (_req, res) => {
     
 }
 
-export {bdHealth};
+const bdSync = async (req, res) => {
+
+
+}
+
+const bdDebug = async (req, res) => {
+
+}
+
+export { bdHealth, bdSync, bdDebug };

@@ -1,6 +1,7 @@
 import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
 import { generateRecommendation } from "../services/recommendationService.js";
+import { generateDiyInstructions } from "../services/diyInstructionService.js";
 
 const AnalyzeImage = () => {
   return async (req, res) => {
@@ -70,4 +71,39 @@ const AnalyzeImage = () => {
   };
 };
 
-export { AnalyzeImage };
+
+
+const GetDiyInstructions = () => {
+  return async (req, res) => {
+    try {
+      const { analysisResult, urgency } = req.body;
+
+      if (!analysisResult) {
+        return res.status(400).json({
+          success: false,
+          message: "analysisResult is required",
+        });
+      }
+
+      const diyInstructions = await generateDiyInstructions(
+        analysisResult,
+        urgency
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "DIY instructions generated",
+        diyInstructions,
+      });
+    } catch (error) {
+      console.error("DIY instructions error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "DIY instructions failed",
+      });
+    }
+  };
+};
+
+export { AnalyzeImage, GetDiyInstructions };

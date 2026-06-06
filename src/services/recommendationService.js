@@ -90,12 +90,126 @@ const generateRecommendation = async (
     location
   );
 
+  const userActions = getUserActions(
+  analysisResult,
+  urgencyResult.urgency
+);
+
   return {
-    ...analysisResult,
-    urgency: urgencyResult.urgency,
-    urgencyDescription: urgencyResult.urgencyDescription,
-    ...costEstimate,
-  };
+  ...analysisResult,
+  urgency: urgencyResult.urgency,
+  urgencyDescription: urgencyResult.urgencyDescription,
+  ...costEstimate,
+  userActions,
+};
 };
 
-export { assignUrgencyLevel, generateRecommendation };
+
+const getUserActions = (analysisResult, urgency) => {
+  const confidence = analysisResult?.confidence || "Low";
+
+  if (confidence === "Low") {
+    return [
+      {
+        actionType: "UPLOAD_CLEARER_IMAGE",
+        label: "Upload Clearer Image",
+        description:
+          "Upload a clearer photo so FixBee can provide a better recommendation.",
+        priority: "Recommended",
+      },
+      {
+        actionType: "FIND_PROFESSIONAL",
+        label: "Find Professional",
+        description:
+          "Contact a professional if the issue is unclear or may become worse.",
+        priority: "Recommended",
+      },
+      {
+        actionType: "MARK_RESOLVED",
+        label: "Mark as Resolved",
+        description:
+          "Mark this issue as resolved if no repair is needed anymore.",
+        priority: "Optional",
+      },
+    ];
+  }
+
+  if (urgency === "High") {
+    return [
+      {
+        actionType: "FIND_PROFESSIONAL",
+        label: "Find Professional",
+        description:
+          "Recommended because this issue may worsen if it is not repaired soon.",
+        priority: "High",
+      },
+      {
+        actionType: "DIY_TEMPORARY_STEPS",
+        label: "View Temporary DIY Steps",
+        description:
+          "View basic temporary safety steps while waiting for a professional.",
+        priority: "Optional",
+      },
+      {
+        actionType: "MARK_RESOLVED",
+        label: "Mark as Resolved",
+        description:
+          "Mark this repair as resolved after the issue has been fixed.",
+        priority: "Optional",
+      },
+    ];
+  }
+
+  if (urgency === "Medium") {
+    return [
+      {
+        actionType: "DIY_INSTRUCTIONS",
+        label: "DIY Instructions",
+        description:
+          "View simple DIY guidance if you want to try a basic fix first.",
+        priority: "Optional",
+      },
+      {
+        actionType: "FIND_PROFESSIONAL",
+        label: "Find Professional",
+        description:
+          "Find a service provider if the issue continues or needs inspection.",
+        priority: "Recommended",
+      },
+      {
+        actionType: "MARK_RESOLVED",
+        label: "Mark as Resolved",
+        description:
+          "Mark this repair as resolved after the issue has been fixed.",
+        priority: "Optional",
+      },
+    ];
+  }
+
+  return [
+    {
+      actionType: "DIY_INSTRUCTIONS",
+      label: "DIY Instructions",
+      description:
+        "View simple DIY guidance for a low-risk repair issue.",
+      priority: "Optional",
+    },
+    {
+      actionType: "FIND_PROFESSIONAL",
+      label: "Find Professional",
+      description:
+        "Find a service provider if you prefer professional help.",
+      priority: "Optional",
+    },
+    {
+      actionType: "MARK_RESOLVED",
+      label: "Mark as Resolved",
+      description:
+        "Mark this repair as resolved after the issue has been fixed.",
+      priority: "Optional",
+    },
+  ];
+};
+
+
+export { assignUrgencyLevel, generateRecommendation, getUserActions };

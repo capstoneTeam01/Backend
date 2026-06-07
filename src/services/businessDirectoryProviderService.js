@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { BusinessDirectoryProviderModel, colName } from "../internal/db/businessDirectoryProvider.js";
-
+import { getCities} from "../utils/cityCluster.js";
 
 const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const lim = cleanLimit(limit);
@@ -21,5 +21,5 @@ const cleanLimit = (limit) => {
 
 
 const makeQuery = (city = "Vancouver", cat = "plumber") => {
- 
+  const cities = getCities(city);    
 };

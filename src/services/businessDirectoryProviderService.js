@@ -4,6 +4,7 @@ import { BusinessDirectoryProviderModel, colName } from "../internal/db/business
 
 const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const lim = cleanLimit(limit);
+  const { q, cities, cityKeys } = makeQuery(city, cat);
 
 };
 
@@ -17,3 +18,8 @@ const cleanLimit = (limit) => {
   return n;
 };
 
+
+
+const makeQuery = (city = "Vancouver", cat = "plumber") => {
+ 
+};

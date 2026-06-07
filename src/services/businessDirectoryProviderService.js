@@ -33,8 +33,10 @@ const makeQuery = (city = "Vancouver", cat = "plumber") => {
 const catQuery = (cat = "plumber") => {
   const catKey = key(cat || "plumber");
   const catText = catKey.replace(/-/g, " ");
+  const re = new RegExp(esc(catText), "i");
 
   console.log(catText);
+  console.log(re);
 
 
 };

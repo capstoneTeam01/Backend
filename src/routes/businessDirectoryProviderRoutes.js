@@ -3,13 +3,14 @@ import { bdHealth, bdSync, bdDebug } from "../handlers/businessDirectoryProvider
 
 
 const businessDirectoryProviderRoutes = () => {
+    console.log("working")
     const router = express.Router();
 
     router.get("/health", bdHealth);
     router.get("/sync", bdSync);
     router.get("/debug", bdDebug);
 
-      return router;
+    return router;
 }
 
 export default businessDirectoryProviderRoutes;

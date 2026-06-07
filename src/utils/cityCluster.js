@@ -1,6 +1,21 @@
 
-
+const clusters = {
+  vancouver: [
+    "Vancouver",
+    "Burnaby",
+    "Richmond",
+    "North Vancouver",
+    "West Vancouver",
+    "New Westminster",
+  ],
+  richmond: ["Richmond", "Vancouver", "Burnaby", "Delta", "New Westminster"],
+  burnaby: ["Burnaby", "Vancouver", "New Westminster", "Richmond"],
+  surrey: ["Surrey", "Delta", "Langley", "White Rock", "New Westminster"],
+  langley: ["Langley", "Surrey", "Abbotsford", "Maple Ridge"],
+  abbotsford: ["Abbotsford", "Langley", "Chilliwack", "Mission"],
+  victoria: ["Victoria", "Saanich", "Esquimalt", "Oak Bay", "Langford"],
+};
 
 const getCities = (city = "Vancouver") => {
- 
+    const clean = String(city || "Vancouver").trim() || "Vancouver";
 };

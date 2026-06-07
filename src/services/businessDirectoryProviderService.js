@@ -25,5 +25,17 @@ const makeQuery = (city = "Vancouver", cat = "plumber") => {
   const cityKeys = getKeys(cities);
   console.log(cities);
   console.log(cityKeys);
+
+  catQuery(cat);
   
 };
+
+const catQuery = (cat = "plumber") => {
+  const catKey = key(cat || "plumber");
+  const catText = catKey.replace(/-/g, " ");
+
+  console.log(catText);
+
+
+};
+const esc = (txt = "") => String(txt).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

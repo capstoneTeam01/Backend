@@ -27,4 +27,15 @@ const key = (txt = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+
+const getKeys = (list = []) => {
+  const arr = [];
+
+  for (const item of list) {
+    const val = key(item);
+    if (val) arr.push(val);
+  }
+
+  return arr;
+};    
 export { key, getCities, getKeys };

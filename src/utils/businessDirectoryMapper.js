@@ -1,6 +1,7 @@
 const mapProvider = (item) => {
   const site = website(item);
   const sources = sourceNames(item);  
+  const cats = arr(item.categories);
   
   
 
@@ -23,6 +24,17 @@ const sourceNames = (item) => {
 
   return out;
 };
+
+const arr = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.filter(Boolean);
+
+  return String(val)
+    .split(/[,|;/]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
 
 
 

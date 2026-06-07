@@ -1,10 +1,23 @@
 import mongoose from "mongoose";
 import { BusinessDirectoryProviderModel, colName } from "../internal/db/businessDirectoryProvider.js";
 import { key, getCities, getKeys } from "../utils/cityCluster.js";
+import { mapProvider } from "../utils/businessDirectoryMapper.js";
 
 const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const lim = cleanLimit(limit);
   const { q, cities, cityKeys } = makeQuery(city, cat);
+
+  const list = await BusinessDirectoryProviderModel.find(q)
+    .sort({ rating: -1, reviewCount: -1, sourceCount: -1, businessName: 1 })
+    .limit(lim)
+    .lean();  
+
+  console.log(list)
+  
+  const providers = [];
+  for (const item of list) {
+    providers.push(mapProvider(item));
+  }  
 
 };
 
@@ -37,6 +50,22 @@ const catQuery = (cat = "plumber") => {
 
   console.log(catText);
   console.log(re);
+
+
+  const list = [
+    { providerType: re },
+    { primaryCategory: re },
+    { categories: re },
+    { businessCategories: re },
+    { sourceCategories: re },
+    { systemTags: re },
+  ];
+
+  if (catKey === "plumber" || catKey === "plumbers" || catKey === "plumbing") {
+    list.unshift({ categoryId: 1 });
+  }
+
+  return { $or: list };
 
 
 };

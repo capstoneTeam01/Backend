@@ -1,1 +1,13 @@
-businessDirectoryMapper.js
+const mapProvider = (item) => {
+
+}
+
+
+
+
+
+
+
+
+
+export { mapProvider };

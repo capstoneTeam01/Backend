@@ -18,4 +18,13 @@ const clusters = {
 
 const getCities = (city = "Vancouver") => {
     const clean = String(city || "Vancouver").trim() || "Vancouver";
+    return clusters[key(clean)] || [clean];
 };
+const key = (txt = "") =>
+  String(txt)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+export { key, getCities, getKeys };

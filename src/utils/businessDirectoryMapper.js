@@ -5,63 +5,38 @@ const mapProvider = (item) => {
   const sources = sourceNames(item);  
   const cats = arr(item.categories);
   const mainCat = item.providerType || item.primaryCategory || cats[0] || null;
-  console.log(mainCat)
   
-    return {
+  return {
     id: String(item._id),
     mongoId: String(item._id),
     sourceProviderId: item.sourceProviderId || item.sourceId || null,
-
     businessName: item.businessName || item.name || "Unknown Provider",
-    nameKey: item.nameKey || null,
-
     categoryId: num(item.categoryId),
     primaryCategory: mainCat,
     providerType: mainCat,
-    categories: cats,
-    businessCategories: arr(item.businessCategories),
-    sourceCategories: arr(item.sourceCategories),
-    systemTags: arr(item.systemTags),
-
     email: item.email || null,
     phoneDisplay: phone(item),
     phoneNormalized: item.phoneNormalized || item.phoneNumber || null,
-
     websiteUrl: site,
     directWebsiteUrl: item.directWebsiteUrl || site,
-    websiteDomain: item.websiteDomain || null,
     listingUrl: item.listingUrl || item.sourceUrl || site,
     hasDirectWebsite: Boolean(site),
-
-    imageUrl: item.imageUrl || null,
     address: address(item),
     serviceLocation: address(item),
-    addressKey: item.addressKey || null,
-
     city: item.city || item.searchCity || null,
-    cityKey: item.cityKey || null,
     searchCity: item.searchCity || item.city || null,
-    searchCities: arr(item.searchCities),
     province: item.province || "British Columbia",
     provinceCode: item.provinceCode || "BC",
     countryCode: item.countryCode || item.country || "CA",
-
     rating: rating(item),
     reviewCount: reviewCount(item),
     reviewCountSourceField: reviewSource(item),
-
     availabilityStatus: item.availabilityStatus || null,
     isClosed: bool(item.isClosed) || item.availabilityStatus === "closed",
     isDeleted: bool(item.isDeleted),
-
-    latitude: coord(item, 1),
-    longitude: coord(item, 0),
-
     sourceWebsite: item.sourceWebsite || null,
     sourceNames: sources,
     sourceCount: num(item.sourceCount) ?? sources.length,
-    sourceTrustScore: num(item.sourceTrustScore),
-
     createdAt: item.createdAt || null,
     updatedAt: item.updatedAt || null,
     migratedAt: item.migratedAt || null,
@@ -69,8 +44,6 @@ const mapProvider = (item) => {
     lastVerifiedAt: item.lastVerifiedAt || item.updatedAt || null,
   };
 }
-
-
 
 const website = (item) =>
   item.websiteUrl || item.website || item.websiteUri || item.directWebsiteUrl || null;
@@ -144,6 +117,5 @@ const coord = (item, index) => {
   if (index === 0) return num(item.longitude ?? item.lng);
   return num(item.latitude ?? item.lat);
 };
-
 
 export { mapProvider };

@@ -40,6 +40,9 @@ const makeQuery = (city = "Vancouver", cat = "plumber") => {
   console.log(cityKeys);
 
   catQuery(cat);
+  console.log(catQuery);
+  let x = cityQuery(cities, cityKeys)
+  console.log(x);
   
 };
 
@@ -66,7 +69,27 @@ const catQuery = (cat = "plumber") => {
   }
 
   return { $or: list };
-
-
 };
+
+
+const cityQuery = (cityList, cityKeys) => {
+  const regexList = [];
+
+  for (const city of cityList) {
+    regexList.push(new RegExp(`^${esc(city)}$`, "i"));
+  }
+
+  return {
+    $or: [
+      { cityKey: { $in: cityKeys } },
+      { searchCityKey: { $in: cityKeys } },
+      { searchCityKeys: { $in: cityKeys } },
+      { city: { $in: regexList } },
+      { searchCity: { $in: regexList } },
+      { searchCities: { $in: regexList } },
+    ],
+  };
+};
+
+
 const esc = (txt = "") => String(txt).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

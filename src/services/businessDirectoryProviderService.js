@@ -17,7 +17,23 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const providers = [];
   for (const item of list) {
     providers.push(mapProvider(item));
-  }  
+  }
+  
+  return {
+    ok: true,
+    feature: "BusinessDirectoryProvider",
+    databaseName: mongoose.connection.name || process.env.DB_NAME || null,
+    sourceCollection: colName,
+    structureVersion: version,
+    city,
+    category: cat,
+    clusterCities: cities,
+    cityKeys,
+    total: providers.length,
+    limit: lim,
+    syncedAt: new Date().toISOString(),
+    providers,
+  };  
 
 };
 
@@ -39,10 +55,16 @@ const makeQuery = (city = "Vancouver", cat = "plumber") => {
   console.log(cities);
   console.log(cityKeys);
 
-  catQuery(cat);
-  console.log(catQuery);
-  let x = cityQuery(cities, cityKeys)
-  console.log(x);
+  return {
+    $or: [
+      { cityKey: { $in: cityKeys } },
+      { searchCityKey: { $in: cityKeys } },
+      { searchCityKeys: { $in: cityKeys } },
+      { city: { $in: regexList } },
+      { searchCity: { $in: regexList } },
+      { searchCities: { $in: regexList } },
+    ],
+  };
   
 };
 

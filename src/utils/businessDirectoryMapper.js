@@ -2,7 +2,8 @@ const mapProvider = (item) => {
   const site = website(item);
   const sources = sourceNames(item);  
   const cats = arr(item.categories);
-  
+  const mainCat = item.providerType || item.primaryCategory || cats[0] || null;
+  console.log(mainCat)
   
 
 }

@@ -13,8 +13,6 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
     .sort({ rating: -1, reviewCount: -1, sourceCount: -1, businessName: 1 })
     .limit(lim)
     .lean();  
-
-  console.log(list)
   
   const providers = [];
   for (const item of list) {
@@ -54,9 +52,7 @@ const cleanLimit = (limit) => {
 const makeQuery = (city = "Vancouver", cat = "plumber") => {
   const cities = getCities(city);
   const cityKeys = getKeys(cities);
-  console.log(cities);
-  console.log(cityKeys);
-
+ 
   const q = {
     $and: [
       { isDeleted: { $ne: true } },
@@ -75,10 +71,6 @@ const catQuery = (cat = "plumber") => {
   const catKey = key(cat || "plumber");
   const catText = catKey.replace(/-/g, " ");
   const re = new RegExp(esc(catText), "i");
-
-  console.log(catText);
-  console.log(re);
-
 
   const list = [
     { providerType: re },

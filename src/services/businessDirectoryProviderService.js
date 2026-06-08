@@ -3,6 +3,8 @@ import { BusinessDirectoryProviderModel, colName } from "../internal/db/business
 import { key, getCities, getKeys } from "../utils/cityCluster.js";
 import { mapProvider } from "../utils/businessDirectoryMapper.js";
 
+const version = "business-directory-clean-provider-v2";
+
 const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const lim = cleanLimit(limit);
   const { q, cities, cityKeys } = makeQuery(city, cat);
@@ -17,7 +19,23 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const providers = [];
   for (const item of list) {
     providers.push(mapProvider(item));
-  }  
+  }
+  
+  return {
+    ok: true,
+    feature: "BusinessDirectoryProvider",
+    databaseName: mongoose.connection.name || process.env.DB_NAME || null,
+    sourceCollection: colName,
+    structureVersion: version,
+    city,
+    category: cat,
+    clusterCities: cities,
+    cityKeys,
+    total: providers.length,
+    limit: lim,
+    syncedAt: new Date().toISOString(),
+    providers,
+  };  
 
 };
 
@@ -39,8 +57,18 @@ const makeQuery = (city = "Vancouver", cat = "plumber") => {
   console.log(cities);
   console.log(cityKeys);
 
-  catQuery(cat);
-  
+  const q = {
+    $and: [
+      { isDeleted: { $ne: true } },
+      { availabilityStatus: { $ne: "unavailable" } },
+      { availabilityStatus: { $ne: "deleted" } },
+      { isClosed: { $ne: true } },
+      catQuery(cat),
+      cityQuery(cities, cityKeys),
+    ],
+  };
+
+  return { q, cities, cityKeys };  
 };
 
 const catQuery = (cat = "plumber") => {
@@ -66,7 +94,29 @@ const catQuery = (cat = "plumber") => {
   }
 
   return { $or: list };
-
-
 };
+
+
+const cityQuery = (cityList, cityKeys) => {
+  const regexList = [];
+
+  for (const city of cityList) {
+    regexList.push(new RegExp(`^${esc(city)}$`, "i"));
+  }
+
+  return {
+    $or: [
+      { cityKey: { $in: cityKeys } },
+      { searchCityKey: { $in: cityKeys } },
+      { searchCityKeys: { $in: cityKeys } },
+      { city: { $in: regexList } },
+      { searchCity: { $in: regexList } },
+      { searchCities: { $in: regexList } },
+    ],
+  };
+};
+
+
 const esc = (txt = "") => String(txt).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export { getList };

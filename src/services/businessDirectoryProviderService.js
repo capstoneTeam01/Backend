@@ -3,6 +3,8 @@ import { BusinessDirectoryProviderModel, colName } from "../internal/db/business
 import { key, getCities, getKeys } from "../utils/cityCluster.js";
 import { mapProvider } from "../utils/businessDirectoryMapper.js";
 
+const version = "business-directory-clean-provider-v2";
+
 const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
   const lim = cleanLimit(limit);
   const { q, cities, cityKeys } = makeQuery(city, cat);
@@ -55,17 +57,18 @@ const makeQuery = (city = "Vancouver", cat = "plumber") => {
   console.log(cities);
   console.log(cityKeys);
 
-  return {
-    $or: [
-      { cityKey: { $in: cityKeys } },
-      { searchCityKey: { $in: cityKeys } },
-      { searchCityKeys: { $in: cityKeys } },
-      { city: { $in: regexList } },
-      { searchCity: { $in: regexList } },
-      { searchCities: { $in: regexList } },
+  const q = {
+    $and: [
+      { isDeleted: { $ne: true } },
+      { availabilityStatus: { $ne: "unavailable" } },
+      { availabilityStatus: { $ne: "deleted" } },
+      { isClosed: { $ne: true } },
+      catQuery(cat),
+      cityQuery(cities, cityKeys),
     ],
   };
-  
+
+  return { q, cities, cityKeys };  
 };
 
 const catQuery = (cat = "plumber") => {
@@ -115,3 +118,5 @@ const cityQuery = (cityList, cityKeys) => {
 
 
 const esc = (txt = "") => String(txt).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export { getList };

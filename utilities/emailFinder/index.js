@@ -1,3 +1,4 @@
+//[Formerly FIXBEE-197] Fetching Email for the respective businesses
 const { MongoClient } = require('mongodb')
 require('dotenv').config()
 

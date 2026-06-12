@@ -43,7 +43,17 @@ async function run() {
     const siteData = await getText(item);
     console.log("Website status:", siteData.status);
     console.log("Pages used:", siteData.urls.length);
-
+    let desc = {
+      short: "",
+      long: "",
+      source: "official_website",
+      sourceUrls: siteData.urls,
+      generatedByAI: false,
+      confidence: 0,
+      status: siteData.status,
+      lastCheckedAt: new Date()
+    };
+    console.log(desc)
   
 
   }  

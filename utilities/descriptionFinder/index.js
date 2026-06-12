@@ -21,10 +21,24 @@ async function run() {
   console.log("Saving into:", newCol);
 
   const { client, db } = await getDb(); 
-
-
-
   
+  const col = db.collection(oldCol);
+  const out = db.collection(newCol);
+
+  let q = col.find({ isDeleted: { $ne: true } }).sort({ reviewCount: -1 });
+
+  if (limit > 0) {
+    q = q.limit(limit);
+  }
+
+  const list = await q.toArray();
+
+  console.log("Providers found:", list.length);
+
+
+
+
+
   await client.close();
   console.log("\nDone");
 

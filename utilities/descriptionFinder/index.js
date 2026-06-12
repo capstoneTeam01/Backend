@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { getDb } from "./db.js";
+import { getText, askGroq } from "./api.js";
 
 
 const oldCol = process.env.COL_NAME;
@@ -35,7 +36,17 @@ async function run() {
 
   console.log("Providers found:", list.length);
 
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
+    console.log("\n" + (i + 1) + ". " + name(item));
 
+    const siteData = await getText(item);
+    console.log("Website status:", siteData.status);
+    console.log("Pages used:", siteData.urls.length);
+
+  
+
+  }  
 
 
 

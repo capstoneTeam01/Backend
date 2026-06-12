@@ -62,8 +62,6 @@ function val(x) {
   return String(x).trim();
 }
 
-
-
 function host(url) {
   try {
     return new URL(url).hostname.replace("www.", "").toLowerCase();

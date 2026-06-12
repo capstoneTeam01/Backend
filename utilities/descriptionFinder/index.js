@@ -41,6 +41,9 @@ async function run() {
     console.log("\n" + (i + 1) + ". " + name(item));
 
     const siteData = await getText(item);
+    
+    console.log('siteData');
+    console.log(siteData);
     console.log("Website status:", siteData.status);
     console.log("Pages used:", siteData.urls.length);
     let desc = {
@@ -73,4 +76,8 @@ async function run() {
 
   await client.close();
   console.log("\nDone");
+}
+
+function name(item) {
+  return item.businessName || item.name || "Unnamed business";
 }

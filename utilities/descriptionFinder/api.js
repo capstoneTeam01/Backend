@@ -6,7 +6,7 @@ export async function getText(item) {
   }
 
 
-  return { status: "testing"};
+  return { status: "text_found", urls, text };
 }
 
 function getSite(item) {

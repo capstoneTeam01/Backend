@@ -25,3 +25,34 @@ function getSite(item) {
 
   return "";
 }
+
+
+function fixUrl(url) {
+  url = val(url);
+  if (!url) return "";
+  if (url.startsWith("mailto:")) return "";
+  if (url.startsWith("tel:")) return "";
+  if (!url.startsWith("http")) url = "https://" + url;
+  return url;
+}
+
+function isBadSite(url) {
+  const h = host(url);
+  const bad = [
+    "yelp.com",
+    "facebook.com",
+    "instagram.com",
+    "google.com",
+    "foursquare.com",
+    "wheree.com",
+    "bbb.org",
+    "yellowpages.ca",
+    "homestars.com"
+  ];
+
+  for (let i = 0; i < bad.length; i++) {
+    if (h.includes(bad[i])) return true;
+  }
+
+  return false;
+}

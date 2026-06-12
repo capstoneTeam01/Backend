@@ -71,6 +71,24 @@ function host(url) {
 }
 
 export async function askGroq(item, text) {
+    const prompt = `Write a business description using only this website text.
+    Business name: ${item.businessName || ""}
+    City: ${item.city || ""}
+    
+    Rules:
+    - Do not invent facts.
+    - Use only the text given.
+    - Return JSON only.
+    
+    JSON format:
+    {
+      "short": "1 short description",
+      "long": "3 to 5 sentence description",
+      "confidence": 0.8
+    }
+    
+    Website text:
+    ${text}`;
 
 
 }

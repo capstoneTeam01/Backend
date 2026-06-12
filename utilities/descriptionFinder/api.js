@@ -90,5 +90,20 @@ export async function askGroq(item, text) {
     Website text:
     ${text}`;
 
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + process.env.GROQ_API_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.1,
+          max_tokens: 400,
+          response_format: { type: "json_object" }
+        })
+    });
 
+    
 }

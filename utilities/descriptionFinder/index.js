@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { getDb } from "./db.js";
+
 
 const oldCol = process.env.COL_NAME;
 const newCol = process.env.ENRICHED_COL_NAME;
@@ -17,6 +19,14 @@ async function run() {
   console.log("FixBee beginner business description script");
   console.log("Reading from:", oldCol);
   console.log("Saving into:", newCol);
+
+  const { client, db } = await getDb(); 
+
+
+
+  
+  await client.close();
+  console.log("\nDone");
 
 
 }

@@ -56,3 +56,18 @@ function isBadSite(url) {
 
   return false;
 }
+
+function val(x) {
+  if (!x) return "";
+  return String(x).trim();
+}
+
+
+
+function host(url) {
+  try {
+    return new URL(url).hostname.replace("www.", "").toLowerCase();
+  } catch {
+    return "";
+  }
+}

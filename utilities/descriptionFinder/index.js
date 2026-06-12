@@ -69,13 +69,8 @@ async function run() {
   
     await out.replaceOne({ _id: item._id }, copy, { upsert: true });
     console.log("Saved description:", desc.short || "no description");
-
   }  
-
-
 
   await client.close();
   console.log("\nDone");
-
-
 }

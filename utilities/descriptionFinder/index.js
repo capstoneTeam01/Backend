@@ -56,7 +56,11 @@ async function run() {
     console.log(desc)
     if (siteData.status === "text_found") {
       const ai = await askGroq(item, siteData.text);
-    
+      desc.short = ai.short;
+      desc.long = ai.long;
+      desc.confidence = ai.confidence;
+      desc.generatedByAI = true;
+      desc.status = "completed";      
     }            
   
 

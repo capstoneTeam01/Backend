@@ -105,4 +105,14 @@ export async function askGroq(item, text) {
         })
     });
 
+  const data = await res.json();
+  const out = data.choices[0].message.content;
+  const obj = JSON.parse(out);
+
+  return {
+    short: obj.short || "",
+    long: obj.long || "",
+    confidence: Number(obj.confidence || 0.7)
+  };    
+
 }

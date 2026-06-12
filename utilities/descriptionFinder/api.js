@@ -105,5 +105,4 @@ export async function askGroq(item, text) {
         })
     });
 
-    
 }

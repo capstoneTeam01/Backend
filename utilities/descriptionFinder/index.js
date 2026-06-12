@@ -61,8 +61,14 @@ async function run() {
       desc.confidence = ai.confidence;
       desc.generatedByAI = true;
       desc.status = "completed";      
-    }            
+    }
+    const copy = {
+      ...item,
+      businessDescription: desc
+    };                
   
+    await out.replaceOne({ _id: item._id }, copy, { upsert: true });
+    console.log("Saved description:", desc.short || "no description");
 
   }  
 

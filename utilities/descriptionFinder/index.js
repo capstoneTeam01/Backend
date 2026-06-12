@@ -54,6 +54,10 @@ async function run() {
       lastCheckedAt: new Date()
     };
     console.log(desc)
+    if (siteData.status === "text_found") {
+      const ai = await askGroq(item, siteData.text);
+    
+    }            
   
 
   }  

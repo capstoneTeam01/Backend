@@ -69,3 +69,8 @@ function host(url) {
     return "";
   }
 }
+
+export async function askGroq(item, text) {
+
+
+}

@@ -5,9 +5,71 @@ export async function getText(item) {
     return { status: "no_website", urls: [], text: "" };
   }
 
+  const html = await page(site);
+  const urls = [site];
+  const more = links(html, site);
+  let text = plain(html);
+
+  for (let i = 0; i < more.length; i++) {
+    const html2 = await page(more[i]);
+    urls.push(more[i]);
+    text = text + " " + plain(html2);
+  }
+
+  text = text.slice(0, 5000);
+
+  if (text.length < 200) {
+    return { status: "not_enough_text", urls, text };
+  }
 
   return { status: "text_found", urls, text };
 }
+
+
+async function page(url) {
+  const res = await fetch(url);
+  const html = await res.text();
+  return html;
+}
+
+function links(html, base) {
+  const list = [];
+  const baseHost = host(base);
+  const re = /href=["']([^"']+)["']/gi;
+  let m;
+
+  while ((m = re.exec(html)) !== null) {
+    let url = m[1];
+
+    try {
+      url = new URL(url, base).toString();
+    } catch {
+      url = "";
+    }
+
+    const low = url.toLowerCase();
+    const good = low.includes("about") || low.includes("service") || low.includes("contact");
+
+    if (url && host(url) === baseHost && good && !list.includes(url)) {
+      list.push(url);
+    }
+  }
+
+  return list.slice(0, 3);
+}
+
+
+function plain(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 
 function getSite(item) {
   const arr = [

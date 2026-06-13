@@ -121,5 +121,4 @@ const coord = (item, index) => {
   if (index === 0) return num(item.longitude ?? item.lng);
   return num(item.latitude ?? item.lat);
 };
-
 export { mapProvider };

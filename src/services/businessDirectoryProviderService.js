@@ -14,6 +14,8 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
     .limit(lim)
     .lean();  
   
+  const sortedList = sortCityFirst(list, city);
+
   const providers = [];
   for (const item of list) {
     providers.push(mapProvider(item));
@@ -37,6 +39,45 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
 
 };
 
+
+const sortCityFirst = (list = [], city = "Vancouver") => {
+  return [...list].sort((a, b) => {
+    const cityDiff = cityPriority(a, city) - cityPriority(b, city);
+    if (cityDiff !== 0) return cityDiff;
+
+    const ratingDiff = safeNumber(b.rating) - safeNumber(a.rating);
+    if (ratingDiff !== 0) return ratingDiff;
+
+    const reviewDiff = safeNumber(b.reviewCount) - safeNumber(a.reviewCount);
+    if (reviewDiff !== 0) return reviewDiff;
+
+    const sourceDiff = safeNumber(b.sourceCount) - safeNumber(a.sourceCount);
+    if (sourceDiff !== 0) return sourceDiff;
+
+    return String(a.businessName || "").localeCompare(String(b.businessName || ""));
+  });
+};
+
+const cityPriority = (item = {}, city = "Vancouver") => {
+  const requestedCityKey = key(city);
+
+  const providerCityKeys = [
+    item.cityKey,
+    item.searchCityKey,
+    key(item.city),
+    key(item.searchCity),
+  ].filter(Boolean);
+
+  if (providerCityKeys.includes(requestedCityKey)) return 0;
+
+  return 1;
+};
+
+const safeNumber = (value) => {
+  const n = Number(value);
+  if (Number.isNaN(n)) return 0;
+  return n;
+};
 
 
 const cleanLimit = (limit) => {

@@ -11,6 +11,7 @@ const mapProvider = (item) => {
     mongoId: String(item._id),
     sourceProviderId: item.sourceProviderId || item.sourceId || null,
     businessName: item.businessName || item.name || "Unknown Provider",
+    businessDescription: description(item),
     categoryId: num(item.categoryId),
     primaryCategory: mainCat,
     providerType: mainCat,

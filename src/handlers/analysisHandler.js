@@ -2,6 +2,7 @@ import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
 import { generateRecommendation } from "../services/recommendationService.js";
 import { generateDiyInstructions } from "../services/diyInstructionService.js";
+import { detectPipeOutlineWithYolo } from "../services/yoloSegmentationService.js";
 
 const AnalyzeImage = () => {
   return async (req, res) => {
@@ -106,4 +107,41 @@ const GetDiyInstructions = () => {
   };
 };
 
-export { AnalyzeImage, GetDiyInstructions };
+const AnalyzeIssueRegion = () => {
+  return async (req, res) => {
+    try {
+      const { imageBase64 } = req.body;
+
+      if (!imageBase64) {
+        return res.status(400).json({
+          success: false,
+          message: "imageBase64 is required",
+        });
+      }
+
+      const result = await detectPipeOutlineWithYolo({ imageBase64 });
+
+      if (!result?.issueRegion) {
+        return res.status(404).json({
+          success: false,
+          message: "No plumbing object detected. Point the camera at a pipe or fixture.",
+          brightness: result?.brightness ?? null,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      console.error("Issue region detection error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Issue region detection failed",
+      });
+    }
+  };
+};
+
+export { AnalyzeImage, GetDiyInstructions, AnalyzeIssueRegion };

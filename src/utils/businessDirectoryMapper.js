@@ -90,6 +90,9 @@ const address = (item) =>
 const phone = (item) =>
   item.phoneNumber || item.phoneDisplay || item.phone || item.displayPhone || item.display_phone || null;
 
+const description = (item) =>
+  item.businessDescription || item.projectDescription || item.description || null;
+
 const rating = (item) => num(item.rating ?? item.totalScore ?? item.googleRating);
 
 const reviewCount = (item) =>
@@ -118,5 +121,4 @@ const coord = (item, index) => {
   if (index === 0) return num(item.longitude ?? item.lng);
   return num(item.latitude ?? item.lat);
 };
-
 export { mapProvider };

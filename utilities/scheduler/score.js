@@ -81,8 +81,6 @@ function score(a, b) {
 }
 
 function need(src) {
-  // Yelp and Foursquare usually do not give the real company website.
-  // So they cannot always reach 80 even when the match is correct.
   if (src === 'yelp') return 60;
   if (src === 'foursquare') return 60;
 

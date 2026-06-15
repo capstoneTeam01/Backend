@@ -51,12 +51,25 @@ async function main() {
     if (cleanDoc.businessName) cleanDocs.push(cleanDoc);
   }
 
+  await targetCol.deleteMany({});
+
+  if (cleanDocs.length > 0) {
+    await targetCol.insertMany(cleanDocs);
+  }
+
+
   const withEmail = cleanDocs.filter(doc => doc.email).length;
-  console.log('Docs with email: ' + withEmail)
+  const withWebsite = cleanDocs.filter(d => d.websiteUrl).length;
+  const withPhone = cleanDocs.filter(d => d.phoneNumber).length;
+
+  console.log('Done');
+  console.log('Clean docs inserted:', cleanDocs.length);
+  console.log('With email:', withEmail);
+  console.log('With website:', withWebsite);
+  console.log('With phone:', withPhone);
   await client.close();
 
 }
-
 
 function makeGroupKey(doc) {
   const name = lower(doc.businessName || doc.name);
@@ -64,8 +77,8 @@ function makeGroupKey(doc) {
   const phone = onlyNumbers(getPhone(doc));
   const website = cleanDomain(getWebsite(doc));
 
-  if (website) return 'web:' + website;
-  if (phone) return 'phone:' + phone;
+  if (website) return 'webcity:' + website + ':' + city;
+  if (phone) return 'phonecity:' + phone + ':' + city;
   return 'name-city:' + name + ':' + city;
 }
 
@@ -101,6 +114,7 @@ function makeCleanDoc(group) {
     sourceProviderId: text(best._id || best.sourceProviderId || best.sourceId),
     availabilityStatus: 'available',
     businessName: text(best.businessName || best.name),
+    businessDescription: findBusinessDescription(group),
     categoryId: Number(best.categoryId || 1),
     city: cleanCity(best.city, address),
     email: getBestEmail(group),
@@ -262,4 +276,23 @@ function pickBestDoc(group) {
   }
 
   return bestDoc;
+}
+
+function getBusinessDescriptionText(doc) {
+  const d = doc.businessDescription;
+
+  if (d && typeof d === 'object' && !Array.isArray(d)) {
+    return text(d.short);
+  }
+
+  return text(d);
+}
+
+function findBusinessDescription(group) {
+  for (const doc of group) {
+    const shortText = getBusinessDescriptionText(doc);
+    if (shortText) return shortText;
+  }
+
+  return '';
 }

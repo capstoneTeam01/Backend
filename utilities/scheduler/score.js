@@ -58,9 +58,6 @@ function score(a, b) {
 
   let p1 = phone(a.phoneNumber);
   let p2 = phone(b.phone);
-
-  // Some APIs return phone as +1 xxx and some as local format.
-  // This keeps the comparison simple but still works for most Canadian numbers.
   if (p1 && p2 && (p1 === p2 || p1.endsWith(p2) || p2.endsWith(p1))) points = points + 40;
 
   let w1 = domain(a.websiteUrl);
@@ -81,6 +78,7 @@ function score(a, b) {
 }
 
 function need(src) {
+
   if (src === 'yelp') return 60;
   if (src === 'foursquare') return 60;
 

@@ -1,6 +1,10 @@
 import express from "express";
 
-import { UploadPhoto } from "../handlers/photoHandler.js";
+import {
+  GetPhotoHistory,
+  UploadPhoto,
+} from "../handlers/photoHandler.js";
+
 import { AuthMiddleware } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/uploadMiddleware.js";
 
@@ -12,6 +16,12 @@ const photoRoutes = (services) => {
     AuthMiddleware(services),
     upload.single("image"),
     UploadPhoto()
+  );
+
+  router.get(
+    "/history",
+    AuthMiddleware(services),
+    GetPhotoHistory()
   );
 
   return router;

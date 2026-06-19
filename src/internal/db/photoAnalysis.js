@@ -79,6 +79,20 @@ class PhotoAnalysis {
       .sort({ createdAt: -1 });
   }
 
+  static async getRecentAnalyzedByUserId(userId, limit = 20) {
+    return PhotoAnalysisModel.find({
+      userId: userId,
+      isDeleted: false,
+      aiResponse: {
+        $exists: true,
+        $nin: ["", null],
+      },
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+  }
+
   static async getById(id) {
     return PhotoAnalysisModel.findOne({
       _id: id,

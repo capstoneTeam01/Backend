@@ -53,4 +53,52 @@ const UploadPhoto = () => {
   };
 };
 
-export { UploadPhoto };
+
+const GetPhotoHistory = () => {
+  return async (req, res) => {
+    try {
+      const userId = req.user._id || req.user.id;
+
+      const photos = await PhotoAnalysis.getRecentAnalyzedByUserId(userId);
+
+      const history = [];
+
+      for (const photo of photos) {
+        if (photo.aiResponse) {
+          try {
+            const analysis = JSON.parse(photo.aiResponse);
+
+            const historyItem = {
+              photoId: photo._id,
+              imageUrl: photo.imageUrl,
+              detectedObject: photo.detectedObject,
+              analysis: analysis,
+              createdAt: photo.createdAt,
+            };
+
+            history.push(historyItem);
+          } catch (error) {
+            console.log(
+              "Could not read analysis for photo:",
+              photo._id
+            );
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        history: history,
+      });
+    } catch (error) {
+      console.error("Photo history error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not load photo history",
+      });
+    }
+  };
+};
+
+export { UploadPhoto, GetPhotoHistory };

@@ -11,16 +11,18 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
 
   const list = await BusinessDirectoryProviderModel.find(q)
     .sort({ rating: -1, reviewCount: -1, sourceCount: -1, businessName: 1 })
-    .limit(lim)
-    .lean();  
-  
+    .lean();
+
   const sortedList = sortCityFirst(list, city);
 
+  const finalList = sortedList.slice(0, lim);
+
   const providers = [];
-  for (const item of list) {
+
+  for (const item of finalList) {
     providers.push(mapProvider(item));
   }
-  
+
   return {
     ok: true,
     feature: "BusinessDirectoryProvider",
@@ -31,12 +33,12 @@ const getList = async (city = "Vancouver", cat = "plumber", limit = 20) => {
     category: cat,
     clusterCities: cities,
     cityKeys,
+    matchingTotal: list.length,
     total: providers.length,
     limit: lim,
     syncedAt: new Date().toISOString(),
     providers,
-  };  
-
+  };
 };
 
 

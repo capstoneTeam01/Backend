@@ -2,6 +2,7 @@ import { getProvider, createAIClient } from "./aiClientService.js";
 
 const GROQ_TEXT_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 const OPENAI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
+const OLLAMA_VISION_MODEL = process.env.OLLAMA_VISION_MODEL || "llava";
 
 const getModelForProvider = (provider) => {
   if (provider === "groq") {
@@ -10,6 +11,9 @@ const getModelForProvider = (provider) => {
 
   if (provider === "openai") {
     return OPENAI_TEXT_MODEL;
+  }
+    if (provider === "ollama") {
+    return process.env.OLLAMA_MODEL || "llava";
   }
 
   return null;

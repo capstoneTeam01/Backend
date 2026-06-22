@@ -38,6 +38,12 @@ const createAIClient = (provider) => {
       apiKey: process.env.OPENAI_API_KEY,
     });
   }
+  if (provider === "ollama") {
+    return new OpenAI({
+      apiKey: "ollama",
+      baseURL: process.env.OLLAMA_URL,
+    });
+  }
 
   return null;
 };

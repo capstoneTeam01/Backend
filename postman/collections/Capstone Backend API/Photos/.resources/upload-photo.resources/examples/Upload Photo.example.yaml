@@ -1,0 +1,36 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/photos/upload"
+  method: POST
+  headers:
+    - key: ""
+      value: ""
+      disabled: true
+  body:
+    type: formdata
+    content:
+      - type: file
+        key: image
+        src:
+          - /Users/kumaraswamybarapati/Downloads/testimage.png
+        disabled: false
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    x-powered-by: Express
+    access-control-allow-origin: "*"
+    content-type: application/json; charset=utf-8
+    content-length: "85"
+    etag: W/"55-8Fq9373Ikm18C19oD9xd8p5c+Hc"
+    date: Sun, 24 May 2026 02:46:42 GMT
+    connection: keep-alive
+    keep-alive: timeout=5
+  body:
+    type: json
+    content: |-
+      {
+        "error": "VALIDATION_FAILED",
+        "message": "Only JPEG, PNG, and WebP images are allowed"
+      }
+order: 1779590806856

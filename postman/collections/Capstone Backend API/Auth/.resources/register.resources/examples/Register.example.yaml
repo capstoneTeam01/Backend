@@ -1,0 +1,28 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/auth/register"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "password": "password123",
+        "location": "Vancouver, BC",
+        "role": "user"
+      }
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    content-length: "0"
+    server: AirTunes/940.23.1
+    x-apple-processingtime: "0"
+    x-apple-requestreceivedtimestamp: "346741264"
+  body:
+    type: text
+    content: ""
+order: 1779585593023

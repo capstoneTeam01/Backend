@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch app.js",
+    "ollama": "ollama serve",
     "start": "node app.js"
   },
   "repository": {

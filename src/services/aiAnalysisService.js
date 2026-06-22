@@ -7,6 +7,9 @@ const GROQ_VISION_MODEL =
 const OPENAI_VISION_MODEL =
   process.env.OPENAI_VISION_MODEL || "gpt-4o-mini";
 
+  const OLLAMA_VISION_MODEL =
+  process.env.OLLAMA_VISION_MODEL || "llava";
+
 const getFallbackResult = (imageUrl) => {
   return {
     detectedObject: "Unable to analyze plumbing image",
@@ -74,6 +77,10 @@ const getModelForProvider = (provider) => {
 
   if (provider === "openai") {
     return OPENAI_VISION_MODEL;
+  }
+
+    if (provider === "ollama") {
+    return OLLAMA_VISION_MODEL;
   }
 
   return null;

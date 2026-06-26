@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  GetPhotoDetails,
   GetPhotoHistory,
   UploadPhoto,
 } from "../handlers/photoHandler.js";
@@ -22,6 +23,12 @@ const photoRoutes = (services) => {
     "/history",
     AuthMiddleware(services),
     GetPhotoHistory()
+  );
+
+  router.get(
+    "/:photoId",
+    AuthMiddleware(services),
+    GetPhotoDetails()
   );
 
   return router;

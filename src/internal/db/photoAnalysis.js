@@ -1,5 +1,69 @@
 import mongoose from "mongoose";
 
+const DiyRepairStepSchema = new mongoose.Schema(
+  {
+    stepNumber: {
+      type: Number,
+      required: false,
+    },
+    title: {
+      type: String,
+      required: false,
+    },
+    instruction: {
+      type: String,
+      required: false,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+const DiyInstructionsSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: false,
+    },
+    summary: {
+      type: String,
+      required: false,
+    },
+    difficulty: {
+      type: String,
+      required: false,
+    },
+    estimatedTime: {
+      type: String,
+      required: false,
+    },
+    toolsNeeded: {
+      type: [String],
+      default: [],
+    },
+    repairSteps: {
+      type: [DiyRepairStepSchema],
+      default: [],
+    },
+    safetyWarnings: {
+      type: [String],
+      default: [],
+    },
+    professionalAdvice: {
+      type: String,
+      required: false,
+    },
+    source: {
+      type: String,
+      required: false,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const PhotoAnalysisSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,6 +95,21 @@ const PhotoAnalysisSchema = new mongoose.Schema({
   aiResponse: {
     type: String,
     required: false,
+  },
+  diyInstructions: {
+    type: DiyInstructionsSchema,
+    required: false,
+    default: null,
+  },
+  diyGeneratedAt: {
+    type: Date,
+    required: false,
+    default: null,
+  },
+  diyGenerationStatus: {
+    type: String,
+    enum: ["not_started", "pending", "completed", "failed"],
+    default: "not_started",
   },
   isDeleted: {
     type: Boolean,
@@ -93,6 +172,14 @@ class PhotoAnalysis {
       .lean();
   }
 
+  static async getByIdForUser(id, userId) {
+    return PhotoAnalysisModel.findOne({
+      _id: id,
+      userId: userId,
+      isDeleted: false,
+    }).lean();
+  }
+  
   static async getById(id) {
     return PhotoAnalysisModel.findOne({
       _id: id,

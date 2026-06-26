@@ -13,8 +13,6 @@ const AuthMiddleware = (services) => {
       if (!token) {
         return res.status(401).json({ message: "unauthorized request" });
       }
-
-      // verify JWT
       const decoded = verifyToken(token, process.env.SECRET);
       if (!decoded) {
         return res.status(401).json({ message: "invalid or expired token" });
@@ -24,8 +22,6 @@ const AuthMiddleware = (services) => {
       if (blacklisted) {
         return res.status(401).json({ message: "token revoked" });
       }
-
-      // check active session in redis
       const sessionRaw = await services.redis.get(token);
       if (!sessionRaw) {
         return res
@@ -33,7 +29,20 @@ const AuthMiddleware = (services) => {
           .json({ message: "session expired, please login again" });
       }
 
-      const sessionData = JSON.parse(sessionRaw);
+      let sessionData;
+      try {
+        sessionData = JSON.parse(sessionRaw);
+      } catch {
+        return res
+          .status(401)
+          .json({ message: "session expired, please login again" });
+      }
+
+      if (!sessionData?.user || !sessionData.user._id) {
+        return res
+          .status(401)
+          .json({ message: "session expired, please login again" });
+      }
 
       req.user = sessionData.user;
       req.user.token = token;
@@ -43,7 +52,6 @@ const AuthMiddleware = (services) => {
         userAgent: sessionData.userAgent,
       };
 
-      // enforce that the JWT subject matches the cached session
       if (String(req.user._id) !== String(decoded.id)) {
         return res.status(401).json({ message: "token mismatch" });
       }
@@ -56,12 +64,6 @@ const AuthMiddleware = (services) => {
   };
 };
 
-/*
- * function name: RequireRole
- * function Description: role-based guard, use AFTER AuthMiddleware
- * arguments: ...allowedRoles
- * return: middleware function
- */
 const RequireRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {

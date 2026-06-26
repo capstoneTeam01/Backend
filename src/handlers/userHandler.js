@@ -1,15 +1,7 @@
 import { User, UserModel } from "../internal/db/user.js";
 import bcrypt from "bcrypt";
-
 const SALT_ROUNDS = 10;
 const TOKEN_TTL_SECONDS = 60 * 60;
-
-/*
- * function name: GetAllUsers
- * function Description: returns all non-deleted users (passwords stripped)
- * arguments: services
- * return: express handler
- */
 const GetAllUsers = (services) => {
   return async (req, res) => {
     try {
@@ -22,16 +14,9 @@ const GetAllUsers = (services) => {
   };
 };
 
-/*
- * function name: GetUser
- * function Description: returns the currently authenticated user
- * arguments: services
- * return: express handler
- */
 const GetUser = (services) => {
   return async (req, res) => {
     try {
-      // _id is populated by AuthMiddleware from the redis session
       const user = await User.getById(req.user._id);
       if (!user) {
         return res.status(404).json({ message: "user not found" });
@@ -44,22 +29,31 @@ const GetUser = (services) => {
   };
 };
 
-/*
- * function name: UpdateUser
- * function Description: partial update of the current user; refreshes redis session
- * arguments: services
- * return: express handler
- */
 const UpdateUser = (services) => {
   return async (req, res) => {
     try {
-      const { name, location, password } = req.body;
+      const { name, location, password, phone, notificationSettings } =
+        req.body;
 
-      // only set fields that were provided — partial update
       const update = {};
       if (name) update.name = name;
       if (location) update.location = location;
+      if (phone !== undefined) update.phone = phone;
       if (password) update.password = await bcrypt.hash(password, SALT_ROUNDS);
+
+      if (notificationSettings && typeof notificationSettings === "object") {
+        if (notificationSettings.push !== undefined) {
+          update["notificationSettings.push"] = Boolean(
+            notificationSettings.push,
+          );
+        }
+        if (notificationSettings.appointmentReminders !== undefined) {
+          update["notificationSettings.appointmentReminders"] = Boolean(
+            notificationSettings.appointmentReminders,
+          );
+        }
+      }
+
       if (req.file) {
         update.profileImage = {
           data: req.file.buffer,
@@ -74,11 +68,18 @@ const UpdateUser = (services) => {
       await UserModel.findByIdAndUpdate(req.user._id, update);
       const updated = await User.getById(req.user._id);
 
-      // refresh redis session with updated user (password field is stripped by sanitize)
+      const refreshedSession = {
+        user: updated,
+        loginAt: req.session?.loginAt || new Date().toISOString(),
+        ip: req.session?.ip || req.ip || "unknown",
+        userAgent:
+          req.session?.userAgent || req.headers["user-agent"] || "unknown",
+      };
+
       await services.redis.set(
         req.user.token,
-        JSON.stringify(updated),
-        { EX: TOKEN_TTL_SECONDS }
+        JSON.stringify(refreshedSession),
+        { EX: TOKEN_TTL_SECONDS },
       );
 
       return res.json({ message: "user updated successfully", user: updated });
@@ -89,17 +90,29 @@ const UpdateUser = (services) => {
   };
 };
 
-/*
- * function name: DeleteUser
- * function Description: soft-deletes current user, clears redis session
- * arguments: services
- * return: express handler
- */
 const DeleteUser = (services) => {
   return async (req, res) => {
     try {
+      const { password } = req.body;
+
+      if (!password) {
+        return res
+          .status(400)
+          .json({ message: "password is required to delete account" });
+      }
+
+      const ok = await User.verifyPassword(req.user._id, password);
+      if (!ok) {
+        return res.status(401).json({ message: "incorrect password" });
+      }
+
       await User.softDelete(req.user._id);
       await services.redis.del(req.user.token);
+
+      await services.redis.set(`blacklist:${req.user.token}`, "1", {
+        EX: TOKEN_TTL_SECONDS,
+      });
+
       return res.json({ message: "user deleted successfully" });
     } catch (error) {
       console.log("DeleteUser error:", error);

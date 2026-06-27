@@ -1,10 +1,16 @@
+import mongoose from "mongoose";
+
 import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
 import { generateRecommendation } from "../services/recommendationService.js";
-
-import { detectPipeOutlineWithYolo } from "../services/yoloSegmentationService.js";
 import { generateAndCacheDiyInstructions } from "../services/diyGenerationJobService.js";
-import mongoose from "mongoose";
+import { detectPipeOutlineWithYolo } from "../services/yoloSegmentationService.js";
+
+const isLowConfidence = (analysisResult) => {
+  const confidence = analysisResult?.confidence || "Low";
+
+  return confidence.toLowerCase() === "low";
+};
 
 const AnalyzeImage = () => {
   return async (req, res) => {
@@ -18,13 +24,15 @@ const AnalyzeImage = () => {
         });
       }
 
+      const userId = req.user._id || req.user.id;
+
       let finalImageUrl = imageUrl;
       let photo = null;
 
       if (photoId) {
         photo = await PhotoAnalysisModel.findOne({
           _id: photoId,
-          userId: req.user._id || req.user.id,
+          userId: userId,
           isDeleted: false,
         });
 
@@ -52,38 +60,54 @@ const AnalyzeImage = () => {
         req.body.location
       );
 
+      const lowConfidence = isLowConfidence(finalAnalysisResult);
+
       let responsePhotoId = null;
       let diyGenerationStatus = "not_started";
+      let diyGenerationReason = null;
+
+      if (lowConfidence) {
+        diyGenerationStatus = "skipped";
+        diyGenerationReason = "LOW_CONFIDENCE";
+      }
 
       if (photo) {
-        const userId = req.user._id || req.user.id;
         const serializedAnalysis = JSON.stringify(finalAnalysisResult);
 
         photo.detectedObject = analysisResult.detectedObject;
         photo.aiResponse = serializedAnalysis;
-
-        // Clear any previous DIY result before starting a new generation job.
         photo.diyInstructions = null;
         photo.diyGeneratedAt = null;
-        photo.diyGenerationStatus = "pending";
-
-        await photo.save();
 
         responsePhotoId = photo._id.toString();
-        diyGenerationStatus = "pending";
 
-        generateAndCacheDiyInstructions({
-          photoId: responsePhotoId,
-          userId: userId,
-          analysisResult: finalAnalysisResult,
-          urgency: finalAnalysisResult.urgency || "Low",
-          expectedAiResponse: serializedAnalysis,
-        }).catch((error) => {
-          console.error(
-            "Unable to start background DIY generation:",
-            error.message
-          );
-        });
+        if (lowConfidence) {
+          photo.diyGenerationStatus = "skipped";
+          photo.diyGenerationReason = "LOW_CONFIDENCE";
+
+          await photo.save();
+        } else {
+          photo.diyGenerationStatus = "pending";
+          photo.diyGenerationReason = null;
+
+          await photo.save();
+
+          diyGenerationStatus = "pending";
+          diyGenerationReason = null;
+
+          generateAndCacheDiyInstructions({
+            photoId: responsePhotoId,
+            userId: userId,
+            analysisResult: finalAnalysisResult,
+            urgency: finalAnalysisResult.urgency,
+            expectedAiResponse: serializedAnalysis,
+          }).catch((error) => {
+            console.error(
+              "Unable to start background DIY generation:",
+              error.message
+            );
+          });
+        }
       }
 
       const analysisForResponse = {
@@ -91,11 +115,19 @@ const AnalyzeImage = () => {
         photoId: responsePhotoId,
       };
 
+      let responseMessage = "Image analysis completed";
+
+      if (lowConfidence) {
+        responseMessage =
+          "Image analysis completed with low confidence. Please upload a clearer photo.";
+      }
+
       return res.status(200).json({
         success: true,
-        message: "Image analysis completed",
+        message: responseMessage,
         photoId: responsePhotoId,
         diyGenerationStatus: diyGenerationStatus,
+        diyGenerationReason: diyGenerationReason,
         analysis: analysisForResponse,
       });
     } catch (error) {
@@ -108,8 +140,6 @@ const AnalyzeImage = () => {
     }
   };
 };
-
-
 
 const GetDiyInstructions = () => {
   return async (req, res) => {
@@ -163,6 +193,7 @@ const GetDiyInstructions = () => {
           success: true,
           message: "DIY instructions retrieved",
           diyGenerationStatus: "completed",
+          diyGenerationReason: null,
           diyInstructions: photo.diyInstructions,
         });
       }
@@ -172,6 +203,38 @@ const GetDiyInstructions = () => {
           success: true,
           message: "DIY instructions are still being prepared",
           diyGenerationStatus: "pending",
+          diyGenerationReason: null,
+          diyInstructions: null,
+        });
+      }
+
+      if (photo.diyGenerationStatus === "skipped") {
+        let message =
+          "DIY instructions were not generated for this scan.";
+
+        if (photo.diyGenerationReason === "LOW_CONFIDENCE") {
+          message =
+            "DIY instructions were not generated because the image analysis confidence was low. Please upload a clearer photo.";
+        }
+
+        return res.status(409).json({
+          success: false,
+          message: message,
+          diyGenerationStatus: "skipped",
+          diyGenerationReason:
+            photo.diyGenerationReason || null,
+          diyInstructions: null,
+        });
+      }
+
+      if (photo.diyGenerationStatus === "failed") {
+        return res.status(500).json({
+          success: false,
+          message:
+            "DIY instruction generation failed. Please try analyzing the image again.",
+          diyGenerationStatus: "failed",
+          diyGenerationReason:
+            photo.diyGenerationReason || null,
           diyInstructions: null,
         });
       }
@@ -181,6 +244,8 @@ const GetDiyInstructions = () => {
         message: "DIY instructions are not available",
         diyGenerationStatus:
           photo.diyGenerationStatus || "not_started",
+        diyGenerationReason:
+          photo.diyGenerationReason || null,
         diyInstructions: null,
       });
     } catch (error) {
@@ -206,7 +271,9 @@ const AnalyzeIssueRegion = () => {
         });
       }
 
-      const result = await detectPipeOutlineWithYolo({ imageBase64 });
+      const result = await detectPipeOutlineWithYolo({
+        imageBase64: imageBase64,
+      });
 
       if (!result?.issueRegion) {
         return res.status(404).json({
@@ -232,4 +299,8 @@ const AnalyzeIssueRegion = () => {
   };
 };
 
-export { AnalyzeImage, GetDiyInstructions, AnalyzeIssueRegion };
+export {
+  AnalyzeImage,
+  GetDiyInstructions,
+  AnalyzeIssueRegion,
+};

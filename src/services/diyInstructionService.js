@@ -1,8 +1,16 @@
-import { getProvider, createAIClient } from "./aiClientService.js";
+import {
+  getProvider,
+  createAIClient,
+} from "./aiClientService.js";
 
-const GROQ_TEXT_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-const OPENAI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
-const OLLAMA_VISION_MODEL = process.env.OLLAMA_VISION_MODEL || "llava";
+const GROQ_TEXT_MODEL =
+  process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+
+const OPENAI_TEXT_MODEL =
+  process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
+
+const OLLAMA_TEXT_MODEL =
+  process.env.OLLAMA_MODEL || "llava";
 
 const getModelForProvider = (provider) => {
   if (provider === "groq") {
@@ -12,162 +20,507 @@ const getModelForProvider = (provider) => {
   if (provider === "openai") {
     return OPENAI_TEXT_MODEL;
   }
-    if (provider === "ollama") {
-    return process.env.OLLAMA_MODEL || "llava";
+
+  if (provider === "ollama") {
+    return OLLAMA_TEXT_MODEL;
   }
 
   return null;
 };
 
-const getFallbackDiyInstructions = (analysisResult, urgency = "Low") => {
+const normalizeUrgency = (urgency) => {
+  if (typeof urgency !== "string") {
+    return "Low";
+  }
+
+  const normalizedUrgency = urgency.toLowerCase();
+
+  if (normalizedUrgency === "critical") {
+    return "Critical";
+  }
+
+  if (normalizedUrgency === "high") {
+    return "High";
+  }
+
+  if (normalizedUrgency === "medium") {
+    return "Medium";
+  }
+
+  return "Low";
+};
+
+const isLowConfidence = (analysisResult) => {
+  const confidence = analysisResult?.confidence || "Low";
+
+  return confidence.toLowerCase() === "low";
+};
+
+const getDetectedObjectLabel = (analysisResult) => {
+  if (
+    typeof analysisResult?.detectedObject === "string" &&
+    analysisResult.detectedObject.trim() !== ""
+  ) {
+    return analysisResult.detectedObject.trim();
+  }
+
+  return "affected plumbing area";
+};
+
+const getDetectedIssueLabel = (analysisResult) => {
+  if (
+    typeof analysisResult?.detectedIssue === "string" &&
+    analysisResult.detectedIssue.trim() !== ""
+  ) {
+    return analysisResult.detectedIssue.trim();
+  }
+
+  return "possible plumbing issue";
+};
+
+const getCriticalFallbackInstructions = (analysisResult) => {
+  const detectedIssue = getDetectedIssueLabel(analysisResult);
+
   return {
-    title: "Basic Safety Guidance",
+    title: "Emergency Safety Steps",
     summary:
-      "These are temporary safety steps only. Contact a professional if the issue continues or becomes worse.",
-    difficulty: urgency === "High" ? "Temporary safety only" : "Basic",
-    estimatedTime: "10 - 20 minutes",
-    toolsNeeded: ["Bucket", "Towel", "Flashlight"],
+      `FixBee identified ${detectedIssue}. Do not attempt a full repair. Use these temporary safety steps while arranging immediate professional help.`,
+    difficulty: "Temporary safety only",
+    estimatedTime: "Approximately 5–10 minutes",
+    toolsNeeded: [
+      "Flashlight",
+      "Bucket or container",
+      "Absorbent towels",
+      "Protective gloves",
+    ],
     repairSteps: [
       {
         stepNumber: 1,
-        title: "Stop Using the Affected Area",
+        title: "Keep People Away",
         instruction:
-          "Avoid using the affected fixture or area until the issue is checked.",
+          "Keep children, pets, and other people away from the affected area.",
       },
       {
         stepNumber: 2,
-        title: "Control Visible Water",
+        title: "Shut Off Water If Safe",
         instruction:
-          "Place a bucket or towel near the leak if it is safe to do so.",
+          "Turn off the nearest water shutoff valve or the main water supply only if it is safe and accessible.",
       },
       {
         stepNumber: 3,
-        title: "Monitor the Issue",
+        title: "Avoid Electrical Hazards",
         instruction:
-          "Check whether the problem is getting worse and avoid attempting complex repairs.",
+          "Do not touch water near outlets, wiring, appliances, electrical panels, or extension cords.",
+      },
+      {
+        stepNumber: 4,
+        title: "Limit Water Spread",
+        instruction:
+          "Use buckets and towels to contain water only when this can be done without entering an unsafe area.",
+      },
+      {
+        stepNumber: 5,
+        title: "Contact Emergency Help",
+        instruction:
+          "Contact a licensed plumber or appropriate emergency service immediately.",
       },
     ],
     safetyWarnings: [
-      "Stop immediately if water is spreading quickly.",
-      "Do not continue if electrical outlets, wiring, or appliances are near water.",
-      "Contact a licensed professional if the issue continues.",
+      "Do not attempt to dismantle or repair the damaged component.",
+      "Leave the area if sewage, contaminated water, structural damage, or electrical danger is present.",
+      "Do not restore the water supply until the issue has been professionally inspected.",
     ],
     professionalAdvice:
-      "This guidance is not a final repair. A licensed service provider should inspect the issue if it continues or appears unsafe.",
+      "This is a critical issue. These steps are temporary damage-control measures and are not a repair.",
     source: "Backend fallback DIY guidance",
   };
+};
+
+const getStandardFallbackInstructions = (
+  analysisResult,
+  urgency
+) => {
+  const detectedObject = getDetectedObjectLabel(analysisResult);
+  const detectedIssue = getDetectedIssueLabel(analysisResult);
+
+  const temporaryOnly = urgency === "High";
+
+  return {
+    title: temporaryOnly
+      ? "Temporary Plumbing Safety Steps"
+      : `Basic Check for ${detectedObject}`,
+    summary: temporaryOnly
+      ? `FixBee identified ${detectedIssue}. Follow these temporary control steps and arrange professional inspection.`
+      : `FixBee identified ${detectedIssue}. These steps help you inspect the area safely without attempting an advanced repair.`,
+    difficulty: temporaryOnly
+      ? "Temporary safety only"
+      : "Basic",
+    estimatedTime: "Approximately 10–20 minutes",
+    toolsNeeded: [
+      "Flashlight",
+      "Bucket or container",
+      "Absorbent towels",
+      "Protective gloves",
+    ],
+    repairSteps: [
+      {
+        stepNumber: 1,
+        title: "Stop Using the Fixture",
+        instruction:
+          "Stop using the affected fixture so the condition does not become worse during inspection.",
+      },
+      {
+        stepNumber: 2,
+        title: "Prepare the Area",
+        instruction:
+          "Place a bucket and absorbent towels below the affected area before touching nearby fittings.",
+      },
+      {
+        stepNumber: 3,
+        title: "Dry and Inspect",
+        instruction:
+          "Dry the visible surface completely, then use a flashlight to check where moisture, movement, or blockage first appears.",
+      },
+      {
+        stepNumber: 4,
+        title: "Check for an Obvious Loose Part",
+        instruction:
+          "Check only accessible fittings by hand. Do not force, dismantle, cut, or remove any component.",
+      },
+      {
+        stepNumber: 5,
+        title: "Test Carefully",
+        instruction:
+          "If there is no safety concern, use a small amount of water and observe the area for 30–60 seconds.",
+      },
+    ],
+    safetyWarnings: [
+      "Stop immediately if leaking increases or water spreads.",
+      "Do not continue if water is near electricity.",
+      "Do not use excessive force on corroded, cracked, or damaged fittings.",
+    ],
+    professionalAdvice:
+      "Contact a licensed plumber if the source cannot be confirmed, the issue continues, or any fitting appears damaged.",
+    source: "Backend fallback DIY guidance",
+  };
+};
+
+const getFallbackDiyInstructions = (
+  analysisResult,
+  urgency = "Low"
+) => {
+  const normalizedUrgency = normalizeUrgency(urgency);
+
+  if (normalizedUrgency === "Critical") {
+    return getCriticalFallbackInstructions(analysisResult);
+  }
+
+  return getStandardFallbackInstructions(
+    analysisResult,
+    normalizedUrgency
+  );
+};
+
+const cleanStringArray = (values) => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const cleanedValues = [];
+
+  for (const value of values) {
+    if (
+      typeof value === "string" &&
+      value.trim() !== ""
+    ) {
+      cleanedValues.push(value.trim());
+    }
+  }
+
+  return cleanedValues;
+};
+
+const cleanRepairSteps = (steps) => {
+  if (!Array.isArray(steps)) {
+    return [];
+  }
+
+  const cleanedSteps = [];
+
+  for (const step of steps) {
+    if (!step || typeof step !== "object") {
+      continue;
+    }
+
+    const title =
+      typeof step.title === "string"
+        ? step.title.trim()
+        : "";
+
+    const instruction =
+      typeof step.instruction === "string"
+        ? step.instruction.trim()
+        : "";
+
+    if (!title || !instruction) {
+      continue;
+    }
+
+    cleanedSteps.push({
+      stepNumber: cleanedSteps.length + 1,
+      title: title,
+      instruction: instruction,
+    });
+  }
+
+  return cleanedSteps;
+};
+
+const hasUsefulDiyContent = (
+  toolsNeeded,
+  repairSteps,
+  safetyWarnings
+) => {
+  if (toolsNeeded.length < 2) {
+    return false;
+  }
+
+  if (repairSteps.length < 4) {
+    return false;
+  }
+
+  if (safetyWarnings.length < 2) {
+    return false;
+  }
+
+  return true;
 };
 
 const generateDiyInstructions = async (
   analysisResult,
   urgency = "Low"
 ) => {
+  const normalizedUrgency = normalizeUrgency(urgency);
+
+  if (isLowConfidence(analysisResult)) {
+    console.log(
+      "DIY generation skipped because image analysis confidence is low"
+    );
+
+    return null;
+  }
+
   const provider = getProvider();
 
   if (!provider) {
-    console.error("No AI provider API key is configured for DIY instructions");
-    return getFallbackDiyInstructions(analysisResult, urgency);
+    console.error(
+      "No AI provider API key is configured for DIY instructions"
+    );
+
+    return getFallbackDiyInstructions(
+      analysisResult,
+      normalizedUrgency
+    );
   }
 
   const aiClient = createAIClient(provider);
   const model = getModelForProvider(provider);
 
   const promptPayload = {
-    task: "Generate safe DIY guidance for a home repair issue in the FixBee app.",
-    detectedObject: analysisResult?.detectedObject || "Unknown object",
-    detectedIssue: analysisResult?.detectedIssue || "Unknown issue",
-    category: analysisResult?.category || "Plumbing",
-    confidence: analysisResult?.confidence || "Low",
-    urgency,
+    task:
+      "Generate practical, safe, issue-specific DIY guidance for the FixBee mobile app.",
+    category:
+      analysisResult?.category || "Plumbing",
+    detectedObject:
+      getDetectedObjectLabel(analysisResult),
+    detectedIssue:
+      getDetectedIssueLabel(analysisResult),
+    confidence:
+      analysisResult?.confidence || "Medium",
+    confidenceReason:
+      analysisResult?.confidenceReason || null,
+    urgency: normalizedUrgency,
     rules: [
       "Return only valid JSON.",
       "Do not include markdown.",
-      "Do not suggest risky or advanced repairs.",
-      "Do not ask the user to handle electrical wiring, gas lines, sewage, or unsafe repairs.",
-      "For High urgency, provide temporary safety steps only and recommend a professional.",
-      "For Low or Medium urgency, provide simple beginner-friendly steps only.",
-      "Use clear short instructions suitable for a mobile app screen.",
-      "Do not claim the issue is fully fixed unless inspected or confirmed.",
-      "For High urgency, avoid calling it a full fix. Use wording like temporary safety steps or temporary control steps.",
+      "Base every tool and repair step on the detected object and detected issue.",
+      "Do not provide generic steps that could apply to every plumbing issue.",
+      "Write instructions for a beginner who may have no plumbing experience.",
+      "List only tools or materials that are actually required for these steps.",
+      "Explain where each tool is used through the repair-step instructions.",
+      "Put preparation and water-control steps before inspection or adjustment.",
+      "Use four to seven repair steps in a safe and logical order.",
+      "Include a final verification step explaining how to check whether leaking, blockage, or movement continues.",
+      "Include clear stop conditions in safetyWarnings.",
+      "Do not ask the user to cut pipes, solder, open walls, handle sewage, work near electricity, or perform advanced repairs.",
+      "Do not recommend excessive tightening because fittings may crack or become damaged.",
+      "Do not claim that the issue is completely repaired unless the user verifies the result.",
+      "Use cautious wording when the exact internal cause cannot be confirmed from the image.",
+      "For High urgency, provide temporary control and inspection steps only, not a full repair.",
+      "For Critical urgency, provide emergency safety and damage-control steps only.",
+      "For Critical urgency, do not instruct the user to dismantle, tighten, replace, seal, or repair the component.",
+      "Keep each instruction clear enough to display on a mobile screen.",
     ],
     requiredJsonFields: {
-      title: "string",
-      summary: "string",
-      difficulty: "Basic, Moderate, or Temporary safety only",
-      estimatedTime: "string",
-      toolsNeeded: ["string"],
+      title: "issue-specific string",
+      summary:
+        "brief explanation of what the steps will safely accomplish",
+      difficulty:
+        "Basic, Moderate, or Temporary safety only",
+      estimatedTime:
+        "Approximately X–Y minutes or hours",
+      toolsNeeded: [
+        "specific tool or material",
+      ],
       repairSteps: [
         {
           stepNumber: "number",
-          title: "string",
-          instruction: "string",
+          title: "short action title",
+          instruction:
+            "specific beginner-readable instruction",
         },
       ],
-      safetyWarnings: ["string"],
-      professionalAdvice: "string",
+      safetyWarnings: [
+        "clear warning or stop condition",
+      ],
+      professionalAdvice:
+        "explain when and why professional help is required",
     },
   };
 
   try {
-    console.log(`${provider} DIY instruction generation started`);
-    console.log("Using DIY instruction model:", model);
+    console.log(
+      `${provider} DIY instruction generation started`
+    );
 
-    const response = await aiClient.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a safe home repair guidance assistant for FixBee. Return only valid JSON.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify(promptPayload),
-        },
-      ],
-      response_format: {
-        type: "json_object",
-      },
-      temperature: 0.2,
-      max_tokens: 900,
-    });
+    console.log(
+      "Using DIY instruction model:",
+      model
+    );
 
-    const content = response.choices?.[0]?.message?.content;
+    const response =
+      await aiClient.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You create safe, practical, issue-specific home-repair guidance for FixBee. Return only valid JSON. Never invent advanced or unsafe repair steps.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify(promptPayload),
+          },
+        ],
+        response_format: {
+          type: "json_object",
+        },
+        temperature: 0.1,
+        max_tokens: 1200,
+      });
+
+    const content =
+      response.choices?.[0]?.message?.content;
 
     if (!content) {
-      console.error(`${provider} returned empty DIY instruction content`);
-      return getFallbackDiyInstructions(analysisResult, urgency);
+      console.error(
+        `${provider} returned empty DIY instruction content`
+      );
+
+      return getFallbackDiyInstructions(
+        analysisResult,
+        normalizedUrgency
+      );
     }
 
     const diyResult = JSON.parse(content);
 
+    const toolsNeeded = cleanStringArray(
+      diyResult.toolsNeeded
+    );
+
+    const repairSteps = cleanRepairSteps(
+      diyResult.repairSteps
+    );
+
+    const safetyWarnings = cleanStringArray(
+      diyResult.safetyWarnings
+    );
+
+    const contentIsUseful = hasUsefulDiyContent(
+      toolsNeeded,
+      repairSteps,
+      safetyWarnings
+    );
+
+    if (!contentIsUseful) {
+      console.error(
+        `${provider} returned incomplete DIY instructions`
+      );
+
+      return getFallbackDiyInstructions(
+        analysisResult,
+        normalizedUrgency
+      );
+    }
+
+    let source = "OpenAI DIY guidance";
+
+    if (provider === "groq") {
+      source = "Groq DIY guidance";
+    }
+
+    if (provider === "ollama") {
+      source = "Ollama DIY guidance";
+    }
+
     return {
-      title: diyResult.title || "DIY Guidance",
+      title:
+        typeof diyResult.title === "string" &&
+        diyResult.title.trim() !== ""
+          ? diyResult.title.trim()
+          : `Guidance for ${getDetectedObjectLabel(
+              analysisResult
+            )}`,
       summary:
-        diyResult.summary ||
-        "Follow these basic safety steps and contact a professional if needed.",
-      difficulty: diyResult.difficulty || "Basic",
-      estimatedTime: diyResult.estimatedTime || "10 - 20 minutes",
-      toolsNeeded: Array.isArray(diyResult.toolsNeeded)
-        ? diyResult.toolsNeeded
-        : ["Bucket", "Towel", "Flashlight"],
-      repairSteps: Array.isArray(diyResult.repairSteps)
-        ? diyResult.repairSteps
-        : getFallbackDiyInstructions(analysisResult, urgency).repairSteps,
-      safetyWarnings: Array.isArray(diyResult.safetyWarnings)
-        ? diyResult.safetyWarnings
-        : getFallbackDiyInstructions(analysisResult, urgency).safetyWarnings,
+        typeof diyResult.summary === "string" &&
+        diyResult.summary.trim() !== ""
+          ? diyResult.summary.trim()
+          : "Follow these steps carefully and stop if the condition becomes worse.",
+      difficulty:
+        typeof diyResult.difficulty === "string" &&
+        diyResult.difficulty.trim() !== ""
+          ? diyResult.difficulty.trim()
+          : normalizedUrgency === "High" ||
+              normalizedUrgency === "Critical"
+            ? "Temporary safety only"
+            : "Basic",
+      estimatedTime:
+        typeof diyResult.estimatedTime === "string" &&
+        diyResult.estimatedTime.trim() !== ""
+          ? diyResult.estimatedTime.trim()
+          : "Approximately 10–20 minutes",
+      toolsNeeded: toolsNeeded,
+      repairSteps: repairSteps,
+      safetyWarnings: safetyWarnings,
       professionalAdvice:
-        diyResult.professionalAdvice ||
-        "Contact a licensed professional if the issue continues or appears unsafe.",
-      source:
-        provider === "groq"
-          ? "Groq DIY guidance"
-          : "OpenAI DIY guidance",
+        typeof diyResult.professionalAdvice ===
+          "string" &&
+        diyResult.professionalAdvice.trim() !== ""
+          ? diyResult.professionalAdvice.trim()
+          : "Contact a licensed professional if the issue continues, the source cannot be confirmed, or the area becomes unsafe.",
+      source: source,
     };
   } catch (error) {
-    console.error(`${provider} DIY instruction generation failed:`, error.message);
-    return getFallbackDiyInstructions(analysisResult, urgency);
+    console.error(
+      `${provider} DIY instruction generation failed:`,
+      error.message
+    );
+
+    return getFallbackDiyInstructions(
+      analysisResult,
+      normalizedUrgency
+    );
   }
 };
 

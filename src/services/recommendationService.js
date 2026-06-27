@@ -1,14 +1,25 @@
 import { estimateRepairCost } from "./costEstimationService.js";
 
-const urgentKeywords = [
+const criticalKeywords = [
+  "burst pipe",
+  "burst",
   "flood",
   "flooding",
-  "burst",
-  "major leak",
-  "active leak",
-  "water damage",
   "sewage",
-  "overflow",
+  "sewer backup",
+  "sewage overflow",
+  "major overflow",
+  "uncontrolled water",
+  "water near electrical",
+];
+
+const highKeywords = [
+  "active leak",
+  "major leak",
+  "heavy leak",
+  "water damage",
+  "rapid leak",
+  "continuous leak",
 ];
 
 const mediumKeywords = [
@@ -23,66 +34,263 @@ const mediumKeywords = [
 ];
 
 const lowKeywords = [
-  "unclear",
-  "unknown",
-  "could not be completed",
-  "unable to analyze",
+  "minor",
+  "small drip",
+  "loose fitting",
+  "maintenance",
 ];
 
-const assignUrgencyLevel = (analysisResult) => {
-  const detectedIssue = analysisResult?.detectedIssue || "";
-  const detectedObject = analysisResult?.detectedObject || "";
+const allowedUrgencyLevels = [
+  "Low",
+  "Medium",
+  "High",
+  "Critical",
+];
+
+const isLowConfidence = (analysisResult) => {
   const confidence = analysisResult?.confidence || "Low";
 
-  const combinedText = `${detectedIssue} ${detectedObject}`.toLowerCase();
+  return confidence.toLowerCase() === "low";
+};
 
-  if (confidence === "Low") {
+const containsKeyword = (text, keywords) => {
+  return keywords.some((keyword) => {
+    return text.includes(keyword);
+  });
+};
+
+const createUserAction = (
+  actionType,
+  label,
+  description,
+  priority
+) => {
+  return {
+    actionType,
+    label,
+    description,
+    priority,
+  };
+};
+
+const createMarkResolvedAction = () => {
+  return createUserAction(
+    "MARK_RESOLVED",
+    "Mark as Resolved",
+    "Mark this repair as resolved after the issue has been fixed.",
+    "Optional"
+  );
+};
+
+const getLowConfidenceActions = () => {
+  return [
+    createUserAction(
+      "UPLOAD_CLEARER_IMAGE",
+      "Retake Photo",
+      "Take a closer photo with better lighting and keep the affected area clearly visible.",
+      "Required"
+    ),
+    createUserAction(
+      "FIND_PROFESSIONAL",
+      "Find Professional",
+      "Contact a professional if there is active leaking, flooding, electrical danger, or another visible safety concern.",
+      "Optional"
+    ),
+  ];
+};
+
+const getCriticalUrgencyActions = () => {
+  return [
+    createUserAction(
+      "FIND_PROFESSIONAL",
+      "Get Emergency Help",
+      "Contact a qualified professional immediately because this issue may cause serious property damage or a safety risk.",
+      "Required"
+    ),
+    createUserAction(
+      "DIY_TEMPORARY_STEPS",
+      "View Emergency Safety Steps",
+      "View temporary safety and damage-control steps while professional help is being arranged.",
+      "Safety Only"
+    ),
+  ];
+};
+
+const getHighUrgencyActions = () => {
+  return [
+    createUserAction(
+      "FIND_PROFESSIONAL",
+      "Find Professional",
+      "Prompt professional attention is recommended because this issue may become worse if it is not repaired soon.",
+      "High"
+    ),
+    createUserAction(
+      "DIY_TEMPORARY_STEPS",
+      "View Temporary Safety Steps",
+      "View basic temporary safety steps while waiting for a professional.",
+      "Optional"
+    ),
+    createMarkResolvedAction(),
+  ];
+};
+
+const getMediumUrgencyActions = () => {
+  return [
+    createUserAction(
+      "DIY_INSTRUCTIONS",
+      "DIY Instructions",
+      "View simple DIY guidance if you want to try a basic repair first.",
+      "Optional"
+    ),
+    createUserAction(
+      "FIND_PROFESSIONAL",
+      "Find Professional",
+      "Find a service provider if the issue continues or requires inspection.",
+      "Recommended"
+    ),
+    createMarkResolvedAction(),
+  ];
+};
+
+const getLowUrgencyActions = () => {
+  return [
+    createUserAction(
+      "DIY_INSTRUCTIONS",
+      "DIY Instructions",
+      "View simple DIY guidance for a lower-risk repair issue.",
+      "Optional"
+    ),
+    createUserAction(
+      "FIND_PROFESSIONAL",
+      "Find Professional",
+      "Find a service provider if you prefer professional assistance.",
+      "Optional"
+    ),
+    createMarkResolvedAction(),
+  ];
+};
+
+const assignUrgencyLevel = (analysisResult) => {
+  if (isLowConfidence(analysisResult)) {
     return {
-      urgency: "Low",
-      urgencyDescription:
-        "The issue could not be confidently identified. A clearer image or professional inspection is recommended.",
+      urgency: null,
+      urgencyDescription: null,
     };
   }
 
-  if (urgentKeywords.some((keyword) => combinedText.includes(keyword))) {
+  const detectedIssue =
+    analysisResult?.detectedIssue || "";
+
+  const detectedObject =
+    analysisResult?.detectedObject || "";
+
+  const combinedText =
+    `${detectedIssue} ${detectedObject}`.toLowerCase();
+
+  if (containsKeyword(combinedText, criticalKeywords)) {
+    return {
+      urgency: "Critical",
+      urgencyDescription:
+        "This issue may present an immediate safety risk or cause serious property damage. Take safe damage-control steps and contact a qualified professional immediately.",
+    };
+  }
+
+  if (containsKeyword(combinedText, highKeywords)) {
     return {
       urgency: "High",
       urgencyDescription:
-        "This may require quick attention because leaks or water damage can worsen if not handled soon.",
+        "This issue requires prompt attention because continued leaking or damage may become worse if repair is delayed.",
     };
   }
 
-  if (mediumKeywords.some((keyword) => combinedText.includes(keyword))) {
+  if (containsKeyword(combinedText, mediumKeywords)) {
     return {
       urgency: "Medium",
       urgencyDescription:
-        "This issue should be checked soon to prevent possible plumbing damage or inconvenience.",
+        "This issue should be inspected and repaired soon to prevent further damage or inconvenience.",
     };
   }
 
-  if (lowKeywords.some((keyword) => combinedText.includes(keyword))) {
+  if (containsKeyword(combinedText, lowKeywords)) {
     return {
       urgency: "Low",
       urgencyDescription:
-        "The image or issue is unclear. Try uploading a clearer photo or consult a plumber if needed.",
+        "This appears to be a lower-risk issue, but it should still be monitored and repaired if it continues.",
+    };
+  }
+
+  const existingUrgency =
+    analysisResult?.urgency || "";
+
+  if (allowedUrgencyLevels.includes(existingUrgency)) {
+    return {
+      urgency: existingUrgency,
+      urgencyDescription:
+        analysisResult?.urgencyDescription ||
+        "Monitor the issue and contact a qualified professional if it becomes worse.",
     };
   }
 
   return {
-    urgency: analysisResult?.urgency || "Low",
+    urgency: "Low",
     urgencyDescription:
-      analysisResult?.urgencyDescription ||
-      "Please monitor the issue and contact a licensed plumber if it becomes worse.",
+      "The available information does not indicate an urgent problem, but the area should still be monitored.",
   };
 };
 
+const getUserActions = (analysisResult, urgency) => {
+  if (isLowConfidence(analysisResult)) {
+    return getLowConfidenceActions();
+  }
 
+  if (urgency === "Critical") {
+    return getCriticalUrgencyActions();
+  }
+
+  if (urgency === "High") {
+    return getHighUrgencyActions();
+  }
+
+  if (urgency === "Medium") {
+    return getMediumUrgencyActions();
+  }
+
+  return getLowUrgencyActions();
+};
+
+const getLowConfidenceRecommendation = (
+  analysisResult
+) => {
+  return {
+    ...analysisResult,
+    urgency: null,
+    urgencyDescription: null,
+    providerType: null,
+    estimatedRepairTime: null,
+    laborRateRange: null,
+    partsCostRange: null,
+    estimatedCostRange: null,
+    currency: null,
+    locationUsed: null,
+    costConfidence: null,
+    costSource: null,
+    costNote: null,
+    userActions: getLowConfidenceActions(),
+  };
+};
 
 const generateRecommendation = async (
   analysisResult,
   location = "Vancouver, BC, Canada"
 ) => {
-  const urgencyResult = assignUrgencyLevel(analysisResult);
+  if (isLowConfidence(analysisResult)) {
+    return getLowConfidenceRecommendation(
+      analysisResult
+    );
+  }
+
+  const urgencyResult =
+    assignUrgencyLevel(analysisResult);
 
   const costEstimate = await estimateRepairCost(
     analysisResult,
@@ -91,125 +299,22 @@ const generateRecommendation = async (
   );
 
   const userActions = getUserActions(
-  analysisResult,
-  urgencyResult.urgency
-);
+    analysisResult,
+    urgencyResult.urgency
+  );
 
   return {
-  ...analysisResult,
-  urgency: urgencyResult.urgency,
-  urgencyDescription: urgencyResult.urgencyDescription,
-  ...costEstimate,
-  userActions,
-};
-};
-
-
-const getUserActions = (analysisResult, urgency) => {
-  const confidence = analysisResult?.confidence || "Low";
-
-  if (confidence === "Low") {
-    return [
-      {
-        actionType: "UPLOAD_CLEARER_IMAGE",
-        label: "Upload Clearer Image",
-        description:
-          "Upload a clearer photo so FixBee can provide a better recommendation.",
-        priority: "Recommended",
-      },
-      {
-        actionType: "FIND_PROFESSIONAL",
-        label: "Find Professional",
-        description:
-          "Contact a professional if the issue is unclear or may become worse.",
-        priority: "Recommended",
-      },
-      {
-        actionType: "MARK_RESOLVED",
-        label: "Mark as Resolved",
-        description:
-          "Mark this issue as resolved if no repair is needed anymore.",
-        priority: "Optional",
-      },
-    ];
-  }
-
-  if (urgency === "High") {
-    return [
-      {
-        actionType: "FIND_PROFESSIONAL",
-        label: "Find Professional",
-        description:
-          "Recommended because this issue may worsen if it is not repaired soon.",
-        priority: "High",
-      },
-      {
-        actionType: "DIY_TEMPORARY_STEPS",
-        label: "View Temporary DIY Steps",
-        description:
-          "View basic temporary safety steps while waiting for a professional.",
-        priority: "Optional",
-      },
-      {
-        actionType: "MARK_RESOLVED",
-        label: "Mark as Resolved",
-        description:
-          "Mark this repair as resolved after the issue has been fixed.",
-        priority: "Optional",
-      },
-    ];
-  }
-
-  if (urgency === "Medium") {
-    return [
-      {
-        actionType: "DIY_INSTRUCTIONS",
-        label: "DIY Instructions",
-        description:
-          "View simple DIY guidance if you want to try a basic fix first.",
-        priority: "Optional",
-      },
-      {
-        actionType: "FIND_PROFESSIONAL",
-        label: "Find Professional",
-        description:
-          "Find a service provider if the issue continues or needs inspection.",
-        priority: "Recommended",
-      },
-      {
-        actionType: "MARK_RESOLVED",
-        label: "Mark as Resolved",
-        description:
-          "Mark this repair as resolved after the issue has been fixed.",
-        priority: "Optional",
-      },
-    ];
-  }
-
-  return [
-    {
-      actionType: "DIY_INSTRUCTIONS",
-      label: "DIY Instructions",
-      description:
-        "View simple DIY guidance for a low-risk repair issue.",
-      priority: "Optional",
-    },
-    {
-      actionType: "FIND_PROFESSIONAL",
-      label: "Find Professional",
-      description:
-        "Find a service provider if you prefer professional help.",
-      priority: "Optional",
-    },
-    {
-      actionType: "MARK_RESOLVED",
-      label: "Mark as Resolved",
-      description:
-        "Mark this repair as resolved after the issue has been fixed.",
-      priority: "Optional",
-    },
-  ];
+    ...analysisResult,
+    urgency: urgencyResult.urgency,
+    urgencyDescription:
+      urgencyResult.urgencyDescription,
+    ...costEstimate,
+    userActions: userActions,
+  };
 };
 
-
-export { assignUrgencyLevel, generateRecommendation, getUserActions };
+export {
+  assignUrgencyLevel,
+  generateRecommendation,
+  getUserActions,
+};

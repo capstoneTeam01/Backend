@@ -108,8 +108,19 @@ const PhotoAnalysisSchema = new mongoose.Schema({
   },
   diyGenerationStatus: {
     type: String,
-    enum: ["not_started", "pending", "completed", "failed"],
+    enum: [
+      "not_started",
+      "pending",
+      "completed",
+      "failed",
+      "skipped",
+    ],
     default: "not_started",
+  },
+  diyGenerationReason: {
+    type: String,
+    required: false,
+    default: null,
   },
   isDeleted: {
     type: Boolean,
@@ -121,7 +132,10 @@ const PhotoAnalysisSchema = new mongoose.Schema({
   },
 });
 
-const PhotoAnalysisModel = mongoose.model("PhotoAnalysis", PhotoAnalysisSchema);
+const PhotoAnalysisModel = mongoose.model(
+  "PhotoAnalysis",
+  PhotoAnalysisSchema
+);
 
 class PhotoAnalysis {
   constructor(
@@ -144,8 +158,9 @@ class PhotoAnalysis {
 
   async save() {
     const photoAnalysis = new PhotoAnalysisModel(this);
-    const saved = await photoAnalysis.save();
-    return saved;
+    const savedPhotoAnalysis = await photoAnalysis.save();
+
+    return savedPhotoAnalysis;
   }
 
   static async getAllByUserId(userId) {
@@ -179,7 +194,7 @@ class PhotoAnalysis {
       isDeleted: false,
     }).lean();
   }
-  
+
   static async getById(id) {
     return PhotoAnalysisModel.findOne({
       _id: id,
@@ -191,8 +206,13 @@ class PhotoAnalysis {
   }
 
   static async softDelete(id) {
-    await PhotoAnalysisModel.findByIdAndUpdate(id, { isDeleted: true });
+    await PhotoAnalysisModel.findByIdAndUpdate(id, {
+      isDeleted: true,
+    });
   }
 }
 
-export { PhotoAnalysis, PhotoAnalysisModel };
+export {
+  PhotoAnalysis,
+  PhotoAnalysisModel,
+};

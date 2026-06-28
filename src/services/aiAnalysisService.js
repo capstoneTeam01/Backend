@@ -34,7 +34,8 @@ const normalizeConfidence = (confidence) => {
     return "Low";
   }
 
-  const normalizedConfidence = confidence.toLowerCase();
+  const normalizedConfidence =
+    confidence.toLowerCase();
 
   if (normalizedConfidence === "high") {
     return "High";
@@ -52,7 +53,15 @@ const getRetakePhotoActions = () => {
     "Hold the camera steady and retake the photo.",
     "Move closer to the affected area.",
     "Use brighter lighting.",
-    "Keep the full fixture and damaged area visible.",
+    "Keep the affected fixture and damaged area visible.",
+  ];
+};
+
+const getDefaultIssueActions = () => {
+  return [
+    "Avoid using the affected fixture until the condition has been checked.",
+    "Monitor the area for continued leaking, moisture, blockage, or further damage.",
+    "Contact a licensed plumber if the issue continues, becomes worse, or cannot be safely confirmed.",
   ];
 };
 
@@ -74,7 +83,7 @@ const getFallbackResult = (imageUrl) => {
 };
 
 const SYSTEM_PROMPT = `
-You are a cautious plumbing image-analysis assistant for a mobile app called FixBee.
+You are a practical and cautious plumbing image-analysis assistant for a mobile app called FixBee.
 
 Analyze the uploaded image and return ONLY one valid JSON object.
 Do not include markdown, comments, explanations, or extra text.
@@ -87,7 +96,11 @@ Return exactly these fields:
   "repairCategory": "Plumbing",
   "confidence": "Low, Medium, or High",
   "confidenceReason": "short explanation of why this confidence level was selected",
-  "recommendedActions": ["safe user actions"]
+  "recommendedActions": [
+    "first issue-specific action",
+    "second issue-specific action",
+    "third issue-specific action"
+  ]
 }
 
 Allowed repairCategory value:
@@ -96,23 +109,47 @@ Allowed repairCategory value:
 Allowed confidence values:
 ["Low", "Medium", "High"]
 
-IMPORTANT IMAGE-QUALITY RULES:
+IMAGE QUALITY AND CONFIDENCE RULES:
 
-- First evaluate whether the image is clear enough for reliable analysis.
-- If the image is blurry, motion-blurred, dark, overexposed, distant, cropped, obstructed, or the affected area is not clearly visible:
-  - confidence MUST be "Low"
-  - detectedIssue MUST be null
-  - do not guess a plumbing failure
-  - recommendedActions must only tell the user how to retake the photo
-- Do not identify a specific problem from the general shape of an object alone.
-- Do not claim a leak, clog, damage, or failure unless visible evidence supports it.
-- If visible evidence is insufficient, return confidence "Low".
-- Medium confidence requires visible evidence of a possible issue, but some uncertainty remains.
-- High confidence requires the object and visible issue to be clearly shown.
-- Never invent severity, cost, repair time, tools, or DIY repair steps.
-- Never provide a final diagnosis.
-- Use wording such as "possible", "appears", or "may indicate" when certainty is limited.
-- Keep all actions safe and suitable for a homeowner.
+- Use "Low" only when the image is genuinely unusable for a meaningful plumbing assessment.
+- Examples of genuinely unusable images include:
+  - severe motion blur;
+  - extreme darkness or overexposure;
+  - the plumbing object is not recognizable;
+  - the affected area is fully obstructed;
+  - the image is unrelated to plumbing;
+  - identifying any issue would require guessing.
+- Minor blur, phone-camera compression, shadows, reflections, partial cropping, or imperfect framing must not automatically result in Low confidence.
+- Use "Medium" when the plumbing object and visible signs of a possible issue can be identified, but the exact cause remains uncertain.
+- Use "High" when the plumbing object and visible issue are clearly shown with strong visual evidence.
+- If confidence is Low:
+  - detectedIssue must be null;
+  - recommendedActions must contain photo-retake guidance only.
+- If confidence is Medium or High:
+  - detectedObject and detectedIssue must be populated;
+  - recommendedActions must relate only to the detected plumbing issue;
+  - do not include photo, camera, lighting, framing, focus, capture, or retake advice.
+
+ISSUE ANALYSIS RULES:
+
+- Identify the visible plumbing object.
+- Identify only issues supported by visible evidence.
+- Use cautious wording such as "possible", "appears", or "may indicate" when certainty is limited.
+- Do not provide a final diagnosis.
+- Do not invent hidden damage or internal causes that are not visible.
+- Do not invent severity, repair cost, repair time, tools, or DIY instructions.
+- Keep the detectedIssue short and specific.
+
+RECOMMENDED ACTION RULES FOR MEDIUM OR HIGH CONFIDENCE:
+
+- Return exactly three distinct actions.
+- Every action must relate directly to the detected object and detected issue.
+- The first action should be an immediate safe precaution.
+- The second action should explain what the user should inspect, monitor, or verify.
+- The third action should explain when professional help is required.
+- Do not include camera or image-capture instructions.
+- Do not repeat the same recommendation in different wording.
+- Keep each action short and suitable for a mobile app.
 `;
 
 const getLowConfidenceResult = (
@@ -135,6 +172,91 @@ const getLowConfidenceResult = (
     isFallback: false,
     imageUrl: imageUrl,
   };
+};
+
+const cleanRecommendedActions = (actions) => {
+  if (!Array.isArray(actions)) {
+    return [];
+  }
+
+  const cameraAdviceKeywords = [
+    "photo",
+    "image",
+    "camera",
+    "lighting",
+    "well-lit",
+    "focus",
+    "focused",
+    "framing",
+    "frame",
+    "retake",
+    "move closer",
+    "capture",
+    "picture",
+  ];
+
+  const cleanedActions = [];
+
+  for (const action of actions) {
+    if (
+      typeof action !== "string" ||
+      action.trim() === ""
+    ) {
+      continue;
+    }
+
+    const trimmedAction = action.trim();
+    const normalizedAction =
+      trimmedAction.toLowerCase();
+
+    const isCameraAdvice =
+      cameraAdviceKeywords.some((keyword) => {
+        return normalizedAction.includes(keyword);
+      });
+
+    if (isCameraAdvice) {
+      continue;
+    }
+
+    const isDuplicate =
+      cleanedActions.some((existingAction) => {
+        return (
+          existingAction.toLowerCase() ===
+          normalizedAction
+        );
+      });
+
+    if (!isDuplicate) {
+      cleanedActions.push(trimmedAction);
+    }
+  }
+
+  return cleanedActions;
+};
+
+const ensureThreeIssueActions = (actions) => {
+  const finalActions = [...actions];
+  const fallbackActions = getDefaultIssueActions();
+
+  for (const fallbackAction of fallbackActions) {
+    if (finalActions.length >= 3) {
+      break;
+    }
+
+    const alreadyExists =
+      finalActions.some((existingAction) => {
+        return (
+          existingAction.toLowerCase() ===
+          fallbackAction.toLowerCase()
+        );
+      });
+
+    if (!alreadyExists) {
+      finalActions.push(fallbackAction);
+    }
+  }
+
+  return finalActions.slice(0, 3);
 };
 
 const createNormalizedResult = (
@@ -171,25 +293,13 @@ const createNormalizedResult = (
     );
   }
 
-  let recommendedActions = [];
+  const cleanedActions =
+    cleanRecommendedActions(
+      aiResult?.recommendedActions
+    );
 
-  if (Array.isArray(aiResult?.recommendedActions)) {
-    recommendedActions =
-      aiResult.recommendedActions.filter((action) => {
-        return (
-          typeof action === "string" &&
-          action.trim() !== ""
-        );
-      });
-  }
-
-  if (recommendedActions.length === 0) {
-    recommendedActions = [
-      "Avoid using the affected fixture until it is checked.",
-      "Monitor the area for visible leaking or further damage.",
-      "Contact a licensed plumber if the issue becomes worse.",
-    ];
-  }
+  const recommendedActions =
+    ensureThreeIssueActions(cleanedActions);
 
   return {
     analysisStatus: "ANALYZED",
@@ -200,7 +310,7 @@ const createNormalizedResult = (
     confidence: confidence,
     confidenceReason:
       aiResult?.confidenceReason ||
-      "The object and possible issue are visible in the image.",
+      "The plumbing object and possible issue are visible in the image.",
     recommendedActions: recommendedActions,
     isFallback: false,
     imageUrl: imageUrl,
@@ -259,7 +369,7 @@ const analyzeImageWithAI = async (imageUrl) => {
                 {
                   type: "text",
                   text:
-                    "First evaluate image clarity. Only identify a plumbing issue when visible evidence is clear enough. Return only the required JSON object.",
+                    "Analyze this plumbing image. Use Low confidence only when the image is genuinely unusable and identifying an issue would require guessing. For Medium or High confidence, return exactly three issue-specific recommended actions and do not include camera, photo, focus, lighting, framing, or retake advice. Return only the required JSON object.",
                 },
                 {
                   type: "image_url",

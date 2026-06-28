@@ -351,7 +351,8 @@ const generateDiyInstructions = async (
       "Put preparation and water-control steps before inspection or adjustment.",
       "Use four to seven repair steps in a safe and logical order.",
       "Include a final verification step explaining how to check whether leaking, blockage, or movement continues.",
-      "Include clear stop conditions in safetyWarnings.",
+      "Return at least two distinct safetyWarnings.",
+      "Each safety warning must describe a clear stop condition or safety risk.",
       "Do not ask the user to cut pipes, solder, open walls, handle sewage, work near electricity, or perform advanced repairs.",
       "Do not recommend excessive tightening because fittings may crack or become damaged.",
       "Do not claim that the issue is completely repaired unless the user verifies the result.",
@@ -381,7 +382,7 @@ const generateDiyInstructions = async (
         },
       ],
       safetyWarnings: [
-        "clear warning or stop condition",
+        "at least two distinct warnings or stop conditions",
       ],
       professionalAdvice:
         "explain when and why professional help is required",
@@ -453,6 +454,14 @@ const generateDiyInstructions = async (
       safetyWarnings
     );
 
+    console.log("DIY validation result:", {
+      urgency: normalizedUrgency,
+      toolsCount: toolsNeeded.length,
+      repairStepsCount: repairSteps.length,
+      safetyWarningsCount: safetyWarnings.length,
+      contentIsUseful: contentIsUseful,
+    });
+
     if (!contentIsUseful) {
       console.error(
         `${provider} returned incomplete DIY instructions`
@@ -477,27 +486,27 @@ const generateDiyInstructions = async (
     return {
       title:
         typeof diyResult.title === "string" &&
-        diyResult.title.trim() !== ""
+          diyResult.title.trim() !== ""
           ? diyResult.title.trim()
           : `Guidance for ${getDetectedObjectLabel(
-              analysisResult
-            )}`,
+            analysisResult
+          )}`,
       summary:
         typeof diyResult.summary === "string" &&
-        diyResult.summary.trim() !== ""
+          diyResult.summary.trim() !== ""
           ? diyResult.summary.trim()
           : "Follow these steps carefully and stop if the condition becomes worse.",
       difficulty:
         typeof diyResult.difficulty === "string" &&
-        diyResult.difficulty.trim() !== ""
+          diyResult.difficulty.trim() !== ""
           ? diyResult.difficulty.trim()
           : normalizedUrgency === "High" ||
-              normalizedUrgency === "Critical"
+            normalizedUrgency === "Critical"
             ? "Temporary safety only"
             : "Basic",
       estimatedTime:
         typeof diyResult.estimatedTime === "string" &&
-        diyResult.estimatedTime.trim() !== ""
+          diyResult.estimatedTime.trim() !== ""
           ? diyResult.estimatedTime.trim()
           : "Approximately 10–20 minutes",
       toolsNeeded: toolsNeeded,
@@ -506,7 +515,7 @@ const generateDiyInstructions = async (
       professionalAdvice:
         typeof diyResult.professionalAdvice ===
           "string" &&
-        diyResult.professionalAdvice.trim() !== ""
+          diyResult.professionalAdvice.trim() !== ""
           ? diyResult.professionalAdvice.trim()
           : "Contact a licensed professional if the issue continues, the source cannot be confirmed, or the area becomes unsafe.",
       source: source,

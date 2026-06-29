@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { colName } from "../internal/db/businessDirectoryProvider.js";
 import { getList } from "../services/businessDirectoryProviderService.js";
+import { sendProviderQuoteRequest } from "../services/providerQuoteRequestService.js";
 
 const bdHealth = async (_req, res) => {
     const version = "business-directory-v1";
@@ -37,4 +38,39 @@ const bdSync = async (req, res) => {
 
 }
 
-export { bdHealth, bdSync };
+const sendQuoteRequest = async (req, res) => {
+  try {
+    if (!req.user?._id) {
+      return res.status(401).json({
+        ok: false,
+        message: "User session is required to send a quote request.",
+      });
+    }
+
+    const result = await sendProviderQuoteRequest({
+      user: req.user,
+      payload: req.body || {},
+    });
+
+    return res.status(201).json({
+      ok: true,
+      collection: "recentScans",
+      recentScanId: result.recentScan._id,
+      userID: result.recentScan.userID,
+      to: result.to,
+      cc: result.cc,
+      bccCount: result.bcc.length,
+      messageId: result.mailResult.messageId,
+      message: "Quote request email sent and saved to recent scans.",
+    });
+  } catch (error) {
+    console.log("[FixBee][QuoteEmail] official quote send failed", error?.message);
+    return res.status(500).json({
+      ok: false,
+      collection: "recentScans",
+      message: error.message || "Could not send quote request.",
+    });
+  }
+};
+
+export { bdHealth, bdSync, sendQuoteRequest };

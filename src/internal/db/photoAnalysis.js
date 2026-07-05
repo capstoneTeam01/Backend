@@ -75,6 +75,15 @@ const PhotoAnalysisSchema = new mongoose.Schema({
     ref: "Category",
     required: false,
   },
+  repairStatus: {
+    type: String,
+    enum: [ "open", "in_progress","completed"],
+    default: "open",
+  },
+  repairCompletedAt: {
+    type: Date,
+    default: null,
+  },
   issueId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Issue",

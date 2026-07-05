@@ -30,6 +30,63 @@ const parseStoredAnalysis = (aiResponse) => {
   }
 };
 
+const UpdateRepairStatus = () => {
+  return async (req, res) => {
+    try {
+      const { photoId } = req.params;
+      const { repairStatus } = req.body;
+      const userId = req.user._id || req.user.id;
+
+      const allowedStatuses = ["open", "in_progress", "completed"];
+
+      if (!allowedStatuses.includes(repairStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid repair status",
+        });
+      }
+
+      const updateData = {
+        repairStatus,
+        repairCompletedAt:
+          repairStatus === "completed" ? new Date() : null,
+      };
+
+      const photo = await PhotoAnalysisModel.findOneAndUpdate(
+        {
+          _id: photoId,
+          userId,
+          isDeleted: false,
+        },
+        { $set: updateData },
+        { new: true }
+      );
+
+      if (!photo) {
+        return res.status(404).json({
+          success: false,
+          message: "Repair scan not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Repair status updated",
+        photoId: photo._id,
+        repairStatus: photo.repairStatus,
+        repairCompletedAt: photo.repairCompletedAt,
+      });
+    } catch (error) {
+      console.error("Repair status update error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not update repair status",
+      });
+    }
+  };
+};
+
 const UploadPhoto = () => {
   return async (req, res) => {
     try {
@@ -206,4 +263,5 @@ export {
   UploadPhoto,
   GetPhotoHistory,
   GetPhotoDetails,
+  UpdateRepairStatus,
 };

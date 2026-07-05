@@ -4,6 +4,7 @@ import {
   GetPhotoDetails,
   GetPhotoHistory,
   UploadPhoto,
+  UpdateRepairStatus,
 } from "../handlers/photoHandler.js";
 
 import { AuthMiddleware } from "../middlewares/authMiddleware.js";
@@ -30,6 +31,7 @@ const photoRoutes = (services) => {
     AuthMiddleware(services),
     GetPhotoDetails()
   );
+  router.patch( "/:photoId/status", AuthMiddleware(services), UpdateRepairStatus());
 
   return router;
 };

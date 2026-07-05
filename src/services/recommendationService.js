@@ -1,62 +1,412 @@
 import { estimateRepairCost } from "./costEstimationService.js";
 
-const criticalKeywords = [
+
+const highRiskKeywords = [
   "burst pipe",
-  "burst",
-  "flood",
-  "flooding",
-  "sewage",
-  "sewer backup",
+  "pipe burst",
+  "burst water line",
+  "ruptured pipe",
+  "pipe rupture",
+  "split pipe",
+  "broken water line",
+  "gushing water",
+  "uncontrolled water flow",
+  "major flooding",
+  "severe flooding",
+  "flooded basement",
+  "flooded room",
   "sewage overflow",
-  "major overflow",
-  "uncontrolled water",
+  "sewer backup",
+  "wastewater overflow",
   "water near electrical",
+  "electrical hazard",
 ];
 
-const highKeywords = [
-  "active leak",
-  "major leak",
+
+const pressurizedFlowKeywords = [
+  "pressurized leak",
+  "pressurized spray",
+  "strong water spray",
+  "heavy water spray",
+  "water shooting out",
+  "rapid water flow",
   "heavy leak",
-  "water damage",
-  "rapid leak",
-  "continuous leak",
 ];
 
-const mediumKeywords = [
+
+const exposedPipeSourceKeywords = [
+  "pipe joint",
+  "pipe connection",
+  "pipe fitting",
+  "supply line",
+  "water line",
+  "main line",
+  "wall pipe",
+  "ceiling pipe",
+  "exposed pipe",
+  "water heater connection",
+  "valve connection",
+];
+
+
+const containedFixtureKeywords = [
+  "faucet",
+  "tap",
+  "sink",
+  "basin",
+  "shower head",
+  "showerhead",
+  "bathtub faucet",
+  "tub faucet",
+  "tub spout",
+];
+
+
+const lowRiskKeywords = [
+  "small drip",
+  "minor drip",
+  "occasional drip",
+  "minor seepage",
+  "loose fitting",
+  "minor corrosion",
+  "minor wear",
+  "routine maintenance",
+];
+
+
+const mediumRiskKeywords = [
   "leak",
+  "active leak",
+  "continuous leak",
   "drip",
+  "dripping",
+  "steady flow",
+  "faucet spray",
+  "spraying faucet",
   "clog",
   "clogged",
   "slow drain",
-  "blocked",
-  "stain",
+  "blocked drain",
+  "blockage",
   "water stain",
-];
-
-const lowKeywords = [
-  "minor",
-  "small drip",
-  "loose fitting",
-  "maintenance",
+  "minor pooling",
+  "localized standing water",
 ];
 
 const allowedUrgencyLevels = [
   "Low",
   "Medium",
   "High",
-  "Critical",
 ];
 
 const isLowConfidence = (analysisResult) => {
-  const confidence = analysisResult?.confidence || "Low";
+  const analysisStatus = String(
+    analysisResult?.analysisStatus || ""
+  ).toUpperCase();
 
-  return confidence.toLowerCase() === "low";
+  if (
+    analysisStatus === "LOW_CONFIDENCE" ||
+    analysisStatus === "ANALYSIS_FAILED"
+  ) {
+    return true;
+  }
+
+  const confidence = String(
+    analysisResult?.confidence || "Low"
+  ).toLowerCase();
+
+  return confidence === "low";
 };
 
 const containsKeyword = (text, keywords) => {
   return keywords.some((keyword) => {
     return text.includes(keyword);
   });
+};
+
+const normalizeBoolean = (value) => {
+  if (value === true) {
+    return true;
+  }
+
+  if (
+    typeof value === "string" &&
+    value.trim().toLowerCase() === "true"
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const normalizeExistingUrgency = (urgency) => {
+  if (typeof urgency !== "string") {
+    return null;
+  }
+
+  const normalizedUrgency =
+    urgency.trim().toLowerCase();
+
+
+  if (
+    normalizedUrgency === "critical" ||
+    normalizedUrgency === "high" ||
+    normalizedUrgency === "emergency" ||
+    normalizedUrgency === "urgent"
+  ) {
+    return "High";
+  }
+
+  if (
+    normalizedUrgency === "medium" ||
+    normalizedUrgency === "moderate"
+  ) {
+    return "Medium";
+  }
+
+  if (normalizedUrgency === "low") {
+    return "Low";
+  }
+
+  return null;
+};
+
+const getVisualEvidence = (analysisResult) => {
+  const visualEvidence =
+    analysisResult?.visualEvidence;
+
+  if (
+    !visualEvidence ||
+    typeof visualEvidence !== "object" ||
+    Array.isArray(visualEvidence)
+  ) {
+    return {};
+  }
+
+  return visualEvidence;
+};
+
+const getCombinedIssueText = (analysisResult) => {
+  const detectedIssue = String(
+    analysisResult?.detectedIssue || ""
+  );
+
+  const detectedObject = String(
+    analysisResult?.detectedObject || ""
+  );
+
+  const issuesToFix = Array.isArray(
+    analysisResult?.issuesToFix
+  )
+    ? analysisResult.issuesToFix.join(" ")
+    : "";
+
+  return `
+    ${detectedIssue}
+    ${detectedObject}
+    ${issuesToFix}
+  `
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const isContainedFixtureIssue = (
+  combinedText
+) => {
+  const containsFixture =
+    containsKeyword(
+      combinedText,
+      containedFixtureKeywords
+    );
+
+  const containsExposedPipeSource =
+    containsKeyword(
+      combinedText,
+      exposedPipeSourceKeywords
+    );
+
+  return (
+    containsFixture &&
+    !containsExposedPipeSource
+  );
+};
+
+const hasHighRiskVisualEvidence = (
+  analysisResult,
+  combinedText
+) => {
+  const visualEvidence =
+    getVisualEvidence(analysisResult);
+
+  const waterFlow = String(
+    visualEvidence.waterFlow || ""
+  ).toLowerCase();
+
+  const floodingLevel = String(
+    visualEvidence.floodingLevel || ""
+  ).toLowerCase();
+
+  const burstOrRuptureVisible =
+    normalizeBoolean(
+      visualEvidence.burstOrRuptureVisible
+    );
+
+  const sewageVisible =
+    normalizeBoolean(
+      visualEvidence.sewageVisible
+    );
+
+  const waterNearElectrical =
+    normalizeBoolean(
+      visualEvidence.waterNearElectrical
+    );
+
+  const immediateHazardVisible =
+    normalizeBoolean(
+      visualEvidence.immediateHazardVisible
+    );
+
+  const activeLeakVisible =
+    normalizeBoolean(
+      visualEvidence.activeLeakVisible
+    );
+
+  
+  if (
+    burstOrRuptureVisible ||
+    sewageVisible ||
+    waterNearElectrical ||
+    floodingLevel === "major" ||
+    waterFlow === "gushing"
+  ) {
+    return true;
+  }
+
+ 
+  if (waterFlow === "spraying") {
+    const exposedPipeSource =
+      containsKeyword(
+        combinedText,
+        exposedPipeSourceKeywords
+      );
+
+    if (
+      exposedPipeSource &&
+      activeLeakVisible
+    ) {
+      return true;
+    }
+
+   
+    if (
+      immediateHazardVisible &&
+      !isContainedFixtureIssue(combinedText)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const hasHighRiskKeywordEvidence = (
+  combinedText
+) => {
+  if (
+    containsKeyword(
+      combinedText,
+      highRiskKeywords
+    )
+  ) {
+    return true;
+  }
+
+  const hasPressurizedFlow =
+    containsKeyword(
+      combinedText,
+      pressurizedFlowKeywords
+    );
+
+  if (!hasPressurizedFlow) {
+    return false;
+  }
+
+ 
+  if (isContainedFixtureIssue(combinedText)) {
+    return false;
+  }
+
+  return true;
+};
+
+const hasSpecificLowRiskEvidence = (
+  analysisResult,
+  combinedText
+) => {
+  if (
+    !containsKeyword(
+      combinedText,
+      lowRiskKeywords
+    )
+  ) {
+    return false;
+  }
+
+  const visualEvidence =
+    getVisualEvidence(analysisResult);
+
+  const waterFlow = String(
+    visualEvidence.waterFlow || ""
+  ).toLowerCase();
+
+  const floodingLevel = String(
+    visualEvidence.floodingLevel || ""
+  ).toLowerCase();
+
+  const hasSeriousHazard =
+    normalizeBoolean(
+      visualEvidence.burstOrRuptureVisible
+    ) ||
+    normalizeBoolean(
+      visualEvidence.sewageVisible
+    ) ||
+    normalizeBoolean(
+      visualEvidence.waterNearElectrical
+    ) ||
+    floodingLevel === "major" ||
+    waterFlow === "gushing" ||
+    waterFlow === "spraying";
+
+  return !hasSeriousHazard;
+};
+
+const hasMediumRiskVisualEvidence = (
+  analysisResult
+) => {
+  const visualEvidence =
+    getVisualEvidence(analysisResult);
+
+  const activeLeakVisible =
+    normalizeBoolean(
+      visualEvidence.activeLeakVisible
+    );
+
+  const waterFlow = String(
+    visualEvidence.waterFlow || ""
+  ).toLowerCase();
+
+  const floodingLevel = String(
+    visualEvidence.floodingLevel || ""
+  ).toLowerCase();
+
+  return (
+    activeLeakVisible ||
+    waterFlow === "dripping" ||
+    waterFlow === "steady" ||
+    waterFlow === "spraying" ||
+    floodingLevel === "minor"
+  );
 };
 
 const createUserAction = (
@@ -99,12 +449,12 @@ const getLowConfidenceActions = () => {
   ];
 };
 
-const getCriticalUrgencyActions = () => {
+const getHighUrgencyActions = () => {
   return [
     createUserAction(
       "FIND_PROFESSIONAL",
       "Get Emergency Help",
-      "Contact a qualified professional immediately because this issue may cause serious property damage or a safety risk.",
+      "Contact a qualified professional immediately because this issue may cause serious property damage or present a safety risk.",
       "Required"
     ),
     createUserAction(
@@ -113,24 +463,6 @@ const getCriticalUrgencyActions = () => {
       "View temporary safety and damage-control steps while professional help is being arranged.",
       "Safety Only"
     ),
-  ];
-};
-
-const getHighUrgencyActions = () => {
-  return [
-    createUserAction(
-      "FIND_PROFESSIONAL",
-      "Find Professional",
-      "Prompt professional attention is recommended because this issue may become worse if it is not repaired soon.",
-      "High"
-    ),
-    createUserAction(
-      "DIY_TEMPORARY_STEPS",
-      "View Temporary Safety Steps",
-      "View basic temporary safety steps while waiting for a professional.",
-      "Optional"
-    ),
-    createMarkResolvedAction(),
   ];
 };
 
@@ -170,7 +502,9 @@ const getLowUrgencyActions = () => {
   ];
 };
 
-const assignUrgencyLevel = (analysisResult) => {
+const assignUrgencyLevel = (
+  analysisResult
+) => {
   if (isLowConfidence(analysisResult)) {
     return {
       urgency: null,
@@ -178,40 +512,43 @@ const assignUrgencyLevel = (analysisResult) => {
     };
   }
 
-  const detectedIssue =
-    analysisResult?.detectedIssue || "";
-
-  const detectedObject =
-    analysisResult?.detectedObject || "";
-
   const combinedText =
-    `${detectedIssue} ${detectedObject}`.toLowerCase();
+    getCombinedIssueText(analysisResult);
 
-  if (containsKeyword(combinedText, criticalKeywords)) {
-    return {
-      urgency: "Critical",
-      urgencyDescription:
-        "This issue may present an immediate safety risk or cause serious property damage. Take safe damage-control steps and contact a qualified professional immediately.",
-    };
-  }
-
-  if (containsKeyword(combinedText, highKeywords)) {
+  
+  if (
+    hasHighRiskVisualEvidence(
+      analysisResult,
+      combinedText
+    )
+  ) {
     return {
       urgency: "High",
       urgencyDescription:
-        "This issue requires prompt attention because continued leaking or damage may become worse if repair is delayed.",
+        "This issue presents a serious risk of property damage or a possible safety hazard. Take safe damage-control steps and contact a qualified professional immediately.",
     };
   }
 
-  if (containsKeyword(combinedText, mediumKeywords)) {
+  
+  if (
+    hasHighRiskKeywordEvidence(
+      combinedText
+    )
+  ) {
     return {
-      urgency: "Medium",
+      urgency: "High",
       urgencyDescription:
-        "This issue should be inspected and repaired soon to prevent further damage or inconvenience.",
+        "This issue requires immediate professional attention because continued water flow or damage may quickly become worse.",
     };
   }
 
-  if (containsKeyword(combinedText, lowKeywords)) {
+  
+  if (
+    hasSpecificLowRiskEvidence(
+      analysisResult,
+      combinedText
+    )
+  ) {
     return {
       urgency: "Low",
       urgencyDescription:
@@ -219,10 +556,35 @@ const assignUrgencyLevel = (analysisResult) => {
     };
   }
 
-  const existingUrgency =
-    analysisResult?.urgency || "";
+  
+  if (
+    hasMediumRiskVisualEvidence(
+      analysisResult
+    ) ||
+    containsKeyword(
+      combinedText,
+      mediumRiskKeywords
+    )
+  ) {
+    return {
+      urgency: "Medium",
+      urgencyDescription:
+        "This issue should be inspected and repaired soon to prevent further damage or inconvenience.",
+    };
+  }
 
-  if (allowedUrgencyLevels.includes(existingUrgency)) {
+ 
+  const existingUrgency =
+    normalizeExistingUrgency(
+      analysisResult?.urgency
+    );
+
+  if (
+    existingUrgency &&
+    allowedUrgencyLevels.includes(
+      existingUrgency
+    )
+  ) {
     return {
       urgency: existingUrgency,
       urgencyDescription:
@@ -231,20 +593,20 @@ const assignUrgencyLevel = (analysisResult) => {
     };
   }
 
+  
   return {
-    urgency: "Low",
+    urgency: "Medium",
     urgencyDescription:
-      "The available information does not indicate an urgent problem, but the area should still be monitored.",
+      "This issue should be inspected and repaired soon because the available evidence indicates a visible plumbing problem.",
   };
 };
 
-const getUserActions = (analysisResult, urgency) => {
+const getUserActions = (
+  analysisResult,
+  urgency
+) => {
   if (isLowConfidence(analysisResult)) {
     return getLowConfidenceActions();
-  }
-
-  if (urgency === "Critical") {
-    return getCriticalUrgencyActions();
   }
 
   if (urgency === "High") {
@@ -263,19 +625,27 @@ const getLowConfidenceRecommendation = (
 ) => {
   return {
     ...analysisResult,
+
+    issuesToFix: [],
+
     urgency: null,
     urgencyDescription: null,
+
     providerType: null,
     estimatedRepairTime: null,
     laborRateRange: null,
     partsCostRange: null,
     estimatedCostRange: null,
+
     currency: null,
     locationUsed: null,
+
     costConfidence: null,
     costSource: null,
     costNote: null,
-    userActions: getLowConfidenceActions(),
+
+    userActions:
+      getLowConfidenceActions(),
   };
 };
 
@@ -292,11 +662,12 @@ const generateRecommendation = async (
   const urgencyResult =
     assignUrgencyLevel(analysisResult);
 
-  const costEstimate = await estimateRepairCost(
-    analysisResult,
-    urgencyResult.urgency,
-    location
-  );
+  const costEstimate =
+    await estimateRepairCost(
+      analysisResult,
+      urgencyResult.urgency,
+      location
+    );
 
   const userActions = getUserActions(
     analysisResult,
@@ -305,10 +676,13 @@ const generateRecommendation = async (
 
   return {
     ...analysisResult,
+
     urgency: urgencyResult.urgency,
     urgencyDescription:
       urgencyResult.urgencyDescription,
+
     ...costEstimate,
+
     userActions: userActions,
   };
 };

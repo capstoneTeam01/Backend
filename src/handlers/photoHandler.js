@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { PhotoAnalysis } from "../internal/db/photoAnalysis.js";
+import { PhotoAnalysis, PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { uploadToBlob } from "../services/blobStorage.js";
 import { preprocessImageForAI } from "../utils/imagePreprocessing.js";
 import { validateImage } from "../utils/imageValidation.js";
@@ -244,9 +244,15 @@ const GetPhotoDetails = () => {
           imageUrl: photo.imageUrl,
           detectedObject: photo.detectedObject,
           analysis: analysis,
+
+          repairStatus: photo.repairStatus || "open",
+          repairCompletedAt: photo.repairCompletedAt || null,
+          providerRequested: photo.providerRequested || false,
+          providerAssigned: photo.providerAssigned || false,
+          repairFeedback: photo.repairFeedback || null,
+
           diyInstructions: photo.diyInstructions || null,
-          diyGenerationStatus:
-            photo.diyGenerationStatus || "not_started",
+          diyGenerationStatus: photo.diyGenerationStatus || "not_started",
           diyGeneratedAt: photo.diyGeneratedAt || null,
           createdAt: photo.createdAt,
         },

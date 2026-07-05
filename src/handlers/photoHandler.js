@@ -46,19 +46,19 @@ const UpdateRepairStatus = () => {
         });
       }
 
-      const updateData = {
-        repairStatus,
-        repairCompletedAt:
-          repairStatus === "completed" ? new Date() : null,
-      };
-
       const photo = await PhotoAnalysisModel.findOneAndUpdate(
         {
           _id: photoId,
           userId,
           isDeleted: false,
         },
-        { $set: updateData },
+        {
+          $set: {
+            repairStatus,
+            repairCompletedAt:
+              repairStatus === "completed" ? new Date() : null,
+          },
+        },
         { new: true }
       );
 
@@ -77,8 +77,6 @@ const UpdateRepairStatus = () => {
         repairCompletedAt: photo.repairCompletedAt,
       });
     } catch (error) {
-      console.error("Repair status update error:", error);
-
       return res.status(500).json({
         success: false,
         message: "Could not update repair status",
@@ -168,6 +166,11 @@ const GetPhotoHistory = () => {
           photoId: photo._id,
           imageUrl: photo.imageUrl,
           detectedObject: photo.detectedObject,
+          repairStatus: photo.repairStatus || "open",
+          repairCompletedAt: photo.repairCompletedAt || null,
+          providerRequested: photo.providerRequested || false,
+          providerAssigned: photo.providerAssigned || false,
+          repairFeedback: photo.repairFeedback || null,
           analysis: analysis,
           diyGenerationStatus:
             photo.diyGenerationStatus || "not_started",

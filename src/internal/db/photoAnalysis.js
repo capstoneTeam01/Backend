@@ -84,6 +84,23 @@ const PhotoAnalysisSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  providerRequested: {
+    type: Boolean,
+    default: false,
+},
+  providerAssigned: {
+    type: Boolean,
+    default: false,
+  },
+  repairFeedback: {
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+    },
+    note: String,
+    submittedAt: Date,
+},
   issueId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Issue",

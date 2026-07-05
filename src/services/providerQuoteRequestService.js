@@ -9,6 +9,9 @@ import {
 import {
   generateIssueReportPdf,
 } from "./pdfReportService.js";
+import {
+  generateExpertTechnicalReport,
+} from "./expertTechnicalReportService.js";
 
 const clean = (value) => {
   return String(value || "").trim();
@@ -47,15 +50,19 @@ const normalizeProviders = (
       id: clean(provider.id),
       mongoId: clean(provider.mongoId),
       providerId: clean(provider.providerId),
+
       businessName: clean(
         provider.businessName
       ),
+
       email: clean(
         provider.email
       ).toLowerCase(),
+
       phoneDisplay: clean(
         provider.phoneDisplay
       ),
+
       address: clean(provider.address),
       city: clean(provider.city),
       rating: provider.rating ?? null,
@@ -82,6 +89,7 @@ const getTransport = () => {
 
   return nodemailer.createTransport({
     service: "gmail",
+
     auth: {
       user,
       pass,
@@ -183,6 +191,12 @@ const getReportData = async ({
     urgency: analysis.urgency,
     confidence: analysis.confidence,
 
+    confidenceReason:
+      analysis.confidenceReason,
+
+    visualEvidence:
+      analysis.visualEvidence || {},
+
     issuesToFix:
       analysis.issuesToFix || [],
 
@@ -200,6 +214,7 @@ const getReportData = async ({
 
     requester: {
       ...(payload.requester || {}),
+
       email:
         clean(payload.requester?.email) ||
         requesterEmail,
@@ -254,6 +269,7 @@ const saveRecentScan = async ({
 
       requester: {
         ...(payload.requester || {}),
+
         email:
           clean(payload.requester?.email) ||
           clean(user.email),
@@ -357,10 +373,16 @@ const sendProviderQuoteRequest = async ({
       requesterEmail,
     });
 
-  const pdfBuffer =
-    await generateIssueReportPdf(
+  const technicalReport =
+    await generateExpertTechnicalReport(
       reportData
     );
+
+  const pdfBuffer =
+    await generateIssueReportPdf({
+      ...reportData,
+      technicalReport,
+    });
 
   const pdfFilename =
     `FixBee-Issue-Report-${reportData.photoId}.pdf`;
@@ -373,6 +395,7 @@ const sendProviderQuoteRequest = async ({
       bccCount: bccList.length,
       providerCount: providers.length,
       pdfAttached: true,
+      technicalReportGenerated: true,
     }
   );
 
@@ -381,6 +404,7 @@ const sendProviderQuoteRequest = async ({
   const mailResult =
     await transport.sendMail({
       from: `"${fromName}" <${fromUser}>`,
+
       to,
 
       cc:

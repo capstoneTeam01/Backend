@@ -19,14 +19,6 @@ const normalizeList = (items) => {
         return item.trim();
       }
 
-      if (item && typeof item === "object") {
-        return clean(
-          item.description ||
-            item.label ||
-            item.title
-        );
-      }
-
       return "";
     })
     .filter(Boolean);
@@ -93,6 +85,26 @@ const addField = (
   document.moveDown(0.35);
 };
 
+const addParagraph = (
+  document,
+  value,
+  emptyMessage
+) => {
+  ensurePageSpace(document, 60);
+
+  document
+    .font("Helvetica")
+    .fontSize(10.5)
+    .fillColor("#202020")
+    .text(
+      clean(value) || emptyMessage,
+      {
+        lineGap: 3,
+        paragraphGap: 6,
+      }
+    );
+};
+
 const addList = (
   document,
   items,
@@ -112,7 +124,7 @@ const addList = (
   }
 
   normalizedItems.forEach((item) => {
-    ensurePageSpace(document, 35);
+    ensurePageSpace(document, 40);
 
     document
       .font("Helvetica")
@@ -120,12 +132,15 @@ const addList = (
       .fillColor("#202020")
       .text(`• ${item}`, {
         indent: 10,
-        paragraphGap: 5,
+        lineGap: 2,
+        paragraphGap: 6,
       });
   });
 };
 
-const downloadImage = async (imageUrl) => {
+const downloadImage = async (
+  imageUrl
+) => {
   const url = clean(imageUrl);
 
   if (!url) {
@@ -145,12 +160,17 @@ const downloadImage = async (imageUrl) => {
     }
 
     const contentType =
-      response.headers.get("content-type") ||
-      "";
+      response.headers.get(
+        "content-type"
+      ) || "";
 
     const isSupportedImage =
-      contentType.includes("image/jpeg") ||
-      contentType.includes("image/png");
+      contentType.includes(
+        "image/jpeg"
+      ) ||
+      contentType.includes(
+        "image/png"
+      );
 
     if (!isSupportedImage) {
       console.warn(
@@ -178,261 +198,376 @@ const downloadImage = async (imageUrl) => {
 const generateIssueReportPdf = async (
   reportData = {}
 ) => {
-  const imageBuffer = await downloadImage(
-    reportData.imageUrl
-  );
-
-  return new Promise((resolve, reject) => {
-    const document = new PDFDocument({
-      size: "A4",
-      margin: 50,
-      info: {
-        Title: "FixBee Issue Report",
-        Author: "FixBee",
-      },
-    });
-
-    const chunks = [];
-
-    document.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
-
-    document.on("end", () => {
-      resolve(Buffer.concat(chunks));
-    });
-
-    document.on("error", reject);
-
-    /*
-     * Report header
-     */
-    document
-      .rect(
-        0,
-        0,
-        document.page.width,
-        90
-      )
-      .fill("#FDE68A");
-
-    document
-      .font("Helvetica-Bold")
-      .fontSize(24)
-      .fillColor("#4A2F0B")
-      .text(
-        "FixBee Issue Report",
-        50,
-        30
-      );
-
-    document
-      .font("Helvetica")
-      .fontSize(10)
-      .text(
-        `Report ID: ${getDisplayValue(
-          reportData.photoId
-        )}`,
-        50,
-        62
-      );
-
-    document.y = 115;
-
-    /*
-     * Analyzed image
-     */
-    if (imageBuffer) {
-      try {
-        const imageTop = document.y;
-
-        document.image(
-          imageBuffer,
-          50,
-          imageTop,
-          {
-            fit: [
-              document.page.width - 100,
-              190,
-            ],
-            align: "center",
-            valign: "center",
-          }
-        );
-
-        document.y = imageTop + 205;
-      } catch (error) {
-        console.warn(
-          "[FixBee][PDF] image could not be inserted",
-          error.message
-        );
-      }
-    }
-
-    /*
-     * Issue information
-     */
-    addSectionTitle(
-      document,
-      "Issue Summary"
+  const imageBuffer =
+    await downloadImage(
+      reportData.imageUrl
     );
 
-    addField(
-      document,
-      "Detected issue",
-      reportData.detectedIssue
-    );
+  const technicalReport =
+    reportData.technicalReport || {};
 
-    addField(
-      document,
-      "Detected object",
-      reportData.detectedObject
-    );
+  const requester =
+    reportData.requester || {};
 
-    addField(
-      document,
-      "Category",
-      reportData.category
-    );
+  const serviceRequest =
+    reportData.serviceRequest || {};
 
-    addField(
-      document,
-      "Risk level",
-      reportData.urgency
-    );
+  return new Promise(
+    (resolve, reject) => {
+      const document =
+        new PDFDocument({
+          size: "A4",
+          margin: 50,
 
-    addField(
-      document,
-      "Analysis confidence",
-      reportData.confidence
-    );
+          info: {
+            Title:
+              "FixBee Expert Technical Assessment",
 
-    /*
-     * Repair estimate
-     */
-    addSectionTitle(
-      document,
-      "Repair Estimate"
-    );
+            Author: "FixBee",
+          },
+        });
 
-    addField(
-      document,
-      "Estimated cost",
-      reportData.estimatedCostRange
-    );
+      const chunks = [];
 
-    addField(
-      document,
-      "Estimated repair time",
-      reportData.estimatedRepairTime
-    );
-
-    addField(
-      document,
-      "Recommended provider",
-      reportData.providerType
-    );
-
-    /*
-     * Issues and recommendations
-     */
-    addSectionTitle(
-      document,
-      "Issues to Fix"
-    );
-
-    addList(
-      document,
-      reportData.issuesToFix,
-      "No specific issues were provided."
-    );
-
-    addSectionTitle(
-      document,
-      "Recommended Actions"
-    );
-
-    addList(
-      document,
-      reportData.recommendedActions,
-      "No recommended actions were provided."
-    );
-
-    /*
-     * Requester information
-     */
-    const requester =
-      reportData.requester || {};
-
-    const serviceRequest =
-      reportData.serviceRequest || {};
-
-    addSectionTitle(
-      document,
-      "Service Request"
-    );
-
-    addField(
-      document,
-      "Requester",
-      requester.name
-    );
-
-    addField(
-      document,
-      "Email",
-      requester.email
-    );
-
-    addField(
-      document,
-      "Address",
-      serviceRequest.address
-    );
-
-    addField(
-      document,
-      "City",
-      serviceRequest.city
-    );
-
-    addField(
-      document,
-      "Preferred date",
-      serviceRequest.preferredDate
-    );
-
-    addField(
-      document,
-      "Preferred time",
-      serviceRequest.preferredTime
-    );
-
-    addField(
-      document,
-      "Additional notes",
-      serviceRequest.notes
-    );
-
-    /*
-     * Disclaimer
-     */
-    ensurePageSpace(document, 60);
-
-    document
-      .moveDown()
-      .font("Helvetica")
-      .fontSize(8.5)
-      .fillColor("#666666")
-      .text(
-        "This FixBee report is based on image analysis and is provided to support a service quote request. A qualified professional should confirm the final diagnosis and repair requirements.",
-        {
-          align: "center",
+      document.on(
+        "data",
+        (chunk) => {
+          chunks.push(chunk);
         }
       );
 
-    document.end();
-  });
+      document.on("end", () => {
+        resolve(
+          Buffer.concat(chunks)
+        );
+      });
+
+      document.on(
+        "error",
+        reject
+      );
+
+      /*
+       * Header
+       */
+      document
+        .rect(
+          0,
+          0,
+          document.page.width,
+          90
+        )
+        .fill("#FDE68A");
+
+      document
+        .font("Helvetica-Bold")
+        .fontSize(22)
+        .fillColor("#4A2F0B")
+        .text(
+          "FixBee Expert Technical Assessment",
+          50,
+          27
+        );
+
+      document
+        .font("Helvetica")
+        .fontSize(9.5)
+        .text(
+          `Report ID: ${getDisplayValue(
+            reportData.photoId
+          )}`,
+          50,
+          62
+        );
+
+      document.y = 115;
+
+      /*
+       * Submitted issue image
+       */
+      if (imageBuffer) {
+        try {
+          const imageTop =
+            document.y;
+
+          document.image(
+            imageBuffer,
+            50,
+            imageTop,
+            {
+              fit: [
+                document.page.width -
+                  100,
+                190,
+              ],
+
+              align: "center",
+              valign: "center",
+            }
+          );
+
+          document.y =
+            imageTop + 205;
+        } catch (error) {
+          console.warn(
+            "[FixBee][PDF] image could not be inserted",
+            error.message
+          );
+        }
+      }
+
+      /*
+       * Basic case information
+       */
+      addSectionTitle(
+        document,
+        "Case Overview"
+      );
+
+      addField(
+        document,
+        "Detected issue",
+        reportData.detectedIssue
+      );
+
+      addField(
+        document,
+        "Affected component",
+        reportData.detectedObject
+      );
+
+      addField(
+        document,
+        "Repair category",
+        reportData.category
+      );
+
+      addField(
+        document,
+        "Risk level",
+        reportData.urgency
+      );
+
+      addField(
+        document,
+        "Analysis confidence",
+        reportData.confidence
+      );
+
+      addField(
+        document,
+        "Confidence basis",
+        reportData.confidenceReason
+      );
+
+      /*
+       * Expert technical report
+       */
+      addSectionTitle(
+        document,
+        "Executive Summary"
+      );
+
+      addParagraph(
+        document,
+        technicalReport.executiveSummary,
+        "No technical summary was generated."
+      );
+
+      addSectionTitle(
+        document,
+        "Visible Observations"
+      );
+
+      addList(
+        document,
+        technicalReport.visibleObservations,
+        "No confirmed visual observations were available."
+      );
+
+      addSectionTitle(
+        document,
+        "Technical Assessment"
+      );
+
+      addParagraph(
+        document,
+        technicalReport.technicalAssessment,
+        "The condition requires an on-site assessment before a final diagnosis can be made."
+      );
+
+      addSectionTitle(
+        document,
+        "Possible Causes"
+      );
+
+      addList(
+        document,
+        technicalReport.possibleCauses,
+        "Possible underlying causes could not be determined from the submitted image."
+      );
+
+      addSectionTitle(
+        document,
+        "Recommended On-Site Diagnostic Checks"
+      );
+
+      addList(
+        document,
+        technicalReport.recommendedDiagnosticChecks,
+        "A qualified technician should inspect the affected component and surrounding connections."
+      );
+
+      addSectionTitle(
+        document,
+        "Likely Repair Scope"
+      );
+
+      addList(
+        document,
+        technicalReport.likelyRepairScope,
+        "The final repair scope must be determined during the on-site inspection."
+      );
+
+      addSectionTitle(
+        document,
+        "Risk Assessment"
+      );
+
+      addParagraph(
+        document,
+        technicalReport.riskAssessment,
+        "The technician should confirm the current risk level before beginning work."
+      );
+
+      addSectionTitle(
+        document,
+        "Immediate Precautions"
+      );
+
+      addList(
+        document,
+        technicalReport.immediatePrecautions,
+        "Limit use of the affected fixture until the condition has been inspected."
+      );
+
+      /*
+       * Preliminary estimates
+       */
+      addSectionTitle(
+        document,
+        "Preliminary Repair Estimate"
+      );
+
+      addField(
+        document,
+        "Estimated cost",
+        reportData.estimatedCostRange
+      );
+
+      addField(
+        document,
+        "Estimated repair time",
+        reportData.estimatedRepairTime
+      );
+
+      addField(
+        document,
+        "Recommended provider",
+        reportData.providerType
+      );
+
+      /*
+       * Service request information
+       */
+      addSectionTitle(
+        document,
+        "Service Request Details"
+      );
+
+      addField(
+        document,
+        "Requester",
+        requester.name
+      );
+
+      addField(
+        document,
+        "Requester email",
+        requester.email
+      );
+
+      addField(
+        document,
+        "Address",
+        serviceRequest.address
+      );
+
+      addField(
+        document,
+        "Unit",
+        serviceRequest.unit
+      );
+
+      addField(
+        document,
+        "City",
+        serviceRequest.city
+      );
+
+      addField(
+        document,
+        "Preferred date",
+        serviceRequest.preferredDate
+      );
+
+      addField(
+        document,
+        "Preferred time",
+        serviceRequest.preferredTime
+      );
+
+      addField(
+        document,
+        "Customer notes",
+        serviceRequest.notes
+      );
+
+      /*
+       * Assessment limitations
+       */
+      addSectionTitle(
+        document,
+        "Assessment Limitations"
+      );
+
+      addParagraph(
+        document,
+        technicalReport.limitations,
+        "This report is based on the submitted image and available FixBee analysis. Hidden damage and the final root cause cannot be confirmed without an on-site inspection."
+      );
+
+      ensurePageSpace(
+        document,
+        65
+      );
+
+      document
+        .moveDown()
+        .font("Helvetica")
+        .fontSize(8.5)
+        .fillColor("#666666")
+        .text(
+          "This report provides a preliminary technical assessment for quotation purposes. It is not a final diagnosis, inspection certificate, repair authorization, or confirmation of code compliance. A qualified service professional must verify the condition and repair requirements on site.",
+          {
+            align: "center",
+            lineGap: 2,
+          }
+        );
+
+      document.end();
+    }
+  );
 };
 
 export {

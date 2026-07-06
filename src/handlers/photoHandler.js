@@ -298,9 +298,64 @@ const GetPhotoDetails = () => {
   };
 };
 
+const UpdateChosenProvider = () => {
+  return async (req, res) => {
+    try {
+      const { photoId } = req.params;
+      const { chosenProvider } = req.body;
+      const userId = req.user._id || req.user.id;
+
+      if (!chosenProvider) {
+        return res.status(400).json({
+          success: false,
+          message: "chosenProvider is required",
+        });
+      }
+
+      const photo = await PhotoAnalysisModel.findOneAndUpdate(
+        {
+          _id: photoId,
+          userId,
+          isDeleted: false,
+        },
+        {
+          $set: {
+            chosenProvider,
+            providerReplyStatus: "replied",
+          },
+        },
+        { new: true }
+      );
+
+      if (!photo) {
+        return res.status(404).json({
+          success: false,
+          message: "Repair scan not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Chosen provider updated",
+        photoId: photo._id,
+        chosenProvider: photo.chosenProvider,
+        providerReplyStatus: photo.providerReplyStatus,
+      });
+    } catch (error) {
+      console.error("Update chosen provider error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not update chosen provider",
+      });
+    }
+  };
+};
+
 export {
   UploadPhoto,
   GetPhotoHistory,
   GetPhotoDetails,
   UpdateRepairStatus,
+  UpdateChosenProvider,
 };

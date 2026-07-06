@@ -78,8 +78,12 @@
           return;
         }
         statusEl.textContent = "Signing you in…";
+
+        var params = new URLSearchParams(window.location.search);
+        var redirectUri = params.get("redirect_uri") || "fixbee://google-auth";
+        var sep = redirectUri.indexOf("?") === -1 ? "?" : "&";
         window.location.href =
-          "fixbee://google-auth?id_token=" + encodeURIComponent(idToken);
+          redirectUri + sep + "id_token=" + encodeURIComponent(idToken);
       }
     </script>
   </body>

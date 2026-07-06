@@ -361,10 +361,72 @@ const UpdateChosenProvider = () => {
   };
 };
 
+const SubmitRepairFeedback = () => {
+  return async (req, res) => {
+    try {
+      const { photoId } = req.params;
+      const { rating, note } = req.body;
+      const userId = req.user._id || req.user.id;
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({
+          success: false,
+          message: "Rating must be between 1 and 5",
+        });
+      }
+
+      const photo = await PhotoAnalysisModel.findOneAndUpdate(
+        {
+          _id: photoId,
+          userId,
+          isDeleted: false,
+        },
+        {
+          $set: {
+            repairFeedback: {
+              rating,
+              note: note || "",
+              submittedAt: new Date(),
+            },
+            feedbackSubmitted: true,
+            repairStatus: "completed",
+            repairCompletedAt: new Date(),
+          },
+        },
+        { new: true }
+      );
+
+      if (!photo) {
+        return res.status(404).json({
+          success: false,
+          message: "Repair scan not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Repair feedback submitted",
+        photoId: photo._id,
+        repairStatus: photo.repairStatus,
+        repairFeedback: photo.repairFeedback,
+        feedbackSubmitted: photo.feedbackSubmitted,
+      });
+    } catch (error) {
+      console.error("Submit repair feedback error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not submit repair feedback",
+      });
+    }
+  };
+};
+
 export {
   UploadPhoto,
   GetPhotoHistory,
   GetPhotoDetails,
   UpdateRepairStatus,
   UpdateChosenProvider,
+  SubmitRepairFeedback,
 };

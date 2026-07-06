@@ -6,6 +6,7 @@ import {
   UploadPhoto,
   UpdateRepairStatus,
   UpdateChosenProvider,
+   SubmitRepairFeedback,
 } from "../handlers/photoHandler.js";
 
 import { AuthMiddleware } from "../middlewares/authMiddleware.js";
@@ -34,6 +35,11 @@ const photoRoutes = (services) => {
   );
   router.patch( "/:photoId/status", AuthMiddleware(services), UpdateRepairStatus());
   router.patch("/:photoId/chosen-provider", AuthMiddleware(services), UpdateChosenProvider());
+  router.post(
+  "/:photoId/feedback",
+  AuthMiddleware(services),
+  SubmitRepairFeedback()
+);
 
   return router;
 };

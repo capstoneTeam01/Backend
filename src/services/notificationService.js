@@ -68,10 +68,6 @@ const sendProviderReplyReminder = async (
   selectedProviders,
 );
 
-    notification.photoId = photoId;
-    notification.selectedProviders = selectedProviders;
-    notification.triggerAt = new Date(Date.now() + delayMs);
-
     return await notification.save();
   } catch (error) {
     console.error("sendProviderReplyReminder error:", error.message);

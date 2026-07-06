@@ -2,6 +2,7 @@ import {
   getProvider,
   createAIClient,
 } from "./aiClientService.js";
+import fs from "fs/promises";
 
 const GROQ_VISION_MODEL =
   process.env.GROQ_VISION_MODEL ||
@@ -45,6 +46,75 @@ const getModelForProvider = (provider) => {
   }
 
   return null;
+};
+
+const extractJsonObject = (text) => {
+  if (typeof text !== "string") {
+    return "{}";
+  }
+
+  const cleanedText = text
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const firstBraceIndex = cleanedText.indexOf("{");
+  const lastBraceIndex = cleanedText.lastIndexOf("}");
+
+  if (firstBraceIndex === -1 || lastBraceIndex === -1) {
+    return cleanedText;
+  }
+
+  return cleanedText.substring(firstBraceIndex, lastBraceIndex + 1);
+};
+const analyzeImageWithOllama = async (imageUrl) => {
+  try {
+    const imageResponse = await fetch(imageUrl);
+
+    if (!imageResponse.ok) {
+      throw new Error("Unable to download image for Ollama analysis");
+    }
+
+    const arrayBuffer = await imageResponse.arrayBuffer();
+    const base64Image = Buffer.from(arrayBuffer).toString("base64");
+
+    const ollamaPrompt = `
+${SYSTEM_PROMPT}
+
+IMPORTANT:
+Return ONLY the JSON object.
+Do not use markdown.
+Do not wrap the response in \`\`\`json.
+Do not add explanation before or after the JSON.
+`;
+
+    const ollamaResponse = await fetch(`${process.env.OLLAMA_URL}/api/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.OLLAMA_VISION_MODEL || "llava",
+        prompt: ollamaPrompt,
+        images: [base64Image],
+        stream: false,
+        format: "json",
+      }),
+    });
+
+    if (!ollamaResponse.ok) {
+      throw new Error("Ollama vision request failed");
+    }
+
+    const data = await ollamaResponse.json();
+    const cleanedResponse = extractJsonObject(data.response);
+    const aiResult = JSON.parse(cleanedResponse);
+
+    return createNormalizedResult(aiResult, imageUrl);
+  } catch (error) {
+    console.error("Ollama image analysis failed:", error.message);
+    return getFallbackResult(imageUrl);
+  }
 };
 
 const normalizeConfidence = (confidence) => {
@@ -597,6 +667,8 @@ const createNormalizedResult = (
 const analyzeImageWithAI = async (
   imageUrl
 ) => {
+
+
   if (!imageUrl) {
     console.error(
       "No image URL provided for analysis"
@@ -606,6 +678,9 @@ const analyzeImageWithAI = async (
   }
 
   const provider = getProvider();
+    if (provider === "ollama") {
+  return analyzeImageWithOllama(imageUrl);
+}
 
   if (!provider) {
     console.error(

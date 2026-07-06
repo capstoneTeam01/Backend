@@ -9,6 +9,9 @@ const GROQ_COST_MODEL =
 const OPENAI_COST_MODEL =
   process.env.OPENAI_COST_MODEL || "gpt-4o-mini";
 
+const OLLAMA_COST_MODEL =
+  process.env.OLLAMA_TEXT_MODEL || "llama3.2";
+
 const DEFAULT_LOCATION = "Vancouver, BC, Canada";
 
 const getCostModel = (provider) => {
@@ -18,6 +21,9 @@ const getCostModel = (provider) => {
 
   if (provider === "openai") {
     return OPENAI_COST_MODEL;
+  }
+  if (provider === "ollama") {
+    return OLLAMA_COST_MODEL;
   }
 
   return null;

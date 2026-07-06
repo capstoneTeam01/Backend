@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const NOTIFICATION_TYPES = [
   "appointment_reminder",
   "appointment_confirmed",
+  "provider_reply",
   "general",
 ];
 
@@ -37,6 +38,15 @@ const NotificationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: false,
   },
+ triggerAt: {
+  type: Date,
+  required: false,
+  default: null,
+},
+selectedProviders: {
+  type: [mongoose.Schema.Types.Mixed],
+  default: [],
+}, 
   isRead: {
     type: Boolean,
     default: false,
@@ -55,20 +65,24 @@ const NotificationModel = mongoose.model("Notification", NotificationSchema);
 
 class Notification {
   constructor(
-    userId,
-    title,
-    message,
-    type = "general",
-    redirectTo = "",
-    relatedId = null,
-  ) {
-    this.userId = userId;
-    this.title = title;
-    this.message = message;
-    this.type = type;
-    this.redirectTo = redirectTo;
-    this.relatedId = relatedId;
-  }
+  userId,
+  title,
+  message,
+  type = "general",
+  redirectTo = "",
+  relatedId = null,
+  triggerAt = null,
+  selectedProviders = [],
+) {
+  this.userId = userId;
+  this.title = title;
+  this.message = message;
+  this.type = type;
+  this.redirectTo = redirectTo;
+  this.relatedId = relatedId;
+  this.triggerAt = triggerAt;
+  this.selectedProviders = selectedProviders;
+}
 
   async save() {
     const notification = new NotificationModel(this);
@@ -76,12 +90,16 @@ class Notification {
     return saved;
   }
 
-  static async getAllByUser(userId) {
-    return NotificationModel.find({
-      userId,
-      isDeleted: false,
-    }).sort({ createdAt: -1 });
-  }
+static async getAllByUser(userId) {
+  return NotificationModel.find({
+    userId,
+    isDeleted: false,
+    $or: [
+      { triggerAt: null },
+      { triggerAt: { $lte: new Date() } },
+    ],
+  }).sort({ createdAt: -1 });
+}
 
   static async getById(id) {
     return NotificationModel.findOne({

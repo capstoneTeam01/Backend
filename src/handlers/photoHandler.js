@@ -34,16 +34,39 @@ const UpdateRepairStatus = () => {
   return async (req, res) => {
     try {
       const { photoId } = req.params;
-      const { repairStatus } = req.body;
+      const { repairStatus, repairFlow } = req.body;
       const userId = req.user._id || req.user.id;
 
       const allowedStatuses = ["open", "in_progress", "completed"];
+      const allowedFlows = ["none", "diy", "expert"];
 
       if (!allowedStatuses.includes(repairStatus)) {
         return res.status(400).json({
           success: false,
           message: "Invalid repair status",
         });
+      }
+
+      if (repairFlow && !allowedFlows.includes(repairFlow)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid repair flow",
+        });
+      }
+
+      const updateData = {
+        repairStatus,
+        repairCompletedAt:
+          repairStatus === "completed" ? new Date() : null,
+      };
+
+      if (repairFlow) {
+        updateData.repairFlow = repairFlow;
+      }
+
+      if (repairFlow === "expert") {
+        updateData.providerRequested = true;
+        updateData.feedbackRequestedAt = new Date(Date.now() + 60 * 1000);
       }
 
       const photo = await PhotoAnalysisModel.findOneAndUpdate(
@@ -53,11 +76,7 @@ const UpdateRepairStatus = () => {
           isDeleted: false,
         },
         {
-          $set: {
-            repairStatus,
-            repairCompletedAt:
-              repairStatus === "completed" ? new Date() : null,
-          },
+          $set: updateData,
         },
         { new: true }
       );
@@ -74,9 +93,14 @@ const UpdateRepairStatus = () => {
         message: "Repair status updated",
         photoId: photo._id,
         repairStatus: photo.repairStatus,
+        repairFlow: photo.repairFlow,
         repairCompletedAt: photo.repairCompletedAt,
+        providerRequested: photo.providerRequested,
+        feedbackRequestedAt: photo.feedbackRequestedAt,
       });
     } catch (error) {
+      console.error("Update repair status error:", error);
+
       return res.status(500).json({
         success: false,
         message: "Could not update repair status",
@@ -167,6 +191,9 @@ const GetPhotoHistory = () => {
           imageUrl: photo.imageUrl,
           detectedObject: photo.detectedObject,
           repairStatus: photo.repairStatus || "open",
+          repairFlow: photo.repairFlow || "none",
+          feedbackRequestedAt: photo.feedbackRequestedAt || null,
+          feedbackSubmitted: photo.feedbackSubmitted || false,
           repairCompletedAt: photo.repairCompletedAt || null,
           providerRequested: photo.providerRequested || false,
           providerAssigned: photo.providerAssigned || false,
@@ -246,6 +273,9 @@ const GetPhotoDetails = () => {
           analysis: analysis,
 
           repairStatus: photo.repairStatus || "open",
+          repairFlow: photo.repairFlow || "none",
+          feedbackRequestedAt: photo.feedbackRequestedAt || null,
+          feedbackSubmitted: photo.feedbackSubmitted || false,
           repairCompletedAt: photo.repairCompletedAt || null,
           providerRequested: photo.providerRequested || false,
           providerAssigned: photo.providerAssigned || false,

@@ -82,6 +82,7 @@
         var params = new URLSearchParams(window.location.search);
         var redirectUri = params.get("redirect_uri") || "fixbee://google-auth";
         var sep = redirectUri.indexOf("?") === -1 ? "?" : "&";
+        statusEl.textContent = redirectUri;
         window.location.href =
           redirectUri + sep + "id_token=" + encodeURIComponent(idToken);
       }

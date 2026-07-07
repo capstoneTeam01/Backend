@@ -43,4 +43,36 @@ const sendAppointmentReminder = async (userId, suggestedProviders = []) => {
   }
 };
 
-export { sendAppointmentReminder, MY_SERVICES_ROUTE };
+const PROVIDER_REPLY_ROUTE = "/provider-reply";
+
+const sendProviderReplyReminder = async (
+  userId,
+  photoId,
+  selectedProviders = [],
+  delayMs = 60 * 1000,
+) => {
+  if (!userId || !photoId) {
+    console.error("sendProviderReplyReminder: missing required data");
+    return null;
+  }
+
+  try {
+    const notification = new Notification(
+  userId,
+  "Did any provider reply?",
+  "Select the provider that responded to your repair request.",
+  "provider_reply",
+  PROVIDER_REPLY_ROUTE,
+  photoId,
+  new Date(Date.now() + delayMs),
+  selectedProviders,
+);
+
+    return await notification.save();
+  } catch (error) {
+    console.error("sendProviderReplyReminder error:", error.message);
+    return null;
+  }
+};
+
+export { sendAppointmentReminder, sendProviderReplyReminder, MY_SERVICES_ROUTE, PROVIDER_REPLY_ROUTE, };

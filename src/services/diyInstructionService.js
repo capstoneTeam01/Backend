@@ -10,7 +10,7 @@ const OPENAI_TEXT_MODEL =
   process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
 
 const OLLAMA_TEXT_MODEL =
-  process.env.OLLAMA_MODEL || "llava";
+  process.env.OLLAMA_TEXT_MODEL || "llama3.2";
 
 const getModelForProvider = (provider) => {
   if (provider === "groq") {
@@ -344,6 +344,8 @@ const generateDiyInstructions = async (
       "Return only valid JSON.",
       "Do not include markdown.",
       "Base every tool and repair step on the detected object and detected issue.",
+      "toolsNeeded must contain at least 3 practical tools or materials.",
+      "Never return an empty toolsNeeded array.",
       "Do not provide generic steps that could apply to every plumbing issue.",
       "Write instructions for a beginner who may have no plumbing experience.",
       "List only tools or materials that are actually required for these steps.",
@@ -361,6 +363,15 @@ const generateDiyInstructions = async (
       "For Critical urgency, provide emergency safety and damage-control steps only.",
       "For Critical urgency, do not instruct the user to dismantle, tighten, replace, seal, or repair the component.",
       "Keep each instruction clear enough to display on a mobile screen.",
+      "Return exactly these top-level fields: title, summary, difficulty, estimatedTime, toolsNeeded, repairSteps, safetyWarnings, professionalAdvice.",
+      "Do not use alternative field names such as steps, warnings, tools, materials, cautions, or instructions.",
+      "toolsNeeded must be an array of at least 3 strings.",
+      "repairSteps must be an array of 4 to 7 objects.",
+      "Each repairSteps object must contain exactly these fields: stepNumber, title, instruction.",
+      "Each repairSteps instruction must be a non-empty string.",
+      "safetyWarnings must be an array of at least 2 strings.",
+      "Do not return repairSteps as plain strings.",
+      "Do not return safetyWarnings as objects.",
     ],
     requiredJsonFields: {
       title: "issue-specific string",
@@ -376,7 +387,7 @@ const generateDiyInstructions = async (
       repairSteps: [
         {
           stepNumber: "number",
-          title: "short action title",
+          title: "Keep People Away",
           instruction:
             "specific beginner-readable instruction",
         },
@@ -436,9 +447,18 @@ const generateDiyInstructions = async (
 
     const diyResult = JSON.parse(content);
 
-    const toolsNeeded = cleanStringArray(
-      diyResult.toolsNeeded
-    );
+ let toolsNeeded = cleanStringArray(
+     diyResult.toolsNeeded
+  );
+
+  if (toolsNeeded.length < 2) {
+    toolsNeeded = [
+    "Flashlight",
+    "Bucket or container",
+    "Absorbent towels",
+    "Protective gloves",
+  ];
+}
 
     const repairSteps = cleanRepairSteps(
       diyResult.repairSteps

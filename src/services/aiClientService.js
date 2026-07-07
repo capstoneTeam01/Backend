@@ -13,12 +13,11 @@ const getProvider = () => {
     return null;
   }
 
-  if (hasGroqKey) {
-    return "groq";
-  }
+  if (hasGroqKey) return "groq";
+  if (hasOpenAIKey) return "openai";
 
-  if (hasOpenAIKey) {
-    return "openai";
+  if (process.env.OLLAMA_ENABLED === "true") {
+    return "ollama";
   }
 
   return null;
@@ -38,13 +37,12 @@ const createAIClient = (provider) => {
       apiKey: process.env.OPENAI_API_KEY,
     });
   }
-  if (provider === "ollama") {
-    return new OpenAI({
-      apiKey: "ollama",
-      baseURL: process.env.OLLAMA_URL,
-    });
-  }
-
+if (provider === "ollama") {
+  return new OpenAI({
+    apiKey: "ollama",
+    baseURL: `${process.env.OLLAMA_URL}/v1`,
+  });
+}
   return null;
 };
 

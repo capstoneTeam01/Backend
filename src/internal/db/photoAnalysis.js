@@ -80,10 +80,41 @@ const PhotoAnalysisSchema = new mongoose.Schema({
     enum: [ "open", "in_progress","completed"],
     default: "open",
   },
+  repairFlow : {
+    type: String,
+    enum: ["none", "diy", "expert"],
+    default: "none",
+  },
+  feedbackRequestedAt: {
+    type: Date,
+    default: null,
+  },
+  feedbackSubmitted: {
+    type: Boolean,
+    default: false,
+  },
+
   repairCompletedAt: {
     type: Date,
     default: null,
   },
+  providerRequested: {
+    type: Boolean,
+    default: false,
+},
+  providerAssigned: {
+    type: Boolean,
+    default: false,
+  },
+  repairFeedback: {
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+    },
+    note: String,
+    submittedAt: Date,
+},
   issueId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Issue",
@@ -139,6 +170,21 @@ const PhotoAnalysisSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  selectedProviders: {
+  type: [mongoose.Schema.Types.Mixed],
+  default: [],
+},
+
+chosenProvider: {
+  type: mongoose.Schema.Types.Mixed,
+  default: null,
+},
+
+providerReplyStatus: {
+  type: String,
+  enum: ["not_requested", "waiting", "replied", "no_reply"],
+  default: "not_requested",
+},
 });
 
 const PhotoAnalysisModel = mongoose.model(

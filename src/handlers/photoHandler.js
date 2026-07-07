@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { PhotoAnalysis } from "../internal/db/photoAnalysis.js";
+import { PhotoAnalysis, PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { uploadToBlob } from "../services/blobStorage.js";
 import { preprocessImageForAI } from "../utils/imagePreprocessing.js";
 import { validateImage } from "../utils/imageValidation.js";
@@ -34,15 +34,23 @@ const UpdateRepairStatus = () => {
   return async (req, res) => {
     try {
       const { photoId } = req.params;
-      const { repairStatus } = req.body;
+      const { repairStatus, repairFlow } = req.body;
       const userId = req.user._id || req.user.id;
 
       const allowedStatuses = ["open", "in_progress", "completed"];
+      const allowedFlows = ["none", "diy", "expert"];
 
       if (!allowedStatuses.includes(repairStatus)) {
         return res.status(400).json({
           success: false,
           message: "Invalid repair status",
+        });
+      }
+
+      if (repairFlow && !allowedFlows.includes(repairFlow)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid repair flow",
         });
       }
 
@@ -52,13 +60,24 @@ const UpdateRepairStatus = () => {
           repairStatus === "completed" ? new Date() : null,
       };
 
+      if (repairFlow) {
+        updateData.repairFlow = repairFlow;
+      }
+
+      if (repairFlow === "expert") {
+        updateData.providerRequested = true;
+        updateData.feedbackRequestedAt = new Date(Date.now() + 60 * 1000);
+      }
+
       const photo = await PhotoAnalysisModel.findOneAndUpdate(
         {
           _id: photoId,
           userId,
           isDeleted: false,
         },
-        { $set: updateData },
+        {
+          $set: updateData,
+        },
         { new: true }
       );
 
@@ -74,10 +93,16 @@ const UpdateRepairStatus = () => {
         message: "Repair status updated",
         photoId: photo._id,
         repairStatus: photo.repairStatus,
+        repairFlow: photo.repairFlow,
+        selectedProviders: photo.selectedProviders || [],
+        chosenProvider: photo.chosenProvider || null,
+        providerReplyStatus: photo.providerReplyStatus || "not_requested",
         repairCompletedAt: photo.repairCompletedAt,
+        providerRequested: photo.providerRequested,
+        feedbackRequestedAt: photo.feedbackRequestedAt,
       });
     } catch (error) {
-      console.error("Repair status update error:", error);
+      console.error("Update repair status error:", error);
 
       return res.status(500).json({
         success: false,
@@ -168,6 +193,17 @@ const GetPhotoHistory = () => {
           photoId: photo._id,
           imageUrl: photo.imageUrl,
           detectedObject: photo.detectedObject,
+          repairStatus: photo.repairStatus || "open",
+          repairFlow: photo.repairFlow || "none",
+          feedbackRequestedAt: photo.feedbackRequestedAt || null,
+          feedbackSubmitted: photo.feedbackSubmitted || false,
+          repairCompletedAt: photo.repairCompletedAt || null,
+          selectedProviders: photo.selectedProviders || [],
+          chosenProvider: photo.chosenProvider || null,
+          providerReplyStatus: photo.providerReplyStatus || "not_requested",
+          providerRequested: photo.providerRequested || false,
+          providerAssigned: photo.providerAssigned || false,
+           repairFeedback: photo.repairFeedback || null,
           analysis: analysis,
           diyGenerationStatus:
             photo.diyGenerationStatus || "not_started",
@@ -241,9 +277,21 @@ const GetPhotoDetails = () => {
           imageUrl: photo.imageUrl,
           detectedObject: photo.detectedObject,
           analysis: analysis,
+
+          repairStatus: photo.repairStatus || "open",
+          repairFlow: photo.repairFlow || "none",
+          feedbackRequestedAt: photo.feedbackRequestedAt || null,
+          feedbackSubmitted: photo.feedbackSubmitted || false,
+          repairCompletedAt: photo.repairCompletedAt || null,
+          selectedProviders: photo.selectedProviders || [],
+          chosenProvider: photo.chosenProvider || null,
+          providerReplyStatus: photo.providerReplyStatus || "not_requested",
+          providerRequested: photo.providerRequested || false,
+          providerAssigned: photo.providerAssigned || false,
+          repairFeedback: photo.repairFeedback || null,
+
           diyInstructions: photo.diyInstructions || null,
-          diyGenerationStatus:
-            photo.diyGenerationStatus || "not_started",
+          diyGenerationStatus: photo.diyGenerationStatus || "not_started",
           diyGeneratedAt: photo.diyGeneratedAt || null,
           createdAt: photo.createdAt,
         },
@@ -259,9 +307,126 @@ const GetPhotoDetails = () => {
   };
 };
 
+const UpdateChosenProvider = () => {
+  return async (req, res) => {
+    try {
+      const { photoId } = req.params;
+      const { chosenProvider } = req.body;
+      const userId = req.user._id || req.user.id;
+
+      if (!chosenProvider) {
+        return res.status(400).json({
+          success: false,
+          message: "chosenProvider is required",
+        });
+      }
+
+      const photo = await PhotoAnalysisModel.findOneAndUpdate(
+        {
+          _id: photoId,
+          userId,
+          isDeleted: false,
+        },
+        {
+          $set: {
+            chosenProvider,
+            providerReplyStatus: "replied",
+          },
+        },
+        { new: true }
+      );
+
+      if (!photo) {
+        return res.status(404).json({
+          success: false,
+          message: "Repair scan not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Chosen provider updated",
+        photoId: photo._id,
+        chosenProvider: photo.chosenProvider,
+        providerReplyStatus: photo.providerReplyStatus,
+      });
+    } catch (error) {
+      console.error("Update chosen provider error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not update chosen provider",
+      });
+    }
+  };
+};
+
+const SubmitRepairFeedback = () => {
+  return async (req, res) => {
+    try {
+      const { photoId } = req.params;
+      const { rating, note } = req.body;
+      const userId = req.user._id || req.user.id;
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({
+          success: false,
+          message: "Rating must be between 1 and 5",
+        });
+      }
+
+      const photo = await PhotoAnalysisModel.findOneAndUpdate(
+        {
+          _id: photoId,
+          userId,
+          isDeleted: false,
+        },
+        {
+          $set: {
+            repairFeedback: {
+              rating,
+              note: note || "",
+              submittedAt: new Date(),
+            },
+            feedbackSubmitted: true,
+            repairStatus: "completed",
+            repairCompletedAt: new Date(),
+          },
+        },
+        { new: true }
+      );
+
+      if (!photo) {
+        return res.status(404).json({
+          success: false,
+          message: "Repair scan not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Repair feedback submitted",
+        photoId: photo._id,
+        repairStatus: photo.repairStatus,
+        repairFeedback: photo.repairFeedback,
+        feedbackSubmitted: photo.feedbackSubmitted,
+      });
+    } catch (error) {
+      console.error("Submit repair feedback error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not submit repair feedback",
+      });
+    }
+  };
+};
+
 export {
   UploadPhoto,
   GetPhotoHistory,
   GetPhotoDetails,
   UpdateRepairStatus,
+  UpdateChosenProvider,
+  SubmitRepairFeedback,
 };

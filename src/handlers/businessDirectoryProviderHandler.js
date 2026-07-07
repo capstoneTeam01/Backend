@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { colName } from "../internal/db/businessDirectoryProvider.js";
 import { getList } from "../services/businessDirectoryProviderService.js";
 import { sendProviderQuoteRequest } from "../services/providerQuoteRequestService.js";
+import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
+import { sendProviderReplyReminder } from "../services/notificationService.js";
 
 const bdHealth = async (_req, res) => {
     const version = "business-directory-v1";
@@ -51,11 +53,53 @@ const sendQuoteRequest = async (req, res) => {
       user: req.user,
       payload: req.body || {},
     });
+    const photoId = req.body?.photoId ||
+    req.body?.issue?.photoId ||
+    req.body?.serviceRequest?.photoId ||
+    req.body?.rawPayload?.photoId;
 
+    const selectedProviders =
+      req.body?.providers ||
+      req.body?.selectedProviders ||
+      req.body?.rawPayload?.providers ||
+      [];
+
+   if (photoId) {
+  const feedbackRequestedAt = new Date(Date.now() + 60 * 1000);
+
+  await PhotoAnalysisModel.findOneAndUpdate(
+    {
+      _id: photoId,
+      userId: req.user._id,
+      isDeleted: false,
+    },
+    {
+      $set: {
+        repairFlow: "expert",
+        repairStatus: "in_progress",
+        providerRequested: true,
+        providerReplyStatus: "waiting",
+        selectedProviders,
+        feedbackRequestedAt,
+      },
+    },
+    { new: true }
+  );
+
+  await sendProviderReplyReminder(
+    req.user._id,
+    photoId,
+    selectedProviders,
+    feedbackRequestedAt.getTime() - Date.now()
+  );
+}
     return res.status(201).json({
       ok: true,
       collection: "recentScans",
       recentScanId: result.recentScan._id,
+      photoId,
+      providerTrackingStarted: Boolean(photoId),
+      providerReplyStatus: photoId ? "waiting" : null,
       userID: result.recentScan.userID,
       to: result.to,
       cc: result.cc,

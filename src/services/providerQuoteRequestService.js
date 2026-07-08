@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
 
 import {
   PhotoAnalysis,
@@ -72,7 +73,38 @@ const normalizeProviders = (
   });
 };
 
-const getTransport = () => {
+const GMAIL_SMTP_HOST = "smtp.gmail.com";
+const IPV4_CACHE_TTL_MS = 5 * 60 * 1000; 
+
+let cachedGmailIp = null;
+let cachedGmailIpExpiresAt = 0;
+
+const resolveGmailIPv4 = async () => {
+  const now = Date.now();
+  if (cachedGmailIp && now < cachedGmailIpExpiresAt) {
+    return cachedGmailIp;
+  }
+
+  try {
+    const addresses = await dns.promises.resolve4(GMAIL_SMTP_HOST);
+    if (addresses && addresses.length) {
+      cachedGmailIp =
+        addresses[Math.floor(Math.random() * addresses.length)];
+      cachedGmailIpExpiresAt = now + IPV4_CACHE_TTL_MS;
+      return cachedGmailIp;
+    }
+  } catch (error) {
+    console.log(
+      "[FixBee][QuoteEmail] IPv4 resolution for smtp.gmail.com failed, falling back to hostname",
+      error.message
+    );
+  }
+
+ 
+  return null;
+};
+
+const getTransport = async () => {
   const user = clean(
     process.env.FIXBEE_MAIL_USER
   );
@@ -87,8 +119,11 @@ const getTransport = () => {
     );
   }
 
+  const ipv4Host = await resolveGmailIPv4();
+
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host: ipv4Host || GMAIL_SMTP_HOST,
+    servername: GMAIL_SMTP_HOST,
     port: 587,
     secure: false,
     requireTLS: true,
@@ -406,7 +441,7 @@ const sendProviderQuoteRequest = async ({
     }
   );
 
-  const transport = getTransport();
+  const transport = await getTransport();
 
   const mailResult =
     await transport.sendMail({

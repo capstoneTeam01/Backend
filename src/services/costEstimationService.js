@@ -35,6 +35,24 @@ const isLowConfidence = (analysisResult) => {
   return confidence.toLowerCase() === "low";
 };
 
+const normalizeUrgency = (urgency) => {
+  if (typeof urgency !== "string") {
+    return "Low";
+  }
+
+  const normalizedUrgency = urgency.trim().toLowerCase();
+
+  if (normalizedUrgency === "high") {
+    return "High";
+  }
+
+  if (normalizedUrgency === "medium") {
+    return "Medium";
+  }
+
+  return "Low";
+};
+
 const normalizeCostConfidence = (confidence) => {
   if (typeof confidence !== "string") {
     return "Low";
@@ -124,17 +142,205 @@ const getUnavailableCostEstimate = () => {
   };
 };
 
+const getCombinedIssueText = (analysisResult) => {
+  const detectedObject = String(
+    analysisResult?.detectedObject || ""
+  );
+
+  const detectedIssue = String(
+    analysisResult?.detectedIssue || ""
+  );
+
+  const issuesToFix = Array.isArray(
+    analysisResult?.issuesToFix
+  )
+    ? analysisResult.issuesToFix.join(" ")
+    : "";
+
+  const visibleRiskSignals = Array.isArray(
+    analysisResult?.visibleRiskSignals
+  )
+    ? analysisResult.visibleRiskSignals.join(" ")
+    : "";
+
+  return `
+    ${detectedObject}
+    ${detectedIssue}
+    ${issuesToFix}
+    ${visibleRiskSignals}
+  `
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const includesAny = (text, keywords) => {
+  return keywords.some((keyword) => {
+    return text.includes(keyword);
+  });
+};
+
+const isContainedFixtureIssue = (issueText) => {
+  const hasFixtureWord = includesAny(issueText, [
+    "faucet",
+    "tap",
+    "sink",
+    "basin",
+    "shower head",
+    "showerhead",
+    "bathtub faucet",
+    "tub faucet",
+    "tub spout",
+  ]);
+
+  const hasPipeSourceWord = includesAny(issueText, [
+    "pipe joint",
+    "pipe connection",
+    "pipe fitting",
+    "supply line",
+    "water line",
+    "main line",
+    "wall pipe",
+    "ceiling pipe",
+    "exposed pipe",
+    "water heater connection",
+    "valve connection",
+  ]);
+
+  return hasFixtureWord && !hasPipeSourceWord;
+};
+
+const getFallbackRangeByIssue = (
+  analysisResult,
+  urgency
+) => {
+  const normalizedUrgency = normalizeUrgency(urgency);
+  const issueText = getCombinedIssueText(analysisResult);
+  const containedFixtureIssue =
+    isContainedFixtureIssue(issueText);
+  const emergencyFlowIssue =
+    includesAny(issueText, [
+      "gushing",
+      "burst",
+      "ruptured",
+      "broken pipe",
+      "water shooting",
+      "water jet",
+      "major flooding",
+      "sewage",
+      "electrical",
+    ]) ||
+    (
+      !containedFixtureIssue &&
+      includesAny(issueText, [
+        "spraying",
+        "pressurized",
+      ])
+    );
+
+  if (
+    normalizedUrgency === "High" ||
+    emergencyFlowIssue
+  ) {
+    return {
+      providerType: "Emergency Licensed Plumber",
+      estimatedRepairTime: "Approximately 2–6 hours",
+      laborRateRange: "$140–$240 CAD/hour",
+      partsCostRange: "$100–$900 CAD",
+      estimatedCostRange: "$380–$2,300 CAD",
+    };
+  }
+
+  if (
+    includesAny(issueText, [
+      "clog",
+      "blocked drain",
+      "slow drain",
+      "drain blockage",
+    ])
+  ) {
+    return {
+      providerType: "Drain Cleaning Plumber",
+      estimatedRepairTime: "Approximately 1–2 hours",
+      laborRateRange: "$100–$180 CAD/hour",
+      partsCostRange: "$0–$120 CAD",
+      estimatedCostRange: "$120–$480 CAD",
+    };
+  }
+
+  if (
+    includesAny(issueText, [
+      "faucet",
+      "tap",
+      "sink",
+      "basin",
+      "dripping",
+      "small drip",
+      "minor drip",
+      "seepage",
+    ])
+  ) {
+    return {
+      providerType: "Licensed Plumber",
+      estimatedRepairTime: "Approximately 1–3 hours",
+      laborRateRange: "$90–$160 CAD/hour",
+      partsCostRange: "$20–$250 CAD",
+      estimatedCostRange: "$110–$730 CAD",
+    };
+  }
+
+  if (
+    includesAny(issueText, [
+      "toilet",
+      "flush",
+      "tank",
+      "bowl",
+    ])
+  ) {
+    return {
+      providerType: "Licensed Plumber",
+      estimatedRepairTime: "Approximately 1–3 hours",
+      laborRateRange: "$90–$170 CAD/hour",
+      partsCostRange: "$30–$300 CAD",
+      estimatedCostRange: "$120–$810 CAD",
+    };
+  }
+
+  if (normalizedUrgency === "Medium") {
+    return {
+      providerType: "Licensed Plumber",
+      estimatedRepairTime: "Approximately 1–4 hours",
+      laborRateRange: "$100–$180 CAD/hour",
+      partsCostRange: "$50–$500 CAD",
+      estimatedCostRange: "$150–$1,220 CAD",
+    };
+  }
+
+  return {
+    providerType: "Licensed Plumber",
+    estimatedRepairTime: "Approximately 1–2 hours",
+    laborRateRange: "$90–$150 CAD/hour",
+    partsCostRange: "$20–$180 CAD",
+    estimatedCostRange: "$110–$480 CAD",
+  };
+};
+
 const getFallbackCostEstimate = (
   analysisResult,
   urgency,
   location
 ) => {
+  const fallbackRange = getFallbackRangeByIssue(
+    analysisResult,
+    urgency
+  );
+
   return {
-    providerType: "Licensed Plumber",
-    estimatedRepairTime: "Approximately 1–3 hours",
-    laborRateRange: "$90–$160 CAD/hour",
-    partsCostRange: "$30–$200 CAD",
-    estimatedCostRange: "$120–$680 CAD",
+    providerType: fallbackRange.providerType,
+    estimatedRepairTime: fallbackRange.estimatedRepairTime,
+    laborRateRange: fallbackRange.laborRateRange,
+    partsCostRange: fallbackRange.partsCostRange,
+    estimatedCostRange: fallbackRange.estimatedCostRange,
     currency: "CAD",
     locationUsed: location || DEFAULT_LOCATION,
     costConfidence: "Low",
@@ -185,6 +391,12 @@ const estimateRepairCost = async (
       analysisResult?.detectedObject || "Unknown object",
     detectedIssue:
       analysisResult?.detectedIssue || "Unknown issue",
+    issuesToFix:
+      analysisResult?.issuesToFix || [],
+    visibleRiskSignals:
+      analysisResult?.visibleRiskSignals || [],
+    riskScore:
+      analysisResult?.riskScore ?? null,
     confidence:
       analysisResult?.confidence || "Low",
     urgency: urgency,
@@ -193,14 +405,17 @@ const estimateRepairCost = async (
       "Do not include markdown.",
       "Use typical plumbing repair market ranges for the supplied location.",
       "Use realistic broad ranges instead of exact promises.",
+      "Base the range on issue severity, visible evidence, likely labor time, and likely parts.",
+      "Do not reuse the same estimatedCostRange for different issue types.",
       "Do not invent a specific contractor or company price.",
       "Estimate likely on-site inspection and repair time, not appointment waiting time or travel time.",
       "Use uppercase CAD for every monetary value.",
-      "Format laborRateRange like '$90–$160 CAD/hour'.",
-      "Format partsCostRange like '$30–$200 CAD'.",
-      "Format estimatedCostRange like '$120–$680 CAD'.",
-      "Format estimatedRepairTime like 'Approximately 1–3 hours'.",
+      "Format laborRateRange as '$MIN–$MAX CAD/hour'.",
+      "Format partsCostRange as '$MIN–$MAX CAD'.",
+      "Format estimatedCostRange as '$MIN–$MAX CAD'.",
+      "Format estimatedRepairTime as 'Approximately X–Y hours'.",
       "Ensure estimatedCostRange is reasonably consistent with labor rate, likely labor time, and parts cost.",
+      "High urgency issues such as spraying, gushing, burst pipes, major flooding, sewage, or electrical risk should have higher ranges than minor leaks or clogs.",
       "Do not claim the price or repair duration is guaranteed.",
       "Explain that the estimate may change after professional inspection.",
       "If the available diagnosis is not reliable, do not provide a cost estimate.",
@@ -260,29 +475,33 @@ const estimateRepairCost = async (
     }
 
     const costResult = JSON.parse(content);
+    const fallbackRange = getFallbackRangeByIssue(
+      analysisResult,
+      urgency
+    );
 
     const estimatedRepairTime =
       normalizeRepairTime(
         costResult.estimatedRepairTime
-      ) || "Approximately 1–3 hours";
+      ) || fallbackRange.estimatedRepairTime;
 
     const laborRateRange =
       normalizeMoneyRange(
         costResult.laborRateRange,
         "labor"
-      ) || "$90–$160 CAD/hour";
+      ) || fallbackRange.laborRateRange;
 
     const partsCostRange =
       normalizeMoneyRange(
         costResult.partsCostRange,
         "parts"
-      ) || "$30–$200 CAD";
+      ) || fallbackRange.partsCostRange;
 
     const estimatedCostRange =
       normalizeMoneyRange(
         costResult.estimatedCostRange,
         "total"
-      ) || "$120–$680 CAD";
+      ) || fallbackRange.estimatedCostRange;
 
     let costSource = "OpenAI market estimate";
 
@@ -293,7 +512,7 @@ const estimateRepairCost = async (
     return {
       providerType:
         costResult.providerType ||
-        "Licensed Plumber",
+        fallbackRange.providerType,
       estimatedRepairTime: estimatedRepairTime,
       laborRateRange: laborRateRange,
       partsCostRange: partsCostRange,

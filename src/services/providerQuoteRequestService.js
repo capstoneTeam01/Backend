@@ -104,6 +104,80 @@ const getTransport = () => {
     },
   });
 };
+
+const downloadPdfBuffer = async (pdfUrl) => {
+  const url = clean(pdfUrl);
+
+  if (!url) {
+    return null;
+  }
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `Cached PDF download failed with status ${response.status}`
+    );
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+
+  return Buffer.from(arrayBuffer);
+};
+
+const getCachedPdfAttachment = async (photo) => {
+  if (
+    photo?.expertReportStatus !== "completed" ||
+    !photo?.expertReportUrl
+  ) {
+    return null;
+  }
+
+  try {
+    const pdfBuffer =
+      await downloadPdfBuffer(photo.expertReportUrl);
+
+    if (!pdfBuffer) {
+      return null;
+    }
+
+    return {
+      pdfBuffer,
+      pdfFilename:
+        photo.expertReportFilename ||
+        `FixBee-Issue-Report-${photo._id}.pdf`,
+      source: "cached",
+    };
+  } catch (error) {
+    console.warn(
+      "[FixBee][QuoteEmail] cached PDF unavailable:",
+      error.message
+    );
+
+    return null;
+  }
+};
+
+const generatePdfAttachment = async (reportData) => {
+  const technicalReport =
+    await generateExpertTechnicalReport(
+      reportData
+    );
+
+  const pdfBuffer =
+    await generateIssueReportPdf({
+      ...reportData,
+      technicalReport,
+    });
+
+  return {
+    pdfBuffer,
+    pdfFilename:
+      `FixBee-Issue-Report-${reportData.photoId}.pdf`,
+    source: "generated",
+  };
+};
+
 const buildHtmlFromText = ({
   text,
   imageUrl,
@@ -174,6 +248,7 @@ const getReportData = async ({
   }
 
   return {
+    photo,
     photoId: photo._id.toString(),
 
     imageUrl:
@@ -380,19 +455,14 @@ const sendProviderQuoteRequest = async ({
       requesterEmail,
     });
 
-  const technicalReport =
-    await generateExpertTechnicalReport(
-      reportData
+  const cachedPdfAttachment =
+    await getCachedPdfAttachment(
+      reportData.photo
     );
 
-  const pdfBuffer =
-    await generateIssueReportPdf({
-      ...reportData,
-      technicalReport,
-    });
-
-  const pdfFilename =
-    `FixBee-Issue-Report-${reportData.photoId}.pdf`;
+  const pdfAttachment =
+    cachedPdfAttachment ||
+    await generatePdfAttachment(reportData);
 
   console.log(
     "[FixBee][QuoteEmail] sending official quote email",
@@ -402,7 +472,7 @@ const sendProviderQuoteRequest = async ({
       bccCount: bccList.length,
       providerCount: providers.length,
       pdfAttached: true,
-      technicalReportGenerated: true,
+      pdfSource: pdfAttachment.source,
     }
   );
 
@@ -427,8 +497,8 @@ const sendProviderQuoteRequest = async ({
 
       attachments: [
         {
-          filename: pdfFilename,
-          content: pdfBuffer,
+          filename: pdfAttachment.pdfFilename,
+          content: pdfAttachment.pdfBuffer,
           contentType:
             "application/pdf",
         },
@@ -454,7 +524,10 @@ const sendProviderQuoteRequest = async ({
         response:
           mailResult.response,
 
-        pdfFilename,
+        pdfFilename:
+          pdfAttachment.pdfFilename,
+        pdfSource:
+          pdfAttachment.source,
       },
 
       status:

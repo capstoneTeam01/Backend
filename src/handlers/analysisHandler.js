@@ -4,6 +4,7 @@ import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { analyzeImageWithAI } from "../services/aiAnalysisService.js";
 import { generateRecommendation } from "../services/recommendationService.js";
 import { generateAndCacheDiyInstructions } from "../services/diyGenerationJobService.js";
+import { generateAndCacheExpertReport } from "../services/expertReportGenerationJobService.js";
 import { detectPipeOutlineWithYolo } from "../services/yoloSegmentationService.js";
 
 const isLowConfidence = (analysisResult) => {
@@ -92,6 +93,9 @@ const AnalyzeImage = () => {
         photo.aiResponse = serializedAnalysis;
         photo.diyInstructions = null;
         photo.diyGeneratedAt = null;
+        photo.expertReportUrl = null;
+        photo.expertReportFilename = null;
+        photo.expertReportGeneratedAt = null;
 
         responsePhotoId = photo._id.toString();
 
@@ -100,11 +104,17 @@ const AnalyzeImage = () => {
           photo.diyGenerationReason = lowConfidence
             ? "LOW_CONFIDENCE"
             : "NO_ISSUE_DETECTED";
+          photo.expertReportStatus = "skipped";
+          photo.expertReportReason = lowConfidence
+            ? "LOW_CONFIDENCE"
+            : "NO_ISSUE_DETECTED";
 
           await photo.save();
         } else {
           photo.diyGenerationStatus = "pending";
           photo.diyGenerationReason = null;
+          photo.expertReportStatus = "pending";
+          photo.expertReportReason = null;
 
           await photo.save();
 
@@ -120,6 +130,17 @@ const AnalyzeImage = () => {
           }).catch((error) => {
             console.error(
               "Unable to start background DIY generation:",
+              error.message
+            );
+          });
+
+          generateAndCacheExpertReport({
+            photoId: responsePhotoId,
+            userId: userId,
+            expectedAiResponse: serializedAnalysis,
+          }).catch((error) => {
+            console.error(
+              "Unable to start background expert report generation:",
               error.message
             );
           });

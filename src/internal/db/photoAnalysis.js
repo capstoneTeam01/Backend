@@ -162,6 +162,37 @@ const PhotoAnalysisSchema = new mongoose.Schema({
     required: false,
     default: null,
   },
+  expertReportStatus: {
+    type: String,
+    enum: [
+      "not_started",
+      "pending",
+      "completed",
+      "failed",
+      "skipped",
+    ],
+    default: "not_started",
+  },
+  expertReportUrl: {
+    type: String,
+    required: false,
+    default: null,
+  },
+  expertReportFilename: {
+    type: String,
+    required: false,
+    default: null,
+  },
+  expertReportGeneratedAt: {
+    type: Date,
+    required: false,
+    default: null,
+  },
+  expertReportReason: {
+    type: String,
+    required: false,
+    default: null,
+  },
   isDeleted: {
     type: Boolean,
     default: false,

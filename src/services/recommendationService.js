@@ -8,18 +8,27 @@ const highRiskKeywords = [
   "ruptured pipe",
   "pipe rupture",
   "split pipe",
+  "broken pipe",
   "broken water line",
   "gushing water",
+  "water gushing",
   "uncontrolled water flow",
+  "uncontrolled leak",
   "major flooding",
+  "active flooding",
   "severe flooding",
   "flooded basement",
   "flooded room",
   "sewage overflow",
+  "sewage backup",
   "sewer backup",
   "wastewater overflow",
   "water near electrical",
   "electrical hazard",
+  "ceiling leak",
+  "wall leak",
+  "main water line",
+  "supply line leak",
 ];
 
 
@@ -29,6 +38,7 @@ const pressurizedFlowKeywords = [
   "strong water spray",
   "heavy water spray",
   "water shooting out",
+  "water jet",
   "rapid water flow",
   "heavy leak",
 ];
@@ -118,6 +128,14 @@ const isLowConfidence = (analysisResult) => {
   return confidence === "low";
 };
 
+const isNoIssueDetected = (analysisResult) => {
+  const analysisStatus = String(
+    analysisResult?.analysisStatus || ""
+  ).toUpperCase();
+
+  return analysisStatus === "NO_ISSUE_DETECTED";
+};
+
 const containsKeyword = (text, keywords) => {
   return keywords.some((keyword) => {
     return text.includes(keyword);
@@ -201,14 +219,41 @@ const getCombinedIssueText = (analysisResult) => {
     ? analysisResult.issuesToFix.join(" ")
     : "";
 
+  const visibleRiskSignals = Array.isArray(
+    analysisResult?.visibleRiskSignals
+  )
+    ? analysisResult.visibleRiskSignals.join(" ")
+    : "";
+
   return `
     ${detectedIssue}
     ${detectedObject}
     ${issuesToFix}
+    ${visibleRiskSignals}
   `
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
+};
+
+const getRiskScore = (analysisResult) => {
+  const riskScore = Number(
+    analysisResult?.riskScore
+  );
+
+  if (!Number.isFinite(riskScore)) {
+    return null;
+  }
+
+  if (riskScore < 0) {
+    return 0;
+  }
+
+  if (riskScore > 100) {
+    return 100;
+  }
+
+  return Math.round(riskScore);
 };
 
 const isContainedFixtureIssue = (
@@ -272,42 +317,61 @@ const hasHighRiskVisualEvidence = (
       visualEvidence.activeLeakVisible
     );
 
-  
+  const sprayingFromExposedPipe =
+    waterFlow === "spraying" &&
+    activeLeakVisible &&
+    !isContainedFixtureIssue(combinedText);
+
+
   if (
     burstOrRuptureVisible ||
     sewageVisible ||
     waterNearElectrical ||
+    immediateHazardVisible ||
     floodingLevel === "major" ||
-    waterFlow === "gushing"
+    waterFlow === "gushing" ||
+    sprayingFromExposedPipe
   ) {
     return true;
   }
 
- 
-  if (waterFlow === "spraying") {
-    const exposedPipeSource =
-      containsKeyword(
-        combinedText,
-        exposedPipeSourceKeywords
-      );
+  return false;
+};
 
-    if (
-      exposedPipeSource &&
-      activeLeakVisible
-    ) {
-      return true;
-    }
-
-   
-    if (
-      immediateHazardVisible &&
-      !isContainedFixtureIssue(combinedText)
-    ) {
-      return true;
-    }
+const getUrgencyFromRiskScore = (riskScore) => {
+  if (riskScore === null) {
+    return null;
   }
 
-  return false;
+  if (riskScore >= 71) {
+    return "High";
+  }
+
+  if (riskScore >= 31) {
+    return "Medium";
+  }
+
+  if (riskScore >= 1) {
+    return "Low";
+  }
+
+  return null;
+};
+
+const getUrgencyDescription = (urgency) => {
+  if (urgency === "High") {
+    return "This issue presents a serious risk of property damage or a possible safety hazard. Take safe damage-control steps and contact a qualified professional immediately.";
+  }
+
+  if (urgency === "Medium") {
+    return "This issue should be inspected and repaired soon to prevent further damage or inconvenience.";
+  }
+
+  if (urgency === "Low") {
+    return "This appears to be a lower-risk issue, but it should still be monitored and repaired if it continues.";
+  }
+
+  return null;
 };
 
 const hasHighRiskKeywordEvidence = (
@@ -332,7 +396,7 @@ const hasHighRiskKeywordEvidence = (
     return false;
   }
 
- 
+
   if (isContainedFixtureIssue(combinedText)) {
     return false;
   }
@@ -379,6 +443,64 @@ const hasSpecificLowRiskEvidence = (
     waterFlow === "spraying";
 
   return !hasSeriousHazard;
+};
+
+const hasLowRiskContainedDrip = (
+  analysisResult,
+  combinedText
+) => {
+  if (!isContainedFixtureIssue(combinedText)) {
+    return false;
+  }
+
+  const visualEvidence =
+    getVisualEvidence(analysisResult);
+
+  const waterFlow = String(
+    visualEvidence.waterFlow || ""
+  ).toLowerCase();
+
+  const floodingLevel = String(
+    visualEvidence.floodingLevel || ""
+  ).toLowerCase();
+
+  const hasHazard =
+    normalizeBoolean(
+      visualEvidence.burstOrRuptureVisible
+    ) ||
+    normalizeBoolean(
+      visualEvidence.sewageVisible
+    ) ||
+    normalizeBoolean(
+      visualEvidence.waterNearElectrical
+    ) ||
+    normalizeBoolean(
+      visualEvidence.immediateHazardVisible
+    ) ||
+    floodingLevel === "major" ||
+    waterFlow === "gushing" ||
+    waterFlow === "spraying" ||
+    waterFlow === "steady";
+
+  if (hasHazard) {
+    return false;
+  }
+
+  return (
+    waterFlow === "dripping" ||
+    containsKeyword(
+      combinedText,
+      [
+        "small drip",
+        "minor drip",
+        "occasional drip",
+        "faucet drip",
+        "dripping faucet",
+        "tap drip",
+        "dripping tap",
+      ]
+    )
+  );
 };
 
 const hasMediumRiskVisualEvidence = (
@@ -449,6 +571,23 @@ const getLowConfidenceActions = () => {
   ];
 };
 
+const getNoIssueActions = () => {
+  return [
+    createUserAction(
+      "NO_ACTION_NEEDED",
+      "No Repair Needed",
+      "No visible plumbing issue was detected in this scan.",
+      "Info"
+    ),
+    createUserAction(
+      "MONITOR_FIXTURE",
+      "Monitor Fixture",
+      "Continue normal use and scan again if leaking, slow drainage, odors, moisture, or damage appears.",
+      "Optional"
+    ),
+  ];
+};
+
 const getHighUrgencyActions = () => {
   return [
     createUserAction(
@@ -505,6 +644,13 @@ const getLowUrgencyActions = () => {
 const assignUrgencyLevel = (
   analysisResult
 ) => {
+  if (isNoIssueDetected(analysisResult)) {
+    return {
+      urgency: null,
+      urgencyDescription: null,
+    };
+  }
+
   if (isLowConfidence(analysisResult)) {
     return {
       urgency: null,
@@ -515,7 +661,7 @@ const assignUrgencyLevel = (
   const combinedText =
     getCombinedIssueText(analysisResult);
 
-  
+
   if (
     hasHighRiskVisualEvidence(
       analysisResult,
@@ -524,12 +670,10 @@ const assignUrgencyLevel = (
   ) {
     return {
       urgency: "High",
-      urgencyDescription:
-        "This issue presents a serious risk of property damage or a possible safety hazard. Take safe damage-control steps and contact a qualified professional immediately.",
+      urgencyDescription: getUrgencyDescription("High"),
     };
   }
 
-  
   if (
     hasHighRiskKeywordEvidence(
       combinedText
@@ -537,14 +681,12 @@ const assignUrgencyLevel = (
   ) {
     return {
       urgency: "High",
-      urgencyDescription:
-        "This issue requires immediate professional attention because continued water flow or damage may quickly become worse.",
+      urgencyDescription: getUrgencyDescription("High"),
     };
   }
 
-  
   if (
-    hasSpecificLowRiskEvidence(
+    hasLowRiskContainedDrip(
       analysisResult,
       combinedText
     )
@@ -552,11 +694,10 @@ const assignUrgencyLevel = (
     return {
       urgency: "Low",
       urgencyDescription:
-        "This appears to be a lower-risk issue, but it should still be monitored and repaired if it continues.",
+        getUrgencyDescription("Low"),
     };
   }
 
-  
   if (
     hasMediumRiskVisualEvidence(
       analysisResult
@@ -573,7 +714,34 @@ const assignUrgencyLevel = (
     };
   }
 
- 
+
+  if (
+    hasSpecificLowRiskEvidence(
+      analysisResult,
+      combinedText
+    )
+  ) {
+    return {
+      urgency: "Low",
+      urgencyDescription:
+        "This appears to be a lower-risk issue, but it should still be monitored and repaired if it continues.",
+    };
+  }
+
+  const scoreUrgency =
+    getUrgencyFromRiskScore(
+      getRiskScore(analysisResult)
+    );
+
+  if (scoreUrgency) {
+    return {
+      urgency: scoreUrgency,
+      urgencyDescription:
+        getUrgencyDescription(scoreUrgency),
+    };
+  }
+
+
   const existingUrgency =
     normalizeExistingUrgency(
       analysisResult?.urgency
@@ -593,7 +761,7 @@ const assignUrgencyLevel = (
     };
   }
 
-  
+
   return {
     urgency: "Medium",
     urgencyDescription:
@@ -605,6 +773,10 @@ const getUserActions = (
   analysisResult,
   urgency
 ) => {
+  if (isNoIssueDetected(analysisResult)) {
+    return getNoIssueActions();
+  }
+
   if (isLowConfidence(analysisResult)) {
     return getLowConfidenceActions();
   }
@@ -649,10 +821,46 @@ const getLowConfidenceRecommendation = (
   };
 };
 
+const getNoIssueRecommendation = (
+  analysisResult
+) => {
+  return {
+    ...analysisResult,
+
+    detectedIssue: null,
+    issuesToFix: [],
+
+    urgency: null,
+    urgencyDescription: null,
+
+    providerType: null,
+    estimatedRepairTime: null,
+    laborRateRange: null,
+    partsCostRange: null,
+    estimatedCostRange: null,
+
+    currency: null,
+    locationUsed: null,
+
+    costConfidence: null,
+    costSource: null,
+    costNote: null,
+
+    userActions:
+      getNoIssueActions(),
+  };
+};
+
 const generateRecommendation = async (
   analysisResult,
   location = "Vancouver, BC, Canada"
 ) => {
+  if (isNoIssueDetected(analysisResult)) {
+    return getNoIssueRecommendation(
+      analysisResult
+    );
+  }
+
   if (isLowConfidence(analysisResult)) {
     return getLowConfidenceRecommendation(
       analysisResult

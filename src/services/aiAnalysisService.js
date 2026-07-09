@@ -136,6 +136,85 @@ const normalizeConfidence = (confidence) => {
   return "Low";
 };
 
+const normalizeAnalysisStatus = (status) => {
+  if (typeof status !== "string") {
+    return null;
+  }
+
+  const normalizedStatus = status.trim().toUpperCase();
+
+  if (
+    normalizedStatus === "NO_ISSUE_DETECTED" ||
+    normalizedStatus === "NORMAL" ||
+    normalizedStatus === "NO_VISIBLE_ISSUE"
+  ) {
+    return "NO_ISSUE_DETECTED";
+  }
+
+  if (
+    normalizedStatus === "LOW_CONFIDENCE" ||
+    normalizedStatus === "ANALYSIS_FAILED"
+  ) {
+    return "LOW_CONFIDENCE";
+  }
+
+  if (normalizedStatus === "ANALYZED") {
+    return "ANALYZED";
+  }
+
+  return null;
+};
+
+const normalizeRiskScore = (score, fallbackScore = null) => {
+  const numberScore = Number(score);
+
+  if (!Number.isFinite(numberScore)) {
+    return fallbackScore;
+  }
+
+  if (numberScore < 0) {
+    return 0;
+  }
+
+  if (numberScore > 100) {
+    return 100;
+  }
+
+  return Math.round(numberScore);
+};
+
+const cleanRiskSignals = (signals, maximumItems = 6) => {
+  if (!Array.isArray(signals)) {
+    return [];
+  }
+
+  const cleanedSignals = [];
+
+  for (const signal of signals) {
+    if (
+      typeof signal !== "string" ||
+      signal.trim() === ""
+    ) {
+      continue;
+    }
+
+    const cleanedSignal = signal.trim();
+    const duplicate = cleanedSignals.some((existingSignal) => {
+      return existingSignal.toLowerCase() === cleanedSignal.toLowerCase();
+    });
+
+    if (!duplicate) {
+      cleanedSignals.push(cleanedSignal);
+    }
+
+    if (cleanedSignals.length >= maximumItems) {
+      break;
+    }
+  }
+
+  return cleanedSignals;
+};
+
 const normalizeBoolean = (value) => {
   if (value === true) {
     return true;
@@ -262,6 +341,14 @@ const getDefaultIssueActions = () => {
   ];
 };
 
+const getNoIssueActions = () => {
+  return [
+    "No visible plumbing issue was detected.",
+    "Continue normal use and monitor for leaks, slow drainage, odors, moisture, or unusual sounds.",
+    "Scan again if a visible plumbing issue appears.",
+  ];
+};
+
 const getFallbackResult = (imageUrl) => {
   return {
     analysisStatus: "ANALYSIS_FAILED",
@@ -272,6 +359,8 @@ const getFallbackResult = (imageUrl) => {
     detectedObject: null,
     detectedIssue: null,
     issuesToFix: [],
+    riskScore: null,
+    visibleRiskSignals: [],
 
     visualEvidence:
       getUnknownVisualEvidence(),
@@ -299,11 +388,17 @@ Do not include markdown, comments, explanations, or extra text.
 Return exactly these fields:
 
 {
+  "analysisStatus": "NO_ISSUE_DETECTED, ANALYZED, or LOW_CONFIDENCE",
   "detectedObject": "string or null",
   "detectedIssue": "string or null",
   "issuesToFix": [
     "first visible repair concern",
     "second visible repair concern"
+  ],
+  "riskScore": "number from 0 to 100 or null",
+  "visibleRiskSignals": [
+    "short visible risk signal",
+    "second short visible risk signal"
   ],
   "repairCategory": "Plumbing",
   "confidence": "Low, Medium, or High",
@@ -336,6 +431,27 @@ Allowed waterFlow values:
 Allowed floodingLevel values:
 ["Unknown", "None", "Minor", "Major"]
 
+Risk score meaning:
+- Use null for LOW_CONFIDENCE.
+- Use 0 for NO_ISSUE_DETECTED.
+- Use 1 to 30 for Low risk visible repair concerns.
+- Use 31 to 70 for Medium risk visible repair concerns.
+- Use 71 to 100 for High risk visible repair concerns.
+
+CLASSIFICATION RULES:
+
+Classify the image first using exactly one analysisStatus value:
+
+1. "NO_ISSUE_DETECTED"
+Use this when a plumbing object or fixture is visible and the image is clear enough to assess, but there is no visible repair concern.
+Examples include a dry normal sink, normal faucet, normal drain, normal toilet, normal pipe, or normal fixture with no visible leak, pooling, clog, crack, rupture, corrosion, damage, stain, overflow, sewage, moisture, loose part, or abnormal water behavior.
+
+2. "ANALYZED"
+Use this only when a plumbing object or fixture is visible and there is a visible repair concern supported by the image.
+
+3. "LOW_CONFIDENCE"
+Use this when the image is not reliable enough for assessment because it is blurry, too dark, overexposed, unrelated to plumbing, obstructed, or missing the affected plumbing area.
+
 IMAGE QUALITY AND CONFIDENCE RULES:
 
 - Use "Low" only when the image is genuinely unusable for a meaningful plumbing assessment.
@@ -349,13 +465,38 @@ IMAGE QUALITY AND CONFIDENCE RULES:
 - Minor blur, phone-camera compression, shadows, reflections, partial cropping, or imperfect framing must not automatically result in Low confidence.
 - Use "Medium" when the plumbing object and visible signs of a possible issue can be identified, but the exact cause remains uncertain.
 - Use "High" when the plumbing object and visible issue are clearly shown with strong visual evidence.
+- A clear image of a normal fixture with no visible issue must use analysisStatus "NO_ISSUE_DETECTED", not "LOW_CONFIDENCE" and not "ANALYZED".
+
+NO-ISSUE OUTPUT RULES:
+
+If analysisStatus is "NO_ISSUE_DETECTED":
+
+- detectedObject must be populated with the visible plumbing object.
+- detectedIssue must be null.
+- issuesToFix must be an empty array.
+- riskScore must be 0.
+- visibleRiskSignals must be an empty array.
+- confidence must be "High" if the fixture is clearly visible, or "Medium" if visibility is usable but imperfect.
+- recommendedActions must contain normal monitoring guidance only.
+- visualEvidence must use:
+  - activeLeakVisible: false;
+  - waterFlow: "None";
+  - floodingLevel: "None";
+  - burstOrRuptureVisible: false;
+  - sewageVisible: false;
+  - waterNearElectrical: false;
+  - immediateHazardVisible: false.
+- Do not invent maintenance needs.
+- Do not recommend repair, DIY instructions, cost estimation, provider contact, or emergency action.
 
 LOW-CONFIDENCE OUTPUT RULES:
 
-If confidence is Low:
+If analysisStatus is "LOW_CONFIDENCE" or confidence is Low:
 
 - detectedIssue must be null;
 - issuesToFix must be an empty array;
+- riskScore must be null;
+- visibleRiskSignals must be an empty array;
 - recommendedActions must contain photo-retake guidance only;
 - visualEvidence must use:
   - activeLeakVisible: false;
@@ -368,11 +509,13 @@ If confidence is Low:
 
 MEDIUM OR HIGH-CONFIDENCE OUTPUT RULES:
 
-If confidence is Medium or High:
+If analysisStatus is "ANALYZED" and confidence is Medium or High:
 
 - detectedObject must be populated;
 - detectedIssue must be populated;
-- issuesToFix must contain between one and three concise visible repair concerns;
+- issuesToFix must contain exactly three concise visible repair concerns;
+- riskScore must be between 1 and 100;
+- visibleRiskSignals must contain short visible evidence phrases such as "active leak", "pressurized spray", "gushing water", "minor pooling", "slow drain", "visible corrosion", "burst pipe", "sewage backup", or "water near electrical";
 - recommendedActions must contain exactly three issue-specific actions;
 - do not include photo, camera, lighting, focus, framing, capture, or retake advice.
 
@@ -385,7 +528,7 @@ ISSUES-TO-FIX RULES:
 - Do not guess that a seal, valve, connection, pipe, or component failed unless the image visibly supports it.
 - Do not include instructions or safety actions in issuesToFix.
 - Do not repeat detectedIssue using multiple slightly different phrases.
-- Return a maximum of three distinct items.
+- Return exactly three distinct items.
 
 VISUAL-EVIDENCE RULES:
 
@@ -402,6 +545,14 @@ VISUAL-EVIDENCE RULES:
 - immediateHazardVisible must be true when the visible condition presents an immediate safety or major property-damage concern.
 - Do not mark a normal drip as spraying, gushing, flooding, or an immediate hazard.
 
+HIGH-RISK SIGNAL RULES:
+
+- If water is visibly projected outward from a pipe, fitting, valve, joint, or connection, set waterFlow to "Spraying", include "pressurized spray" in visibleRiskSignals, and use riskScore 71 or higher.
+- If heavy uncontrolled water is visibly flowing from a pipe or plumbing component, set waterFlow to "Gushing", include "gushing water" in visibleRiskSignals, and use riskScore 85 or higher.
+- If a pipe or water line appears split, ruptured, broken, or burst, set burstOrRuptureVisible to true, include "burst pipe" or "ruptured pipe" in visibleRiskSignals, and use riskScore 85 or higher.
+- If major flooding, sewage overflow, sewer backup, or water near electrical equipment is visible, use riskScore 85 or higher.
+- Use High risk evidence for words and visuals such as gushing, spraying, pressurized spray, water shooting out, water jet, rapid water flow, uncontrolled leak, burst pipe, ruptured pipe, split pipe, broken pipe, broken water line, active flooding, major flooding, sewage backup, sewage overflow, water near electrical, electrical hazard, ceiling leak, wall leak, main water line, or supply line leak.
+
 ISSUE ANALYSIS RULES:
 
 - Identify the visible plumbing object.
@@ -413,6 +564,8 @@ ISSUE ANALYSIS RULES:
 - Keep detectedIssue short and specific.
 - When water is visibly spraying, gushing, or flooding, include that visible condition in detectedIssue.
 - Do not describe a strong visible spray only as a generic "leak".
+- Do not classify a normal dry fixture as a repair issue.
+- Do not infer hidden clogs, hidden leaks, worn parts, old parts, or maintenance needs when the fixture appears normal and dry.
 
 RECOMMENDED ACTION RULES FOR MEDIUM OR HIGH CONFIDENCE:
 
@@ -440,6 +593,8 @@ const getLowConfidenceResult = (
     detectedObject: detectedObject,
     detectedIssue: null,
     issuesToFix: [],
+    riskScore: null,
+    visibleRiskSignals: [],
 
     visualEvidence:
       getUnknownVisualEvidence(),
@@ -453,6 +608,57 @@ const getLowConfidenceResult = (
 
     recommendedActions:
       getRetakePhotoActions(),
+
+    isFallback: false,
+    imageUrl: imageUrl,
+  };
+};
+
+const getNoIssueResult = (
+  aiResult,
+  imageUrl,
+  detectedObject
+) => {
+  const visualEvidence =
+    normalizeVisualEvidence(
+      aiResult?.visualEvidence
+    );
+
+  return {
+    analysisStatus: "NO_ISSUE_DETECTED",
+
+    userMessage:
+      "No visible plumbing issue was detected in this image.",
+
+    detectedObject: detectedObject,
+    detectedIssue: null,
+    issuesToFix: [],
+    riskScore: 0,
+    visibleRiskSignals: [],
+
+    visualEvidence: {
+      ...visualEvidence,
+      activeLeakVisible: false,
+      waterFlow: "None",
+      floodingLevel: "None",
+      burstOrRuptureVisible: false,
+      sewageVisible: false,
+      waterNearElectrical: false,
+      immediateHazardVisible: false,
+    },
+
+    category: "Plumbing",
+    confidence:
+      normalizeConfidence(aiResult?.confidence) === "Low"
+        ? "Medium"
+        : normalizeConfidence(aiResult?.confidence),
+
+    confidenceReason:
+      aiResult?.confidenceReason ||
+      "The plumbing fixture is visible and no leak, pooling, blockage, damage, corrosion, overflow, moisture, or abnormal condition is visible.",
+
+    recommendedActions:
+      getNoIssueActions(),
 
     isFallback: false,
     imageUrl: imageUrl,
@@ -546,18 +752,51 @@ const cleanIssuesToFix = (
   const cleanedIssues =
     cleanStringArray(issuesToFix, 3);
 
-  if (cleanedIssues.length > 0) {
-    return cleanedIssues;
-  }
-
   if (
     typeof detectedIssue === "string" &&
     detectedIssue.trim() !== ""
   ) {
-    return [detectedIssue.trim()];
+    const detectedIssueText =
+      detectedIssue.trim();
+
+    const alreadyExists =
+      cleanedIssues.some((issue) => {
+        return (
+          issue.toLowerCase() ===
+          detectedIssueText.toLowerCase()
+        );
+      });
+
+    if (!alreadyExists) {
+      cleanedIssues.push(detectedIssueText);
+    }
   }
 
-  return [];
+  const fallbackIssues = [
+    "Inspect the affected fixture or plumbing component.",
+    "Check for continued leaking, moisture, blockage, or damage.",
+    "Confirm whether the issue continues during normal use.",
+  ];
+
+  for (const fallbackIssue of fallbackIssues) {
+    if (cleanedIssues.length >= 3) {
+      break;
+    }
+
+    const alreadyExists =
+      cleanedIssues.some((issue) => {
+        return (
+          issue.toLowerCase() ===
+          fallbackIssue.toLowerCase()
+        );
+      });
+
+    if (!alreadyExists) {
+      cleanedIssues.push(fallbackIssue);
+    }
+  }
+
+  return cleanedIssues.slice(0, 3);
 };
 
 const ensureThreeIssueActions = (actions) => {
@@ -587,6 +826,34 @@ const ensureThreeIssueActions = (actions) => {
   return finalActions.slice(0, 3);
 };
 
+const hasVisibleIssueEvidence = (visualEvidence) => {
+  if (!visualEvidence || typeof visualEvidence !== "object") {
+    return false;
+  }
+
+  const waterFlow = String(
+    visualEvidence.waterFlow || ""
+  ).toLowerCase();
+
+  const floodingLevel = String(
+    visualEvidence.floodingLevel || ""
+  ).toLowerCase();
+
+  return (
+    normalizeBoolean(visualEvidence.activeLeakVisible) ||
+    waterFlow === "dripping" ||
+    waterFlow === "steady" ||
+    waterFlow === "spraying" ||
+    waterFlow === "gushing" ||
+    floodingLevel === "minor" ||
+    floodingLevel === "major" ||
+    normalizeBoolean(visualEvidence.burstOrRuptureVisible) ||
+    normalizeBoolean(visualEvidence.sewageVisible) ||
+    normalizeBoolean(visualEvidence.waterNearElectrical) ||
+    normalizeBoolean(visualEvidence.immediateHazardVisible)
+  );
+};
+
 const createNormalizedResult = (
   aiResult,
   imageUrl
@@ -605,12 +872,39 @@ const createNormalizedResult = (
       ? aiResult.detectedIssue.trim()
       : "";
 
-  if (confidence === "Low") {
+  const analysisStatus =
+    normalizeAnalysisStatus(
+      aiResult?.analysisStatus || aiResult?.status
+    );
+
+  if (
+    analysisStatus === "LOW_CONFIDENCE" ||
+    confidence === "Low"
+  ) {
     return getLowConfidenceResult(
       aiResult,
       imageUrl,
       detectedObject || null
     );
+  }
+
+  if (analysisStatus === "NO_ISSUE_DETECTED") {
+    const visualEvidence =
+      normalizeVisualEvidence(
+        aiResult?.visualEvidence
+      );
+
+    if (
+      detectedObject &&
+      !detectedIssue &&
+      !hasVisibleIssueEvidence(visualEvidence)
+    ) {
+      return getNoIssueResult(
+        aiResult,
+        imageUrl,
+        detectedObject
+      );
+    }
   }
 
   if (!detectedObject || !detectedIssue) {
@@ -624,6 +918,15 @@ const createNormalizedResult = (
   const issuesToFix = cleanIssuesToFix(
     aiResult?.issuesToFix,
     detectedIssue
+  );
+
+  const riskScore = normalizeRiskScore(
+    aiResult?.riskScore,
+    null
+  );
+
+  const visibleRiskSignals = cleanRiskSignals(
+    aiResult?.visibleRiskSignals
   );
 
   const visualEvidence =
@@ -646,6 +949,8 @@ const createNormalizedResult = (
     detectedObject: detectedObject,
     detectedIssue: detectedIssue,
     issuesToFix: issuesToFix,
+    riskScore: riskScore,
+    visibleRiskSignals: visibleRiskSignals,
 
     visualEvidence: visualEvidence,
 
@@ -727,7 +1032,7 @@ const analyzeImageWithAI = async (
                 {
                   type: "text",
                   text:
-                    "Analyze this plumbing image. Use Low confidence only when the image is genuinely unusable. For a usable image, return detectedObject, detectedIssue, one to three visible issuesToFix, structured visualEvidence, and exactly three issue-specific recommendedActions. Clearly identify visible dripping, steady flow, pressurized spraying, gushing, burst pipes, standing water, major flooding, sewage, or water near electrical equipment. Return only the required JSON object.",
+                    "Analyze this plumbing image. First classify it as NO_ISSUE_DETECTED, ANALYZED, or LOW_CONFIDENCE. Return riskScore and visibleRiskSignals. Use NO_ISSUE_DETECTED for a clear normal dry plumbing fixture with no visible leak, pooling, clog, crack, rupture, corrosion, damage, stain, overflow, sewage, moisture, loose part, or abnormal water behavior. Use LOW_CONFIDENCE only when the image is genuinely unusable. Use ANALYZED only when a visible repair concern is supported by the image. Clearly identify visible dripping, steady flow, pressurized spraying, gushing, burst pipes, standing water, major flooding, sewage, or water near electrical equipment. Pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, or water near electrical must produce high-risk evidence and a riskScore of at least 71. Return only the required JSON object.",
                 },
                 {
                   type: "image_url",

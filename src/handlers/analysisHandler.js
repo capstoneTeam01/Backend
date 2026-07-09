@@ -12,6 +12,14 @@ const isLowConfidence = (analysisResult) => {
   return confidence.toLowerCase() === "low";
 };
 
+const isNoIssueDetected = (analysisResult) => {
+  const analysisStatus = String(
+    analysisResult?.analysisStatus || ""
+  ).toUpperCase();
+
+  return analysisStatus === "NO_ISSUE_DETECTED";
+};
+
 const AnalyzeImage = () => {
   return async (req, res) => {
     try {
@@ -61,6 +69,7 @@ const AnalyzeImage = () => {
       );
 
       const lowConfidence = isLowConfidence(finalAnalysisResult);
+      const noIssueDetected = isNoIssueDetected(finalAnalysisResult);
 
       let responsePhotoId = null;
       let diyGenerationStatus = "not_started";
@@ -69,6 +78,11 @@ const AnalyzeImage = () => {
       if (lowConfidence) {
         diyGenerationStatus = "skipped";
         diyGenerationReason = "LOW_CONFIDENCE";
+      }
+
+      if (noIssueDetected) {
+        diyGenerationStatus = "skipped";
+        diyGenerationReason = "NO_ISSUE_DETECTED";
       }
 
       if (photo) {
@@ -81,9 +95,11 @@ const AnalyzeImage = () => {
 
         responsePhotoId = photo._id.toString();
 
-        if (lowConfidence) {
+        if (lowConfidence || noIssueDetected) {
           photo.diyGenerationStatus = "skipped";
-          photo.diyGenerationReason = "LOW_CONFIDENCE";
+          photo.diyGenerationReason = lowConfidence
+            ? "LOW_CONFIDENCE"
+            : "NO_ISSUE_DETECTED";
 
           await photo.save();
         } else {
@@ -120,6 +136,11 @@ const AnalyzeImage = () => {
       if (lowConfidence) {
         responseMessage =
           "Image analysis completed with low confidence. Please upload a clearer photo.";
+      }
+
+      if (noIssueDetected) {
+        responseMessage =
+          "Image analysis completed. No visible plumbing issue was detected.";
       }
 
       return res.status(200).json({
@@ -215,6 +236,11 @@ const GetDiyInstructions = () => {
         if (photo.diyGenerationReason === "LOW_CONFIDENCE") {
           message =
             "DIY instructions were not generated because the image analysis confidence was low. Please upload a clearer photo.";
+        }
+
+        if (photo.diyGenerationReason === "NO_ISSUE_DETECTED") {
+          message =
+            "DIY instructions were not generated because no visible plumbing issue was detected.";
         }
 
         return res.status(409).json({

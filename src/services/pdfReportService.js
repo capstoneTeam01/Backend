@@ -206,12 +206,6 @@ const generateIssueReportPdf = async (
   const technicalReport =
     reportData.technicalReport || {};
 
-  const requester =
-    reportData.requester || {};
-
-  const serviceRequest =
-    reportData.serviceRequest || {};
-
   return new Promise(
     (resolve, reject) => {
       const document =
@@ -475,62 +469,6 @@ const generateIssueReportPdf = async (
         document,
         "Recommended provider",
         reportData.providerType
-      );
-
-      /*
-       * Service request information
-       */
-      addSectionTitle(
-        document,
-        "Service Request Details"
-      );
-
-      addField(
-        document,
-        "Requester",
-        requester.name
-      );
-
-      addField(
-        document,
-        "Requester email",
-        requester.email
-      );
-
-      addField(
-        document,
-        "Address",
-        serviceRequest.address
-      );
-
-      addField(
-        document,
-        "Unit",
-        serviceRequest.unit
-      );
-
-      addField(
-        document,
-        "City",
-        serviceRequest.city
-      );
-
-      addField(
-        document,
-        "Preferred date",
-        serviceRequest.preferredDate
-      );
-
-      addField(
-        document,
-        "Preferred time",
-        serviceRequest.preferredTime
-      );
-
-      addField(
-        document,
-        "Customer notes",
-        serviceRequest.notes
       );
 
       /*

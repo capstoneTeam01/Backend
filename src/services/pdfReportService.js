@@ -13,6 +13,16 @@ const logoPath = path.join(
   "../../assets/pdf-logo.svg"
 );
 
+const rubikRegularPath = path.join(
+  __dirname,
+  "../../assets/fonts/Rubik-Regular.ttf"
+);
+
+const rubikBoldPath = path.join(
+  __dirname,
+  "../../assets/fonts/Rubik-Bold.ttf"
+);
+
 const colors = {
   brown: "#4A2F0B",
   amber: "#FBB800",
@@ -24,12 +34,121 @@ const colors = {
   white: "#FFFFFF",
 };
 
+const typography = {
+  title: 20,
+  sectionTitle: 16,
+  h3: 14,
+  cardTitle: 12,
+  body: 10.5,
+  caption: 9.5,
+  smallCaption: 8.5,
+};
+
 const clean = (value) => {
   return String(value ?? "").trim();
 };
 
 const getDisplayValue = (value) => {
   return clean(value) || "N/A";
+};
+
+const toTitleCase = (value) => {
+  const text = clean(value);
+
+  if (!text) {
+    return "N/A";
+  }
+
+  return text
+    .split(" ")
+    .map((word) => {
+      if (!word) {
+        return "";
+      }
+
+      if (
+        /^[A-Z0-9/$–-]+$/.test(word)
+      ) {
+        return word;
+      }
+
+      const lowerCaseWord =
+        word.toLowerCase();
+
+      return (
+        lowerCaseWord.charAt(0).toUpperCase() +
+        lowerCaseWord.slice(1)
+      );
+    })
+    .join(" ");
+};
+
+const capitalizeFirstLetter = (value) => {
+  const text = clean(value);
+
+  if (!text) {
+    return "";
+  }
+
+  return text.replace(
+    /[A-Za-z]/,
+    (letter) => {
+      return letter.toUpperCase();
+    }
+  );
+};
+
+const getPdfFonts = async () => {
+  try {
+    await fs.access(rubikRegularPath);
+
+    try {
+      await fs.access(rubikBoldPath);
+
+      return {
+        regular: "Rubik",
+        bold: "RubikBold",
+        regularPath: rubikRegularPath,
+        boldPath: rubikBoldPath,
+      };
+    } catch {
+      return {
+        regular: "Rubik",
+        bold: "Rubik",
+        regularPath: rubikRegularPath,
+        boldPath: rubikRegularPath,
+      };
+    }
+  } catch {
+    return {
+      regular: "Helvetica",
+      bold: "Helvetica-Bold",
+      regularPath: null,
+      boldPath: null,
+    };
+  }
+};
+
+const registerPdfFonts = (
+  document,
+  fonts
+) => {
+  if (fonts.regularPath) {
+    document.registerFont(
+      fonts.regular,
+      fonts.regularPath
+    );
+  }
+
+  if (
+    fonts.boldPath &&
+    fonts.boldPath !== fonts.regularPath
+  ) {
+    document.registerFont(
+      fonts.bold,
+      fonts.boldPath
+    );
+  }
 };
 
 const loadLogoBuffer = async () => {
@@ -109,15 +228,16 @@ const ensurePageSpace = (
 
 const addSectionTitle = (
   document,
-  title
+  title,
+  fonts
 ) => {
   ensurePageSpace(document);
   document.x = 50;
 
   document
     .moveDown(0.7)
-    .font("Helvetica-Bold")
-    .fontSize(13)
+    .font(fonts.regular)
+    .fontSize(typography.sectionTitle)
     .fillColor(colors.brown)
     .text(title);
 
@@ -136,21 +256,26 @@ const addSectionTitle = (
 const addField = (
   document,
   label,
-  value
+  value,
+  fonts
 ) => {
   ensurePageSpace(document, 35);
   document.x = 50;
 
   document
-    .font("Helvetica-Bold")
-    .fontSize(10.5)
+    .font(fonts.regular)
+    .fontSize(typography.body)
     .fillColor(colors.brown)
     .text(`${label}: `, {
       continued: true,
     })
-    .font("Helvetica")
+    .font(fonts.regular)
     .fillColor(colors.text)
-    .text(getDisplayValue(value));
+    .text(
+      capitalizeFirstLetter(
+        getDisplayValue(value)
+      )
+    );
 
   document.moveDown(0.35);
 };
@@ -158,17 +283,20 @@ const addField = (
 const addParagraph = (
   document,
   value,
-  emptyMessage
+  emptyMessage,
+  fonts
 ) => {
   ensurePageSpace(document, 60);
   document.x = 50;
 
   document
-    .font("Helvetica")
-    .fontSize(10.5)
+    .font(fonts.regular)
+    .fontSize(typography.body)
     .fillColor(colors.text)
     .text(
-      clean(value) || emptyMessage,
+      capitalizeFirstLetter(
+        clean(value) || emptyMessage
+      ),
       {
         lineGap: 3,
         paragraphGap: 6,
@@ -179,17 +307,22 @@ const addParagraph = (
 const addList = (
   document,
   items,
-  emptyMessage
+  emptyMessage,
+  fonts
 ) => {
   const normalizedItems =
     normalizeList(items);
 
   if (!normalizedItems.length) {
     document
-      .font("Helvetica")
-      .fontSize(10.5)
+      .font(fonts.regular)
+      .fontSize(typography.body)
       .fillColor(colors.muted)
-      .text(emptyMessage);
+      .text(
+        capitalizeFirstLetter(
+          emptyMessage
+        )
+      );
 
     return;
   }
@@ -199,10 +332,10 @@ const addList = (
     document.x = 50;
 
     document
-      .font("Helvetica")
-      .fontSize(10.5)
+      .font(fonts.regular)
+      .fontSize(typography.body)
       .fillColor(colors.text)
-      .text(`• ${item}`, {
+      .text(`• ${capitalizeFirstLetter(item)}`, {
         indent: 10,
         lineGap: 2,
         paragraphGap: 6,
@@ -213,7 +346,8 @@ const addList = (
 const addHeader = (
   document,
   reportData,
-  logoBuffer
+  logoBuffer,
+  fonts
 ) => {
   document
     .rect(
@@ -244,8 +378,8 @@ const addHeader = (
     );
   } else {
     document
-      .font("Helvetica-Bold")
-      .fontSize(24)
+      .font(fonts.regular)
+      .fontSize(typography.title)
       .fillColor(colors.brown)
       .text("FixBee", 440, 34, {
         width: 105,
@@ -254,8 +388,8 @@ const addHeader = (
   }
 
   document
-    .font("Helvetica-Bold")
-    .fontSize(18)
+    .font(fonts.regular)
+    .fontSize(typography.title)
     .fillColor(colors.brown)
     .text(
       "Expert Technical Assessment",
@@ -267,8 +401,8 @@ const addHeader = (
     );
 
   document
-    .font("Helvetica")
-    .fontSize(9.5)
+    .font(fonts.regular)
+    .fontSize(typography.caption)
     .fillColor(colors.muted)
     .text(
       `Report ID: ${getDisplayValue(
@@ -291,6 +425,7 @@ const addBadge = (
   x,
   y,
   width,
+  fonts,
   fillColor = colors.panel
 ) => {
   const height = 54;
@@ -309,8 +444,8 @@ const addBadge = (
     );
 
   document
-    .font("Helvetica")
-    .fontSize(8.5)
+    .font(fonts.regular)
+    .fontSize(typography.smallCaption)
     .fillColor(colors.muted)
     .text(
       label.toUpperCase(),
@@ -322,11 +457,11 @@ const addBadge = (
     );
 
   document
-    .font("Helvetica-Bold")
-    .fontSize(11)
+    .font(fonts.regular)
+    .fontSize(typography.cardTitle)
     .fillColor(colors.brown)
     .text(
-      getDisplayValue(value),
+      toTitleCase(value),
       x + 12,
       y + 27,
       {
@@ -357,7 +492,8 @@ const getRiskFillColor = (urgency) => {
 
 const addSummaryGrid = (
   document,
-  reportData
+  reportData,
+  fonts
 ) => {
   ensurePageSpace(document, 145);
 
@@ -373,7 +509,8 @@ const addSummaryGrid = (
     reportData.detectedIssue,
     startX,
     y,
-    cardWidth
+    cardWidth,
+    fonts
   );
 
   addBadge(
@@ -383,6 +520,7 @@ const addSummaryGrid = (
     startX + cardWidth + gap,
     y,
     cardWidth,
+    fonts,
     getRiskFillColor(reportData.urgency)
   );
 
@@ -394,7 +532,8 @@ const addSummaryGrid = (
     reportData.detectedObject,
     startX,
     y,
-    cardWidth
+    cardWidth,
+    fonts
   );
 
   addBadge(
@@ -403,7 +542,8 @@ const addSummaryGrid = (
     reportData.estimatedCostRange,
     startX + cardWidth + gap,
     y,
-    cardWidth
+    cardWidth,
+    fonts
   );
 
   y += 66;
@@ -414,7 +554,8 @@ const addSummaryGrid = (
     reportData.category,
     startX,
     y,
-    cardWidth
+    cardWidth,
+    fonts
   );
 
   addBadge(
@@ -423,7 +564,8 @@ const addSummaryGrid = (
     reportData.estimatedRepairTime,
     startX + cardWidth + gap,
     y,
-    cardWidth
+    cardWidth,
+    fonts
   );
 
   document.y = y + 70;
@@ -528,13 +670,16 @@ const getImageBlockHeight = async (
   }
 };
 
-const addFooter = (document) => {
+const addFooter = (
+  document,
+  fonts
+) => {
   ensurePageSpace(document, 65);
 
   document
     .moveDown()
-    .font("Helvetica")
-    .fontSize(8.5)
+    .font(fonts.regular)
+    .fontSize(typography.smallCaption)
     .fillColor(colors.muted)
     .text(
       "This report provides a preliminary technical assessment for quotation purposes. It is not a final diagnosis, inspection certificate, repair authorization, or confirmation of code compliance. A qualified service professional must verify the condition and repair requirements on site.",
@@ -618,6 +763,9 @@ const generateIssueReportPdf = async (
   const logoBuffer =
     await loadLogoBuffer();
 
+  const fonts =
+    await getPdfFonts();
+
   const imageHeight =
     await getImageBlockHeight(imageBuffer);
 
@@ -659,10 +807,16 @@ const generateIssueReportPdf = async (
         reject
       );
 
+      registerPdfFonts(
+        document,
+        fonts
+      );
+
       addHeader(
         document,
         reportData,
-        logoBuffer
+        logoBuffer,
+        fonts
       );
 
       addImageBlock(
@@ -673,98 +827,118 @@ const generateIssueReportPdf = async (
 
       addSectionTitle(
         document,
-        "Executive Summary"
+        "Executive Summary",
+        fonts
       );
 
       addParagraph(
         document,
         technicalReport.executiveSummary,
-        "No technical summary was generated."
+        "No technical summary was generated.",
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Visible Observations"
+        "Visible Observations",
+        fonts
       );
 
       addList(
         document,
         technicalReport.visibleObservations,
-        "No confirmed visual observations were available."
+        "No confirmed visual observations were available.",
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Technical Assessment"
+        "Technical Assessment",
+        fonts
       );
 
       addParagraph(
         document,
         technicalReport.technicalAssessment,
-        "The condition requires an on-site assessment before a final diagnosis can be made."
+        "The condition requires an on-site assessment before a final diagnosis can be made.",
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Possible Causes"
+        "Possible Causes",
+        fonts
       );
 
       addList(
         document,
         technicalReport.possibleCauses,
-        "Possible underlying causes could not be determined from the submitted image."
+        "Possible underlying causes could not be determined from the submitted image.",
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Recommended On-Site Diagnostic Checks"
+        "Recommended On-Site Diagnostic Checks",
+        fonts
       );
 
       addList(
         document,
         technicalReport.recommendedDiagnosticChecks,
-        "A qualified technician should inspect the affected component and surrounding connections."
+        "A qualified technician should inspect the affected component and surrounding connections.",
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Likely Repair Scope"
+        "Likely Repair Scope",
+        fonts
       );
 
       addList(
         document,
         technicalReport.likelyRepairScope,
-        "The final repair scope must be determined during the on-site inspection."
+        "The final repair scope must be determined during the on-site inspection.",
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Case Overview"
+        "Case Overview",
+        fonts
       );
 
       addSummaryGrid(
         document,
-        reportData
+        reportData,
+        fonts
       );
 
       addField(
         document,
         "Confidence basis",
-        reportData.confidenceReason
+        reportData.confidenceReason,
+        fonts
       );
 
       addSectionTitle(
         document,
-        "Assessment Limitations"
+        "Assessment Limitations",
+        fonts
       );
 
       addParagraph(
         document,
         technicalReport.limitations,
-        "This report is based on the submitted image and available FixBee analysis. Hidden damage and the final root cause cannot be confirmed without an on-site inspection."
+        "This report is based on the submitted image and available FixBee analysis. Hidden damage and the final root cause cannot be confirmed without an on-site inspection.",
+        fonts
       );
 
-      addFooter(document);
+      addFooter(
+        document,
+        fonts
+      );
 
       document.end();
     }

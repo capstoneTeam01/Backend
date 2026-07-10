@@ -1,4 +1,28 @@
 import PDFDocument from "pdfkit";
+import fs from "fs/promises";
+import path from "path";
+import sharp from "sharp";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(
+  fileURLToPath(import.meta.url)
+);
+
+const logoPath = path.join(
+  __dirname,
+  "../../assets/pdf-logo.svg"
+);
+
+const colors = {
+  brown: "#4A2F0B",
+  amber: "#FBB800",
+  amberSoft: "#FFF4C2",
+  text: "#202020",
+  muted: "#666666",
+  border: "#E2D8C4",
+  panel: "#FFFDF7",
+  white: "#FFFFFF",
+};
 
 const clean = (value) => {
   return String(value ?? "").trim();
@@ -6,6 +30,50 @@ const clean = (value) => {
 
 const getDisplayValue = (value) => {
   return clean(value) || "N/A";
+};
+
+const loadLogoBuffer = async () => {
+  try {
+    const svgBuffer = await fs.readFile(
+      logoPath
+    );
+
+    return await sharp(svgBuffer)
+      .png()
+      .toBuffer();
+  } catch (error) {
+    console.warn(
+      "[FixBee][PDF] logo could not be loaded",
+      error.message
+    );
+
+    return null;
+  }
+};
+
+const prepareReportImageBuffer = async (
+  imageBuffer
+) => {
+  if (!imageBuffer) {
+    return null;
+  }
+
+  try {
+    return await sharp(imageBuffer)
+      .trim({
+        background: "#000000",
+        threshold: 18,
+      })
+      .png()
+      .toBuffer();
+  } catch (error) {
+    console.warn(
+      "[FixBee][PDF] image could not be optimized",
+      error.message
+    );
+
+    return imageBuffer;
+  }
 };
 
 const normalizeList = (items) => {
@@ -44,12 +112,13 @@ const addSectionTitle = (
   title
 ) => {
   ensurePageSpace(document);
+  document.x = 50;
 
   document
     .moveDown(0.7)
     .font("Helvetica-Bold")
-    .fontSize(14)
-    .fillColor("#4A2F0B")
+    .fontSize(13)
+    .fillColor(colors.brown)
     .text(title);
 
   document
@@ -58,7 +127,7 @@ const addSectionTitle = (
       document.page.width - 50,
       document.y + 4
     )
-    .strokeColor("#FBB800")
+    .strokeColor(colors.amber)
     .stroke();
 
   document.moveDown(0.8);
@@ -70,16 +139,17 @@ const addField = (
   value
 ) => {
   ensurePageSpace(document, 35);
+  document.x = 50;
 
   document
     .font("Helvetica-Bold")
     .fontSize(10.5)
-    .fillColor("#4A2F0B")
+    .fillColor(colors.brown)
     .text(`${label}: `, {
       continued: true,
     })
     .font("Helvetica")
-    .fillColor("#202020")
+    .fillColor(colors.text)
     .text(getDisplayValue(value));
 
   document.moveDown(0.35);
@@ -91,11 +161,12 @@ const addParagraph = (
   emptyMessage
 ) => {
   ensurePageSpace(document, 60);
+  document.x = 50;
 
   document
     .font("Helvetica")
     .fontSize(10.5)
-    .fillColor("#202020")
+    .fillColor(colors.text)
     .text(
       clean(value) || emptyMessage,
       {
@@ -117,7 +188,7 @@ const addList = (
     document
       .font("Helvetica")
       .fontSize(10.5)
-      .fillColor("#666666")
+      .fillColor(colors.muted)
       .text(emptyMessage);
 
     return;
@@ -125,17 +196,353 @@ const addList = (
 
   normalizedItems.forEach((item) => {
     ensurePageSpace(document, 40);
+    document.x = 50;
 
     document
       .font("Helvetica")
       .fontSize(10.5)
-      .fillColor("#202020")
+      .fillColor(colors.text)
       .text(`• ${item}`, {
         indent: 10,
         lineGap: 2,
         paragraphGap: 6,
       });
   });
+};
+
+const addHeader = (
+  document,
+  reportData,
+  logoBuffer
+) => {
+  document
+    .rect(
+      0,
+      0,
+      document.page.width,
+      96
+    )
+    .fill(colors.amberSoft);
+
+  document
+    .rect(
+      0,
+      0,
+      document.page.width,
+      8
+    )
+    .fill(colors.amber);
+
+  if (logoBuffer) {
+    document.image(
+      logoBuffer,
+      410,
+      26,
+      {
+        width: 135,
+      }
+    );
+  } else {
+    document
+      .font("Helvetica-Bold")
+      .fontSize(24)
+      .fillColor(colors.brown)
+      .text("FixBee", 440, 34, {
+        width: 105,
+        align: "right",
+      });
+  }
+
+  document
+    .font("Helvetica-Bold")
+    .fontSize(18)
+    .fillColor(colors.brown)
+    .text(
+      "Expert Technical Assessment",
+      50,
+      30,
+      {
+        width: 330,
+      }
+    );
+
+  document
+    .font("Helvetica")
+    .fontSize(9.5)
+    .fillColor(colors.muted)
+    .text(
+      `Report ID: ${getDisplayValue(
+        reportData.photoId
+      )}`,
+      50,
+      58,
+      {
+        width: 330,
+      }
+    );
+
+  document.y = 122;
+};
+
+const addBadge = (
+  document,
+  label,
+  value,
+  x,
+  y,
+  width,
+  fillColor = colors.panel
+) => {
+  const height = 54;
+
+  document
+    .roundedRect(
+      x,
+      y,
+      width,
+      height,
+      8
+    )
+    .fillAndStroke(
+      fillColor,
+      colors.border
+    );
+
+  document
+    .font("Helvetica")
+    .fontSize(8.5)
+    .fillColor(colors.muted)
+    .text(
+      label.toUpperCase(),
+      x + 12,
+      y + 10,
+      {
+        width: width - 24,
+      }
+    );
+
+  document
+    .font("Helvetica-Bold")
+    .fontSize(11)
+    .fillColor(colors.brown)
+    .text(
+      getDisplayValue(value),
+      x + 12,
+      y + 27,
+      {
+        width: width - 24,
+        lineGap: 1,
+      }
+    );
+};
+
+const getRiskFillColor = (urgency) => {
+  const normalizedUrgency =
+    clean(urgency).toLowerCase();
+
+  if (normalizedUrgency === "high") {
+    return "#FFE5E5";
+  }
+
+  if (normalizedUrgency === "medium") {
+    return colors.amberSoft;
+  }
+
+  if (normalizedUrgency === "low") {
+    return "#EAF7EE";
+  }
+
+  return colors.panel;
+};
+
+const addSummaryGrid = (
+  document,
+  reportData
+) => {
+  ensurePageSpace(document, 145);
+
+  const startX = 50;
+  const gap = 10;
+  const cardWidth =
+    (document.page.width - 100 - gap) / 2;
+  let y = document.y;
+
+  addBadge(
+    document,
+    "Detected Issue",
+    reportData.detectedIssue,
+    startX,
+    y,
+    cardWidth
+  );
+
+  addBadge(
+    document,
+    "Risk Level",
+    reportData.urgency,
+    startX + cardWidth + gap,
+    y,
+    cardWidth,
+    getRiskFillColor(reportData.urgency)
+  );
+
+  y += 66;
+
+  addBadge(
+    document,
+    "Affected Component",
+    reportData.detectedObject,
+    startX,
+    y,
+    cardWidth
+  );
+
+  addBadge(
+    document,
+    "Estimated Cost",
+    reportData.estimatedCostRange,
+    startX + cardWidth + gap,
+    y,
+    cardWidth
+  );
+
+  y += 66;
+
+  addBadge(
+    document,
+    "Repair Category",
+    reportData.category,
+    startX,
+    y,
+    cardWidth
+  );
+
+  addBadge(
+    document,
+    "Estimated Time",
+    reportData.estimatedRepairTime,
+    startX + cardWidth + gap,
+    y,
+    cardWidth
+  );
+
+  document.y = y + 70;
+  document.x = 50;
+};
+
+const addImageBlock = (
+  document,
+  imageBuffer,
+  imageHeight
+) => {
+  if (!imageBuffer) {
+    return;
+  }
+
+  ensurePageSpace(
+    document,
+    imageHeight + 30
+  );
+
+  const imageTop = document.y;
+  const imageX = 50;
+  const imageWidth =
+    document.page.width - 100;
+
+  document
+    .roundedRect(
+      imageX,
+      imageTop,
+      imageWidth,
+      imageHeight,
+      8
+    )
+    .fillAndStroke(
+      colors.white,
+      colors.border
+    );
+
+  try {
+    document.image(
+      imageBuffer,
+      imageX + 10,
+      imageTop + 10,
+      {
+        fit: [
+          imageWidth - 20,
+          imageHeight - 20,
+        ],
+        align: "center",
+        valign: "center",
+      }
+    );
+
+    document.y =
+      imageTop + imageHeight + 18;
+    document.x = 50;
+  } catch (error) {
+    console.warn(
+      "[FixBee][PDF] image could not be inserted",
+      error.message
+    );
+  }
+};
+
+const getImageBlockHeight = async (
+  imageBuffer
+) => {
+  if (!imageBuffer) {
+    return 215;
+  }
+
+  try {
+    const metadata =
+      await sharp(imageBuffer).metadata();
+
+    if (
+      !metadata.width ||
+      !metadata.height
+    ) {
+      return 215;
+    }
+
+    const imageWidth = 475;
+    const innerWidth =
+      imageWidth - 20;
+    const imageRatio =
+      metadata.width / metadata.height;
+    const naturalHeight =
+      Math.round(innerWidth / imageRatio) + 20;
+
+    return Math.min(
+      Math.max(naturalHeight, 190),
+      285
+    );
+  } catch (error) {
+    console.warn(
+      "[FixBee][PDF] image size could not be checked",
+      error.message
+    );
+
+    return 215;
+  }
+};
+
+const addFooter = (document) => {
+  ensurePageSpace(document, 65);
+
+  document
+    .moveDown()
+    .font("Helvetica")
+    .fontSize(8.5)
+    .fillColor(colors.muted)
+    .text(
+      "This report provides a preliminary technical assessment for quotation purposes. It is not a final diagnosis, inspection certificate, repair authorization, or confirmation of code compliance. A qualified service professional must verify the condition and repair requirements on site.",
+      {
+        align: "center",
+        lineGap: 2,
+      }
+    );
 };
 
 const downloadImage = async (
@@ -198,10 +605,21 @@ const downloadImage = async (
 const generateIssueReportPdf = async (
   reportData = {}
 ) => {
-  const imageBuffer =
+  const originalImageBuffer =
     await downloadImage(
       reportData.imageUrl
     );
+
+  const imageBuffer =
+    await prepareReportImageBuffer(
+      originalImageBuffer
+    );
+
+  const logoBuffer =
+    await loadLogoBuffer();
+
+  const imageHeight =
+    await getImageBlockHeight(imageBuffer);
 
   const technicalReport =
     reportData.technicalReport || {};
@@ -241,122 +659,18 @@ const generateIssueReportPdf = async (
         reject
       );
 
-      /*
-       * Header
-       */
-      document
-        .rect(
-          0,
-          0,
-          document.page.width,
-          90
-        )
-        .fill("#FDE68A");
-
-      document
-        .font("Helvetica-Bold")
-        .fontSize(22)
-        .fillColor("#4A2F0B")
-        .text(
-          "FixBee Expert Technical Assessment",
-          50,
-          27
-        );
-
-      document
-        .font("Helvetica")
-        .fontSize(9.5)
-        .text(
-          `Report ID: ${getDisplayValue(
-            reportData.photoId
-          )}`,
-          50,
-          62
-        );
-
-      document.y = 115;
-
-      /*
-       * Submitted issue image
-       */
-      if (imageBuffer) {
-        try {
-          const imageTop =
-            document.y;
-
-          document.image(
-            imageBuffer,
-            50,
-            imageTop,
-            {
-              fit: [
-                document.page.width -
-                  100,
-                190,
-              ],
-
-              align: "center",
-              valign: "center",
-            }
-          );
-
-          document.y =
-            imageTop + 205;
-        } catch (error) {
-          console.warn(
-            "[FixBee][PDF] image could not be inserted",
-            error.message
-          );
-        }
-      }
-
-      /*
-       * Basic case information
-       */
-      addSectionTitle(
+      addHeader(
         document,
-        "Case Overview"
+        reportData,
+        logoBuffer
       );
 
-      addField(
+      addImageBlock(
         document,
-        "Detected issue",
-        reportData.detectedIssue
+        imageBuffer,
+        imageHeight
       );
 
-      addField(
-        document,
-        "Affected component",
-        reportData.detectedObject
-      );
-
-      addField(
-        document,
-        "Repair category",
-        reportData.category
-      );
-
-      addField(
-        document,
-        "Risk level",
-        reportData.urgency
-      );
-
-      addField(
-        document,
-        "Analysis confidence",
-        reportData.confidence
-      );
-
-      addField(
-        document,
-        "Confidence basis",
-        reportData.confidenceReason
-      );
-
-      /*
-       * Expert technical report
-       */
       addSectionTitle(
         document,
         "Executive Summary"
@@ -425,55 +739,20 @@ const generateIssueReportPdf = async (
 
       addSectionTitle(
         document,
-        "Risk Assessment"
+        "Case Overview"
       );
 
-      addParagraph(
+      addSummaryGrid(
         document,
-        technicalReport.riskAssessment,
-        "The technician should confirm the current risk level before beginning work."
-      );
-
-      addSectionTitle(
-        document,
-        "Immediate Precautions"
-      );
-
-      addList(
-        document,
-        technicalReport.immediatePrecautions,
-        "Limit use of the affected fixture until the condition has been inspected."
-      );
-
-      /*
-       * Preliminary estimates
-       */
-      addSectionTitle(
-        document,
-        "Preliminary Repair Estimate"
+        reportData
       );
 
       addField(
         document,
-        "Estimated cost",
-        reportData.estimatedCostRange
+        "Confidence basis",
+        reportData.confidenceReason
       );
 
-      addField(
-        document,
-        "Estimated repair time",
-        reportData.estimatedRepairTime
-      );
-
-      addField(
-        document,
-        "Recommended provider",
-        reportData.providerType
-      );
-
-      /*
-       * Assessment limitations
-       */
       addSectionTitle(
         document,
         "Assessment Limitations"
@@ -485,23 +764,7 @@ const generateIssueReportPdf = async (
         "This report is based on the submitted image and available FixBee analysis. Hidden damage and the final root cause cannot be confirmed without an on-site inspection."
       );
 
-      ensurePageSpace(
-        document,
-        65
-      );
-
-      document
-        .moveDown()
-        .font("Helvetica")
-        .fontSize(8.5)
-        .fillColor("#666666")
-        .text(
-          "This report provides a preliminary technical assessment for quotation purposes. It is not a final diagnosis, inspection certificate, repair authorization, or confirmation of code compliance. A qualified service professional must verify the condition and repair requirements on site.",
-          {
-            align: "center",
-            lineGap: 2,
-          }
-        );
+      addFooter(document);
 
       document.end();
     }

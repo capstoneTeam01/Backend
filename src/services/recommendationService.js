@@ -91,6 +91,11 @@ const mediumRiskKeywords = [
   "drip",
   "dripping",
   "steady flow",
+  "pressurized spray",
+  "strong water spray",
+  "heavy water spray",
+  "water shooting out",
+  "spraying water",
   "faucet spray",
   "spraying faucet",
   "clog",
@@ -277,6 +282,15 @@ const isContainedFixtureIssue = (
   );
 };
 
+const hasExposedPipeSource = (
+  combinedText
+) => {
+  return containsKeyword(
+    combinedText,
+    exposedPipeSourceKeywords
+  );
+};
+
 const hasHighRiskVisualEvidence = (
   analysisResult,
   combinedText
@@ -317,17 +331,31 @@ const hasHighRiskVisualEvidence = (
       visualEvidence.activeLeakVisible
     );
 
+  const exposedPipeSourceVisible =
+    hasExposedPipeSource(combinedText);
+
   const sprayingFromExposedPipe =
     waterFlow === "spraying" &&
     activeLeakVisible &&
-    !isContainedFixtureIssue(combinedText);
+    exposedPipeSourceVisible;
+
+  const seriousImmediateHazard =
+    immediateHazardVisible &&
+    (
+      exposedPipeSourceVisible ||
+      burstOrRuptureVisible ||
+      sewageVisible ||
+      waterNearElectrical ||
+      floodingLevel === "major" ||
+      waterFlow === "gushing"
+    );
 
 
   if (
     burstOrRuptureVisible ||
     sewageVisible ||
     waterNearElectrical ||
-    immediateHazardVisible ||
+    seriousImmediateHazard ||
     floodingLevel === "major" ||
     waterFlow === "gushing" ||
     sprayingFromExposedPipe
@@ -397,11 +425,7 @@ const hasHighRiskKeywordEvidence = (
   }
 
 
-  if (isContainedFixtureIssue(combinedText)) {
-    return false;
-  }
-
-  return true;
+  return hasExposedPipeSource(combinedText);
 };
 
 const hasSpecificLowRiskEvidence = (

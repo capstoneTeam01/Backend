@@ -1,5 +1,6 @@
 import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
 import { generateDiyInstructions } from "./diyInstructionService.js";
+import { mapToolsWithImages } from "../utils/toolImageMapper.js";
 
 const activeDiyJobs = new Set();
 
@@ -120,6 +121,13 @@ const generateAndCacheDiyInstructions = async ({
       return false;
     }
 
+    const enrichedDiyInstructions = {
+      ...diyInstructions,
+      toolsNeeded: mapToolsWithImages(
+        diyInstructions.toolsNeeded
+      ),
+    };
+
     const updateResult =
       await PhotoAnalysisModel.updateOne(
         {
@@ -131,7 +139,7 @@ const generateAndCacheDiyInstructions = async ({
         },
         {
           $set: {
-            diyInstructions: diyInstructions,
+            diyInstructions: enrichedDiyInstructions,
             diyGeneratedAt: new Date(),
             diyGenerationStatus: "completed",
             diyGenerationReason: null,
@@ -155,7 +163,7 @@ const generateAndCacheDiyInstructions = async ({
 
     console.log(
       "DIY instruction source:",
-      diyInstructions.source
+      enrichedDiyInstructions.source
     );
 
     return true;

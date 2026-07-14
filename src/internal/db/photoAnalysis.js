@@ -39,7 +39,7 @@ const DiyInstructionsSchema = new mongoose.Schema(
       required: false,
     },
     toolsNeeded: {
-      type: [String],
+      type: [mongoose.Schema.Types.Mixed],
       default: [],
     },
     repairSteps: {

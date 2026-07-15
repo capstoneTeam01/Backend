@@ -4,6 +4,7 @@ import {
   isOllamaEnabled,
 } from "./aiClientService.js";
 import fs from "fs/promises";
+import { visionAnalysisKnowledge } from "./plumbingKnowledgeService.js";
 
 const GROQ_VISION_MODEL =
   process.env.GROQ_VISION_MODEL ||
@@ -388,6 +389,8 @@ const getFallbackResult = (imageUrl) => {
 
 const SYSTEM_PROMPT = `
 You are a practical and cautious plumbing image-analysis assistant for a mobile app called FixBee.
+
+${visionAnalysisKnowledge}
 
 Analyze the uploaded image and return ONLY one valid JSON object.
 Do not include markdown, comments, explanations, or extra text.

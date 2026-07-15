@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -11,6 +12,8 @@ import {
   photoRoutes,
   providerRoutes,
   analysisRoutes,
+  notificationRoutes,
+  businessDirectoryProviderRoutes,
 } from "./src/routes/index.js";
 
 dotenv.config();
@@ -18,7 +21,8 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.static("public"));
 
 const services = {};
 
@@ -71,8 +75,12 @@ app.get("/health", async (req, res) => {
 app.use("/api/auth", authRoutes(services));
 app.use("/api/users", userRoutes(services));
 app.use("/api/photos", photoRoutes(services));
-// app.use("/api/providers", providerRoutes(services));
 app.use("/api/analysis", analysisRoutes(services));
+app.use(
+  "/api/business-directory/providers",
+  businessDirectoryProviderRoutes(services),
+);
+app.use("/api/notifications", notificationRoutes(services));
 
 const PORT = process.env.PORT || 5000;
 

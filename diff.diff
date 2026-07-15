@@ -1,0 +1,76 @@
+diff --git a/src/services/diyGenerationJobService.js b/src/services/diyGenerationJobService.js
+index e9ecb99..5bb9dea 100644
+--- a/src/services/diyGenerationJobService.js
++++ b/src/services/diyGenerationJobService.js
+@@ -1,5 +1,6 @@
+ import { PhotoAnalysisModel } from "../internal/db/photoAnalysis.js";
+ import { generateDiyInstructions } from "./diyInstructionService.js";
++import { mapToolsWithImages } from "../utils/toolImageMapper.js";
+ 
+ const activeDiyJobs = new Set();
+ 
+@@ -120,24 +121,31 @@ const generateAndCacheDiyInstructions = async ({
+       return false;
+     }
+ 
+-    const updateResult =
+-      await PhotoAnalysisModel.updateOne(
+-        {
+-          _id: photoId,
+-          userId: userId,
+-          isDeleted: false,
+-          aiResponse: expectedAiResponse,
+-          diyGenerationStatus: "pending",
+-        },
+-        {
+-          $set: {
+-            diyInstructions: diyInstructions,
+-            diyGeneratedAt: new Date(),
+-            diyGenerationStatus: "completed",
+-            diyGenerationReason: null,
+-          },
+-        }
+-      );
++   const enrichedDiyInstructions = {
++  ...diyInstructions,
++  toolsNeeded: mapToolsWithImages(
++    diyInstructions.toolsNeeded
++  ),
++};
++
++const updateResult =
++  await PhotoAnalysisModel.updateOne(
++    {
++      _id: photoId,
++      userId: userId,
++      isDeleted: false,
++      aiResponse: expectedAiResponse,
++      diyGenerationStatus: "pending",
++    },
++    {
++      $set: {
++        diyInstructions: enrichedDiyInstructions,
++        diyGeneratedAt: new Date(),
++        diyGenerationStatus: "completed",
++        diyGenerationReason: null,
++      },
++    }
++  );
+ 
+     if (updateResult.matchedCount === 0) {
+       console.log(
+@@ -153,10 +161,10 @@ const generateAndCacheDiyInstructions = async ({
+       photoId
+     );
+ 
+-    console.log(
+-      "DIY instruction source:",
+-      diyInstructions.source
+-    );
++ console.log(
++  "DIY instruction source:",
++  enrichedDiyInstructions.source
++);
+ 
+     return true;
+   } catch (error) {

@@ -1,5 +1,15 @@
 node_modules/
 .env
+.env.*
+!.env.example
 .DS_Store
-.postman
-postman
+
+# Python ML environment
+ml/.venv/
+ml/Ultralytics/
+ml/**/__pycache__/
+*.pyc
+
+# YOLO model weights (large — keep locally, see ml/README.md)
+ml/weights/*.pt
+!ml/weights/.gitkeep

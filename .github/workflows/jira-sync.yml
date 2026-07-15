@@ -50,8 +50,6 @@ jobs:
       JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
       JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # Optional GitHub repository variables.
-      # If you do not create these vars, the defaults below will be used.
       JIRA_PROJECT_KEY: ${{ vars.JIRA_PROJECT_KEY }}
       JIRA_WORK_BASE_BRANCH: ${{ vars.JIRA_WORK_BASE_BRANCH }}
       JIRA_STATUS_FLOW: ${{ vars.JIRA_STATUS_FLOW }}
@@ -152,12 +150,12 @@ jobs:
               repo = os.environ.get("GITHUB_REPOSITORY")
 
               if not repo or not pr_number:
-                  return
+                  return "", ""
 
               pr = github_get(f"/repos/{repo}/pulls/{pr_number}")
 
               if not pr:
-                  return
+                  return "", ""
 
               add(pr.get("title"))
               add(pr.get("body"))
@@ -165,10 +163,15 @@ jobs:
               head = pr.get("head") or {}
               base = pr.get("base") or {}
 
-              add(head.get("ref"))
-              add(base.get("ref"))
+              head_branch = head.get("ref") or ""
+              base_branch = base.get("ref") or ""
+
+              add(head_branch)
+              add(base_branch)
 
               collect_pr_commits(pr_number)
+
+              return head_branch, base_branch
 
           def comment_target(body):
               body = body or ""
@@ -193,6 +196,7 @@ jobs:
           add(os.environ.get("GITHUB_REF"))
 
           target_status = ""
+          base_branch_for_fallback = ""
 
           if event_name == "workflow_dispatch":
               inputs = event.get("inputs") or {}
@@ -229,14 +233,13 @@ jobs:
 
               head_branch = head.get("ref") or ""
               base_branch = base.get("ref") or ""
+              base_branch_for_fallback = base_branch
 
               add(head_branch)
               add(base_branch)
 
               collect_pr_commits(pr.get("number"))
 
-              # Important:
-              # Only PRs going INTO pre-beta control review/testing/done.
               if base_branch == work_base_branch:
                   if action in ["opened", "reopened", "synchronize", "edited", "ready_for_review", "review_requested"]:
                       target_status = status_in_review
@@ -257,6 +260,7 @@ jobs:
 
               head_branch = head.get("ref") or ""
               base_branch = base.get("ref") or ""
+              base_branch_for_fallback = base_branch
 
               add(head_branch)
               add(base_branch)
@@ -285,7 +289,15 @@ jobs:
               target_status = comment_target(body)
 
               if issue.get("pull_request"):
-                  collect_pr_details(issue.get("number"))
+                  head_branch, base_branch = collect_pr_details(issue.get("number"))
+                  base_branch_for_fallback = base_branch
+
+          # Safety fallback:
+          # If this is a PR-related event going into pre-beta but target is blank,
+          # default to In Review instead of failing.
+          if event_name in ["pull_request", "pull_request_review", "issue_comment"] and not target_status:
+              if base_branch_for_fallback == work_base_branch:
+                  target_status = status_in_review
 
           combined = " ".join(texts)
 
@@ -305,6 +317,7 @@ jobs:
           print("Event:", event_name)
           print("Project key:", project_key)
           print("Work base branch:", work_base_branch)
+          print("Base branch fallback:", base_branch_for_fallback)
           print("Target status:", target_status)
           print("Issues:", ",".join(issues))
 
@@ -314,7 +327,7 @@ jobs:
           PY
 
       - name: Stop if no Jira update is needed
-        if: steps.collect.outputs.issues == '' || steps.collect.outputs.target == ''
+        if: ${{ steps.collect.outputs.issues == '' || steps.collect.outputs.target == '' }}
         run: |
           echo "No Jira update needed."
           echo "Issues found: '${{ steps.collect.outputs.issues }}'"

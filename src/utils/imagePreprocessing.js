@@ -1,6 +1,7 @@
 import sharp from "sharp";
 
 const AI_MAX_DIMENSION = 1024;
+const AVATAR_SIZE = 512;
 const OUTPUT_MIME = "image/jpeg";
 const OUTPUT_QUALITY = 85;
 
@@ -28,4 +29,25 @@ const preprocessImageForAI = async (buffer) => {
   };
 };
 
-export { preprocessImageForAI };
+const preprocessAvatar = async (buffer) => {
+  const processedBuffer = await sharp(buffer)
+    .rotate()
+    .resize({
+      width: AVATAR_SIZE,
+      height: AVATAR_SIZE,
+      fit: "cover",
+      position: "centre",
+    })
+    .jpeg({ quality: OUTPUT_QUALITY, mozjpeg: true })
+    .toBuffer();
+
+  return {
+    buffer: processedBuffer,
+    mimetype: OUTPUT_MIME,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    extension: "jpeg",
+  };
+};
+
+export { preprocessImageForAI, preprocessAvatar };

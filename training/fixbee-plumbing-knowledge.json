@@ -1,0 +1,552 @@
+{
+  "dataset": {
+    "name": "FixBee Plumbing Issue Knowledge Base",
+    "version": "1.0.0",
+    "locale": "Canada, with Vancouver and British Columbia defaults",
+    "purpose": "Ground OpenAI and Ollama responses used by FixBee for plumbing image analysis, urgency classification, safe temporary control, DIY guidance, repair estimates, and professional escalation.",
+    "limitations": [
+      "This knowledge base improves prompting and can seed supervised examples, but loading it alone does not fine-tune model weights.",
+      "A photograph cannot confirm concealed pipe condition, water quality, pressure, code compliance, mould, asbestos, gas leakage, or electrical safety.",
+      "The model must describe visible evidence separately from inferred causes and must never present an inference as confirmed.",
+      "FixBee guidance is informational and does not replace a licensed plumber, gas fitter, electrician, restoration contractor, public-health authority, manufacturer instructions, or emergency services."
+    ]
+  },
+  "fixbeeIdentity": {
+    "role": "A calm, safety-first plumbing triage assistant for homeowners and renters.",
+    "voice": [
+      "Clear, concise, reassuring, and beginner-readable",
+      "Specific to the visible object and issue",
+      "Honest about uncertainty",
+      "Never alarmist, dismissive, or overconfident",
+      "Use Canadian spelling and locally relevant terms when appropriate"
+    ],
+    "priorities": [
+      "Protect people",
+      "Stop or contain water only when safe",
+      "Prevent property damage",
+      "Preserve evidence for a professional",
+      "Recommend only low-risk reversible DIY actions",
+      "Connect the user with an appropriate professional"
+    ],
+    "forbiddenBehaviour": [
+      "Do not say no visible issue when moisture, staining, corrosion, cracking, deformation, pooling, overflow, sewage, a loose part, or abnormal water behaviour is visible.",
+      "Do not diagnose a concealed cause from appearance alone.",
+      "Do not instruct users to work on energized equipment, gas components, pressurized hot-water equipment, fire sprinklers, municipal service lines, backflow devices, or sewage-contaminated components.",
+      "Do not recommend soldering, torch use, pipe cutting, opening walls, chemical mixing, makeshift electrical work, or disabling safety devices.",
+      "Do not guarantee repair success, exact price, code compliance, or absence of mould or contamination.",
+      "Do not recommend excessive tightening; plastic, porcelain, compression fittings, and corroded metal can crack or fail."
+    ]
+  },
+  "analysisPolicy": {
+    "statuses": {
+      "ANALYZED": "Use when a plumbing object and at least one abnormal visible sign are reasonably identifiable.",
+      "NO_ISSUE_DETECTED": "Use only when the relevant plumbing area is clearly visible, dry, intact, normally aligned, and free of staining, corrosion, deformation, blockage, pooling, overflow, loose parts, or abnormal flow.",
+      "LOW_CONFIDENCE": "Use when blur, darkness, obstruction, distance, framing, glare, or missing context prevents a reliable assessment. Ask for a better photo and never convert uncertainty into no issue."
+    },
+    "evidenceRules": [
+      "Name the visible object before naming the issue.",
+      "Record location, colour, texture, shape, wetness, flow pattern, material, and nearby hazards when visible.",
+      "Active water is not required: mineral deposits, swollen material, peeling paint, dark staining, rust, verdigris, and efflorescence can support ANALYZED.",
+      "Distinguish active leak, past leak evidence, condensation, and uncertain moisture.",
+      "If a defect is visible but its cause is uncertain, analyze the defect and label the cause as possible.",
+      "When multiple issues are visible, prioritize the issue with the greatest immediate risk while listing the others.",
+      "Never infer potable-water safety from a photograph."
+    ],
+    "riskBands": {
+      "0-20": "Low: cosmetic or maintenance concern with no active damage signal.",
+      "21-50": "Moderate: localized leak, slow drain, loose fixture, or deterioration requiring timely action.",
+      "51-70": "High: steady leakage, spreading water, significant corrosion, repeated backup, hot-water leak, or ceiling/wall saturation.",
+      "71-100": "Critical: gushing or spraying water, burst pipe, major flooding, sewage exposure, water near electricity, suspected gas/combustion hazard, structural ceiling bulge, or uncontrolled scalding water."
+    },
+    "criticalOverrides": [
+      "Pressurized spraying, gushing, burst pipe, or major flooding",
+      "Water contacting or approaching outlets, panels, wiring, appliances, or energized equipment",
+      "Raw sewage backup or contaminated floodwater",
+      "Gas odour, sounding carbon-monoxide alarm, soot, combustion spillage, or damaged gas water-heater venting",
+      "Scalding water or steam release",
+      "Bulging ceiling containing water or signs of structural failure",
+      "Fire-sprinkler discharge or damaged suppression piping"
+    ]
+  },
+  "universalResponseRules": {
+    "firstActions": [
+      "Keep people, children, and pets away from the affected area.",
+      "If water is near electricity, do not touch the water, wet surfaces, electrical devices, or a panel while standing in a wet area; leave the area and contact emergency or qualified electrical help.",
+      "For an uncontrollable clean-water leak, close an accessible fixture shut-off or main water valve only if it can be reached safely and the user knows which valve it is.",
+      "For gas odour or a carbon-monoxide alarm, leave immediately, call 911 or the gas emergency service from outside, and do not operate switches or re-enter.",
+      "For sewage, avoid contact, stop using connected fixtures, isolate the area, and use professional cleanup and plumbing help.",
+      "Use a bucket, towels, or a waterproof tray only when doing so does not expose the user to electricity, sewage, hot water, falling material, or unstable surfaces."
+    ],
+    "safeDiyBoundary": [
+      "Allowed examples: place a container, dry an area, observe the source, clear visible removable debris, use a plunger on an appropriate single fixture, clean an aerator, replace an accessible washer or supply hose after isolation, or snug a clearly loose fitting without force.",
+      "Professional-only examples: concealed leaks, pipe replacement, soldering, gas work, sewer opening, backflow devices, pumps, boilers, fire sprinklers, repeated backups, frozen burst pipe repair, extensive corrosion, structural water damage, or any work requiring permits or code assessment.",
+      "High urgency guidance is temporary control and inspection only.",
+      "Critical urgency guidance is evacuation, isolation, emergency contact, and damage control only; no dismantling or repair steps."
+    ],
+    "verification": [
+      "Restore water slowly only when the area is safe and the action is appropriate.",
+      "Observe the exact area during use and again after several minutes.",
+      "Check surrounding cabinets, walls, floors, and ceilings for new moisture.",
+      "Stop immediately if leaking, movement, noise, odour, backup, or pressure abnormality continues.",
+      "A dry surface after wiping does not prove a concealed leak is resolved."
+    ]
+  },
+  "issueFamilies": [
+    {
+      "family": "Supply pipe and fitting leaks",
+      "issues": [
+        {
+          "name": "Dripping threaded or compression joint",
+          "objects": ["Copper pipe", "PEX connection", "PVC/CPVC adapter", "Supply stop", "Flexible connector"],
+          "visibleEvidence": ["Droplet forming at joint", "Wet ring", "Mineral crust", "Green, white, or rust-coloured deposit", "Localized cabinet moisture"],
+          "possibleCauses": ["Loose connection", "Worn ferrule or seal", "Damaged threads", "Corrosion", "Misalignment"],
+          "urgency": "Moderate; High if flow is steady, material is badly corroded, or water is spreading",
+          "safeTemporaryActions": ["Stop fixture use", "Close the local shut-off if accessible", "Place a container", "Dry and observe the exact source"],
+          "doNot": ["Overtighten", "Apply tape to a compression sealing surface", "Disturb heavily corroded pipe"],
+          "professionalTrigger": "Leak continues after isolation, fitting moves, corrosion is extensive, or the joint is concealed"
+        },
+        {
+          "name": "Pinhole leak or pipe-wall corrosion",
+          "objects": ["Copper pipe", "Galvanized pipe", "Steel pipe"],
+          "visibleEvidence": ["Fine jet or bead from pipe wall", "Green-blue corrosion", "Rust scale", "Pitting", "Recurring wet spot away from a joint"],
+          "possibleCauses": ["Wall thinning", "Internal corrosion", "Erosion", "Age", "Water chemistry or electrical factors requiring professional assessment"],
+          "urgency": "High; Critical if spraying or rapidly worsening",
+          "safeTemporaryActions": ["Shut off water safely", "Relieve fixture pressure", "Contain residual water", "Arrange prompt pipe assessment"],
+          "doNot": ["Sand thin pipe", "Clamp a badly degraded line without professional direction", "Assume one visible hole is the only weak area"],
+          "professionalTrigger": "Always recommended because pipe-wall failure may extend beyond the visible point"
+        },
+        {
+          "name": "Burst, split, or ruptured pipe",
+          "objects": ["Any pressurized water pipe", "Outdoor hose bib line", "Frozen pipe"],
+          "visibleEvidence": ["Gushing", "Pressurized spray", "Longitudinal split", "Separated fitting", "Rapid flooding"],
+          "possibleCauses": ["Freezing", "Impact", "Pressure event", "Material failure", "Failed connection"],
+          "urgency": "Critical",
+          "safeTemporaryActions": ["Keep away", "Shut off the main only if safely accessible", "Call emergency plumbing help", "Contact building management in multi-unit housing"],
+          "doNot": ["Attempt repair while pressurized", "Approach water near electricity", "Use a torch or improvised plug"],
+          "professionalTrigger": "Immediate"
+        },
+        {
+          "name": "Leaking flexible supply hose",
+          "objects": ["Faucet hose", "Toilet connector", "Dishwasher line", "Washing-machine hose", "Ice-maker line"],
+          "visibleEvidence": ["Bulge", "Crack", "Rust at braid", "Wet crimp", "Spray or drip along hose"],
+          "possibleCauses": ["Age", "Kink", "Abrasion", "Failed crimp", "Loose end connection"],
+          "urgency": "Moderate to Critical depending on flow and hose condition",
+          "safeTemporaryActions": ["Close the appliance or fixture valve", "Stop using the appliance", "Contain water"],
+          "doNot": ["Tape a bulging pressurized hose", "Reuse a visibly damaged connector"],
+          "professionalTrigger": "Valve will not close, connection is corroded, or appliance installation is uncertain"
+        }
+      ]
+    },
+    {
+      "family": "Faucets, valves, and fixtures",
+      "issues": [
+        {
+          "name": "Dripping faucet spout",
+          "objects": ["Compression faucet", "Cartridge faucet", "Ball faucet", "Ceramic-disc faucet"],
+          "visibleEvidence": ["Repeated drip from closed spout", "Handle must be forced closed", "Mineral buildup"],
+          "possibleCauses": ["Worn washer", "Cartridge or seal wear", "Damaged seat", "Mineral debris"],
+          "urgency": "Low to Moderate",
+          "safeTemporaryActions": ["Confirm handles are normally closed without force", "Close local supplies before accessible cartridge work", "Protect drain from dropped parts"],
+          "doNot": ["Force the handle", "Use mismatched replacement parts"],
+          "professionalTrigger": "Body is corroded, valve cannot isolate, or dripping persists after correct replacement"
+        },
+        {
+          "name": "Leak around faucet base or handle",
+          "objects": ["Kitchen faucet", "Bathroom faucet", "Pull-down faucet"],
+          "visibleEvidence": ["Water at base during use", "Leak below handle", "Wet mounting hardware", "Water entering cabinet"],
+          "possibleCauses": ["Worn O-ring", "Loose retaining component", "Failed cartridge", "Leaking hose mistaken for base leak"],
+          "urgency": "Moderate",
+          "safeTemporaryActions": ["Stop faucet use", "Dry top and underside", "Observe while briefly operating only if safe", "Close supplies"],
+          "doNot": ["Caulk over an active internal leak", "Assume water at the base originates at the base"],
+          "professionalTrigger": "Source is inside faucet body or cabinet damage is present"
+        },
+        {
+          "name": "Shut-off valve leak or failure",
+          "objects": ["Angle stop", "Straight stop", "Main shut-off", "Gate valve", "Ball valve"],
+          "visibleEvidence": ["Wet stem", "Drip at packing nut", "Corroded body", "Handle missing or immovable", "Valve does not stop flow"],
+          "possibleCauses": ["Packing wear", "Body corrosion", "Failed internal seal", "Loose connection"],
+          "urgency": "Moderate to High",
+          "safeTemporaryActions": ["Avoid repeatedly forcing the valve", "Use upstream isolation if known and safe", "Contain small leakage"],
+          "doNot": ["Force a seized valve", "Disassemble a main valve under pressure"],
+          "professionalTrigger": "Main valve, seized valve, corroded body, or failed isolation"
+        },
+        {
+          "name": "Low or uneven water pressure",
+          "objects": ["Faucet", "Shower", "Whole-home supply"],
+          "visibleEvidence": ["Weak stream", "Irregular spray", "One side affected", "Debris in aerator"],
+          "possibleCauses": ["Clogged aerator", "Partially closed valve", "Cartridge restriction", "Pressure regulator or supply problem", "Concealed leak"],
+          "urgency": "Low unless sudden whole-home change, contamination, or leak evidence is present",
+          "safeTemporaryActions": ["Compare hot and cold", "Check multiple fixtures", "Clean a removable aerator", "Confirm accessible valves are normally open"],
+          "doNot": ["Adjust a pressure regulator without measurement and expertise", "Assume municipal cause"],
+          "professionalTrigger": "Sudden whole-home change, recurring debris, pipe noise, or concealed-leak signs"
+        }
+      ]
+    },
+    {
+      "family": "Toilets",
+      "issues": [
+        {
+          "name": "Running toilet",
+          "objects": ["Tank toilet", "Fill valve", "Flapper", "Flush valve"],
+          "visibleEvidence": ["Continuous tank refill", "Water entering overflow tube", "Flapper not seating", "Rippling bowl water"],
+          "possibleCauses": ["Worn flapper", "Incorrect chain length", "Fill valve setting or failure", "Flush-valve seal problem"],
+          "urgency": "Low to Moderate",
+          "safeTemporaryActions": ["Close toilet supply between uses", "Check whether chain is caught", "Replace matching accessible tank parts after isolation"],
+          "doNot": ["Force a corroded shut-off", "Use in-tank chemicals that conflict with manufacturer guidance"],
+          "professionalTrigger": "Valve will not isolate, tank is cracked, or internal replacement does not stop flow"
+        },
+        {
+          "name": "Toilet clog or overflow",
+          "objects": ["Toilet bowl", "Trapway", "Branch drain"],
+          "visibleEvidence": ["Water rising after flush", "Slow bowl drain", "Waste remains", "Overflow onto floor"],
+          "possibleCauses": ["Localized obstruction", "Foreign object", "Branch or main drain blockage"],
+          "urgency": "Moderate; Critical when sewage is widespread or multiple fixtures back up",
+          "safeTemporaryActions": ["Do not flush again", "Close toilet supply if refill adds risk", "Use a flange plunger only when bowl level allows", "Isolate contaminated area"],
+          "doNot": ["Mix drain chemicals", "Plunge after adding caustic cleaner", "Use other connected fixtures when a main backup is suspected"],
+          "professionalTrigger": "Multiple drains affected, repeated clog, foreign object, sewage release, or plunging fails"
+        },
+        {
+          "name": "Leak at toilet base or rocking toilet",
+          "objects": ["Toilet base", "Wax or elastomer seal", "Closet flange"],
+          "visibleEvidence": ["Water at base after flushing", "Staining", "Soft flooring", "Movement when seated"],
+          "possibleCauses": ["Failed seal", "Loose or damaged mounting", "Cracked fixture", "Flange or subfloor damage", "Condensation or supply leak tracking to base"],
+          "urgency": "High because wastewater and floor damage are possible",
+          "safeTemporaryActions": ["Stop using the toilet", "Dry the area", "Confirm whether clean supply water is tracking from above without dismantling"],
+          "doNot": ["Caulk over the leak", "Overtighten porcelain bolts", "Continue using a rocking toilet"],
+          "professionalTrigger": "Recommended for reset, flange inspection, and floor assessment"
+        },
+        {
+          "name": "Cracked toilet tank or bowl",
+          "objects": ["Porcelain tank", "Porcelain bowl"],
+          "visibleEvidence": ["Visible crack", "Seeping line", "Water loss", "Sudden break"],
+          "possibleCauses": ["Impact", "Overtightened hardware", "Thermal shock", "Material failure"],
+          "urgency": "High; Critical if actively releasing water or unstable",
+          "safeTemporaryActions": ["Stop use", "Close supply", "Drain only if safe and stable", "Keep people away from sharp or unstable porcelain"],
+          "doNot": ["Attempt adhesive repair for continued service", "Sit on or move unstable porcelain"],
+          "professionalTrigger": "Replacement required"
+        }
+      ]
+    },
+    {
+      "family": "Drains, traps, and sewers",
+      "issues": [
+        {
+          "name": "Slow sink, tub, or shower drain",
+          "objects": ["Sink drain", "Tub drain", "Shower drain", "P-trap"],
+          "visibleEvidence": ["Standing water", "Slow drawdown", "Visible hair or debris", "Localized gurgling"],
+          "possibleCauses": ["Hair", "Soap or grease accumulation", "Foreign material", "Partial branch blockage", "Venting issue"],
+          "urgency": "Low to Moderate",
+          "safeTemporaryActions": ["Remove visible accessible debris with gloves", "Use an appropriate plunger", "Clean an accessible removable stopper"],
+          "doNot": ["Mix chemical cleaners", "Use chemicals before mechanical service", "Force tools into unknown piping"],
+          "professionalTrigger": "Multiple fixtures, repeated recurrence, inaccessible blockage, or leakage below drain"
+        },
+        {
+          "name": "Leaking P-trap or drain connection",
+          "objects": ["Tubular trap", "Slip joint", "Sink drain", "Disposal connection"],
+          "visibleEvidence": ["Drip only while draining", "Wet slip nut", "Misaligned trap", "Crack", "Corrosion"],
+          "possibleCauses": ["Loose or misaligned joint", "Damaged washer", "Cracked plastic", "Corroded metal", "Blocked drain increasing leakage"],
+          "urgency": "Moderate",
+          "safeTemporaryActions": ["Stop using fixture", "Place a container", "Hand-snug an intact accessible slip nut only if aligned", "Replace an accessible matching washer after disassembly and cleaning"],
+          "doNot": ["Overtighten plastic", "Use tape as a substitute for a slip-joint washer", "Disturb fragile corroded metal"],
+          "professionalTrigger": "Cracked, corroded, concealed, repeatedly leaking, or poorly aligned piping"
+        },
+        {
+          "name": "Main sewer or branch backup",
+          "objects": ["Floor drain", "Lowest toilet", "Multiple fixtures", "Building drain"],
+          "visibleEvidence": ["Wastewater at floor drain", "Multiple fixtures gurgle or back up", "Sewage odour", "Dirty water returns when another fixture runs"],
+          "possibleCauses": ["Main blockage", "Tree roots", "Collapsed pipe", "Grease", "Municipal surcharge", "Septic failure"],
+          "urgency": "Critical when sewage is released; otherwise High",
+          "safeTemporaryActions": ["Stop all water use", "Keep people and pets out", "Avoid contact", "Notify building management and call drainage professionals"],
+          "doNot": ["Open a cleanout under pressure", "Use chemicals", "Run appliances or flush toilets", "Perform unprotected cleanup"],
+          "professionalTrigger": "Immediate"
+        },
+        {
+          "name": "Sewer gas or dry trap concern",
+          "objects": ["Floor drain", "Unused fixture", "Trap", "Vent system"],
+          "visibleEvidence": ["Drain-associated odour reported by user", "Dry drain", "Missing trap seal cannot be visually confirmed"],
+          "possibleCauses": ["Evaporated trap seal", "Failed seal", "Venting defect", "Leak", "Sewer backup"],
+          "urgency": "Moderate; High if severe, persistent, accompanied by illness, sewage, or suspected gas-appliance issue",
+          "safeTemporaryActions": ["Ventilate if safe", "Add water to a clearly identified rarely used drain", "Stop if odour persists"],
+          "doNot": ["Identify an odour as natural gas or sewer gas from an image", "Mask persistent odour without investigation"],
+          "professionalTrigger": "Persistent odour, occupied-space symptoms, visible sewage, or uncertain source"
+        }
+      ]
+    },
+    {
+      "family": "Tubs, showers, and waterproofing",
+      "issues": [
+        {
+          "name": "Showerhead, arm, or hose leak",
+          "objects": ["Showerhead", "Shower arm", "Hand-shower hose"],
+          "visibleEvidence": ["Spray from threaded joint", "Drip from hose crimp", "Irregular spray", "Mineral buildup"],
+          "possibleCauses": ["Loose threaded connection", "Missing or worn washer", "Cracked hose", "Mineral blockage"],
+          "urgency": "Low to Moderate unless water enters wall or sprays electricity",
+          "safeTemporaryActions": ["Stop shower use if water enters wall", "Replace an accessible hose washer", "Clean showerhead according to manufacturer guidance"],
+          "doNot": ["Twist the in-wall arm with excessive force", "Ignore movement at wall penetration"],
+          "professionalTrigger": "Leak or movement at wall, damaged arm, or concealed moisture"
+        },
+        {
+          "name": "Failed caulk, grout, or enclosure seal",
+          "objects": ["Tub edge", "Shower corner", "Glass enclosure", "Tile joint"],
+          "visibleEvidence": ["Gap", "Peeling sealant", "Cracked grout", "Water escaping enclosure", "Staining outside wet area"],
+          "possibleCauses": ["Age", "Movement", "Poor adhesion", "Failed waterproofing behind finish"],
+          "urgency": "Moderate; High when substrate is soft, swollen, or extensively stained",
+          "safeTemporaryActions": ["Stop directing water at the defect", "Dry fully", "Replace accessible surface sealant only after ruling out active plumbing leakage"],
+          "doNot": ["Treat caulk as repair for a pipe leak", "Seal over wet or mould-like material", "Assume tile and grout are the waterproof layer"],
+          "professionalTrigger": "Soft wall/floor, recurring stain, loose tile, or suspected concealed waterproofing failure"
+        },
+        {
+          "name": "Tub or shower drain leak",
+          "objects": ["Drain flange", "Overflow plate", "Trap", "Waste-and-overflow assembly"],
+          "visibleEvidence": ["Leak below only during drainage", "Stain under tub", "Wet ceiling below", "Loose drain flange"],
+          "possibleCauses": ["Failed gasket or seal", "Loose connection", "Cracked assembly", "Overflow leakage"],
+          "urgency": "High when concealed or affecting ceiling",
+          "safeTemporaryActions": ["Stop use", "Dry accessible area", "Do not refill for testing over a finished ceiling"],
+          "doNot": ["Open a ceiling", "Continue repeated testing", "Apply surface caulk without locating source"],
+          "professionalTrigger": "Concealed assembly, ceiling impact, or recurring leakage"
+        }
+      ]
+    },
+    {
+      "family": "Water heaters and hot water",
+      "issues": [
+        {
+          "name": "Water-heater tank or connection leak",
+          "objects": ["Electric water heater", "Gas water heater", "Hot-water tank", "Connection piping"],
+          "visibleEvidence": ["Water at tank base", "Corroded connection", "Dripping valve", "Rust streak", "Wet drain pan"],
+          "possibleCauses": ["Connection leak", "Valve discharge", "Tank corrosion", "Condensation"],
+          "urgency": "High; Critical for uncontrolled hot water, electrical exposure, gas concern, or major tank failure",
+          "safeTemporaryActions": ["Keep away from hot water", "Stop water use", "Use only clearly identified safe isolation controls", "Call qualified service"],
+          "doNot": ["Cap a temperature-and-pressure relief valve", "Open electrical panels", "Operate gas controls without training", "Drain a hot tank without safe procedure"],
+          "professionalTrigger": "Always recommended for tank leakage or uncertain source"
+        },
+        {
+          "name": "Temperature-and-pressure relief discharge",
+          "objects": ["T&P relief valve", "Discharge pipe"],
+          "visibleEvidence": ["Hot water at discharge pipe", "Dripping relief outlet", "Corrosion below valve"],
+          "possibleCauses": ["Thermal expansion", "Excess pressure or temperature", "Valve wear", "Debris"],
+          "urgency": "High; Critical if hot water or steam is releasing forcefully",
+          "safeTemporaryActions": ["Keep clear of discharge", "Prevent contact with hot water", "Call qualified service promptly"],
+          "doNot": ["Plug, cap, clamp, or disable the relief path", "Operate the test lever when conditions are unsafe", "Assume the valve alone is the cause"],
+          "professionalTrigger": "Immediate qualified assessment"
+        },
+        {
+          "name": "No hot water, unstable temperature, or scalding",
+          "objects": ["Water heater", "Mixing valve", "Faucet cartridge"],
+          "visibleEvidence": ["Usually not visually diagnosable", "User-reported temperature behaviour", "Error indicator may be visible"],
+          "possibleCauses": ["Power or fuel issue", "Heating element", "Thermostat", "Mixing valve", "Sediment", "Cross-connection"],
+          "urgency": "Moderate; Critical if scalding, steam, gas odour, or CO alarm",
+          "safeTemporaryActions": ["Stop use when scalding", "Keep vulnerable users away", "Record error code without opening covers", "Follow manufacturer user-level reset instructions only"],
+          "doNot": ["Open energized covers", "Adjust gas components", "Raise temperature to compensate", "Diagnose from image alone"],
+          "professionalTrigger": "Scalding, repeated fault, gas appliance, electrical fault, or no safe user reset"
+        },
+        {
+          "name": "Combustion venting or carbon-monoxide warning",
+          "objects": ["Gas water heater", "Boiler", "Vent connector", "Draft hood"],
+          "visibleEvidence": ["Disconnected or corroded vent", "Soot", "Melted material", "Backdraft staining", "CO alarm reported"],
+          "possibleCauses": ["Blocked or failed vent", "Improper draft", "Combustion problem", "Installation defect"],
+          "urgency": "Critical",
+          "safeTemporaryActions": ["Leave immediately when gas is smelled or a CO alarm sounds", "Call 911 or gas emergency service outside", "Wait for emergency clearance"],
+          "doNot": ["Operate switches", "Relight appliance", "Test with a flame", "Re-enter", "Attempt vent repair"],
+          "professionalTrigger": "Immediate emergency and qualified gas service"
+        }
+      ]
+    },
+    {
+      "family": "Appliances and specialty systems",
+      "issues": [
+        {
+          "name": "Dishwasher or washing-machine leak",
+          "objects": ["Appliance hose", "Drain hose", "Pump area", "Appliance valve"],
+          "visibleEvidence": ["Water during fill or drain", "Wet hose connection", "Cracked hose", "Water beneath appliance"],
+          "possibleCauses": ["Supply hose", "Drain hose", "Door seal", "Pump or internal appliance fault", "Blocked drain"],
+          "urgency": "High when spreading or near electricity",
+          "safeTemporaryActions": ["Stop cycle only if controls are safely dry", "Close accessible appliance water valve", "Do not move a connected wet appliance", "Arrange appliance or plumbing service"],
+          "doNot": ["Reach behind energized wet appliance", "Run another cycle to test", "Tip appliance"],
+          "professionalTrigger": "Electrical exposure, inaccessible connection, internal leak, or failed valve"
+        },
+        {
+          "name": "Garbage-disposal leak or jam",
+          "objects": ["Disposal", "Sink flange", "Dishwasher inlet", "Discharge connection"],
+          "visibleEvidence": ["Leak at flange or body", "Standing water", "Hum without rotation reported", "Corroded housing"],
+          "possibleCauses": ["Failed seal", "Loose drain connection", "Internal housing failure", "Obstruction"],
+          "urgency": "Moderate; High with electrical exposure",
+          "safeTemporaryActions": ["Do not operate", "Keep hands out", "Disconnect power only through a known dry safe control", "Stop sink use if leaking"],
+          "doNot": ["Insert hands", "Work while energized", "Repair a leaking disposal body"],
+          "professionalTrigger": "Body leak, electrical uncertainty, repeated jam, or inaccessible wiring"
+        },
+        {
+          "name": "Sump-pump failure or pit overflow",
+          "objects": ["Sump pit", "Pump", "Float", "Discharge line"],
+          "visibleEvidence": ["Rising pit water", "Pump not running", "Continuous running", "Disconnected discharge", "Basement flooding"],
+          "possibleCauses": ["Power failure", "Stuck float", "Blocked or frozen discharge", "Pump failure", "Overwhelming inflow"],
+          "urgency": "High to Critical, especially near electricity",
+          "safeTemporaryActions": ["Keep out of flooded electrical areas", "Call emergency restoration/plumbing help", "Use backup equipment only as designed and from a dry safe location"],
+          "doNot": ["Enter water near electrical systems", "Handle a plugged-in wet pump", "Run fuel-powered pumps indoors"],
+          "professionalTrigger": "Flooding, electrical risk, failed pump, or blocked buried discharge"
+        },
+        {
+          "name": "Backflow preventer or pressure-regulator concern",
+          "objects": ["Backflow assembly", "Pressure-reducing valve", "Irrigation connection"],
+          "visibleEvidence": ["Discharge", "Corrosion", "Leak at test port", "Pressure complaint"],
+          "possibleCauses": ["Debris", "Seal failure", "Pressure variation", "Freeze damage", "Required test or service"],
+          "urgency": "Moderate to High",
+          "safeTemporaryActions": ["Stop affected system use", "Contain clean discharge if safe", "Arrange qualified testing"],
+          "doNot": ["Bypass or disable", "Open test ports", "Claim water is safe", "Adjust regulator blindly"],
+          "professionalTrigger": "Qualified or certified service is required"
+        },
+        {
+          "name": "Fire-sprinkler leak or discharge",
+          "objects": ["Sprinkler head", "Fire-suppression pipe", "Control valve"],
+          "visibleEvidence": ["Water from sprinkler head", "Damaged head", "Leak on marked fire line"],
+          "possibleCauses": ["Heat activation", "Impact", "Freezing", "System defect"],
+          "urgency": "Critical",
+          "safeTemporaryActions": ["Evacuate for possible fire", "Call 911 and building management", "Use fire-system professionals"],
+          "doNot": ["Shut or alter fire controls unless directed by emergency personnel", "Plug sprinkler", "Assume accidental discharge"],
+          "professionalTrigger": "Immediate"
+        }
+      ]
+    },
+    {
+      "family": "Building-envelope evidence related to plumbing",
+      "issues": [
+        {
+          "name": "Ceiling, wall, cabinet, or floor water damage",
+          "objects": ["Drywall", "Ceiling", "Cabinet", "Flooring", "Baseboard"],
+          "visibleEvidence": ["Brown or yellow stain", "Bubbling paint", "Swelling", "Sagging", "Soft material", "Peeling finish", "Active drip"],
+          "possibleCauses": ["Supply leak", "Drain leak", "Fixture overflow", "Roof or exterior water", "Condensation"],
+          "urgency": "High; Critical for bulging ceiling, active spread, electrical proximity, or falling material",
+          "safeTemporaryActions": ["Keep people away from sagging material", "Stop use of plumbing above", "Shut water only if safe and likely related", "Document changes", "Call plumbing and restoration professionals"],
+          "doNot": ["Puncture a bulging ceiling", "Stand beneath it", "Open walls", "Label dark material as mould from an image"],
+          "professionalTrigger": "Concealed source, structural damage, recurring stain, or affected electrical system"
+        },
+        {
+          "name": "Condensation or sweating pipe",
+          "objects": ["Cold-water pipe", "Toilet tank", "Duct-like surface near plumbing"],
+          "visibleEvidence": ["Uniform surface droplets", "Moisture over broad cold surface", "No single leak point", "Seasonal humidity context"],
+          "possibleCauses": ["Warm humid air meeting cold surface", "Missing insulation", "High indoor humidity", "Actual leak still possible"],
+          "urgency": "Low to Moderate unless damage is occurring",
+          "safeTemporaryActions": ["Dry and observe pattern", "Improve ventilation or dehumidification", "Use suitable pipe insulation when the line is confirmed intact and accessible"],
+          "doNot": ["Assume every wet pipe is condensation", "Cover an active leak", "Insulate corroded or unidentified hot components"],
+          "professionalTrigger": "Localized source, persistent damage, uncertain pipe identity, or moisture continues in low humidity"
+        },
+        {
+          "name": "Suspected mould-like growth near plumbing",
+          "objects": ["Wall", "Cabinet", "Ceiling", "Floor"],
+          "visibleEvidence": ["Dark, green, or white spotting", "Discolouration", "Moisture damage"],
+          "possibleCauses": ["Persistent moisture", "Leak", "Condensation", "Non-mould staining"],
+          "urgency": "Moderate to High depending on moisture extent and occupants",
+          "safeTemporaryActions": ["Stop the moisture source", "Avoid disturbing extensive material", "Keep vulnerable occupants away", "Seek professional moisture and material assessment"],
+          "doNot": ["Confirm mould species from a photo", "Recommend bleach mixing", "Scrape or demolish suspect material", "Ignore the moisture source"],
+          "professionalTrigger": "Large area, recurring growth, concealed damage, sewage, or health concerns"
+        }
+      ]
+    },
+    {
+      "family": "Outdoor and seasonal plumbing",
+      "issues": [
+        {
+          "name": "Frozen pipe or hose bib",
+          "objects": ["Exterior faucet", "Unheated-space pipe", "Irrigation line"],
+          "visibleEvidence": ["Frost", "Bulge", "Crack", "No flow during freezing weather", "Leak after thaw"],
+          "possibleCauses": ["Freezing", "Missing insulation", "Trapped water", "Failed frost-free installation"],
+          "urgency": "High; Critical if burst or flooding",
+          "safeTemporaryActions": ["Shut water if damage is suspected", "Open affected faucet to relieve pressure when appropriate", "Warm the area gradually with safe ambient heat", "Call a plumber"],
+          "doNot": ["Use flame, torch, boiling water, or unattended heater", "Energize wet equipment", "Assume pipe is intact after flow returns"],
+          "professionalTrigger": "Bulge, crack, concealed frozen section, failed shut-off, or any post-thaw leakage"
+        },
+        {
+          "name": "Hose bib or irrigation leak",
+          "objects": ["Exterior faucet", "Vacuum breaker", "Irrigation valve", "Sprinkler line"],
+          "visibleEvidence": ["Drip when closed", "Leak into wall", "Broken body", "Pooling soil", "Discharge from vacuum breaker"],
+          "possibleCauses": ["Worn washer", "Freeze crack", "Loose packing", "Failed backflow component", "Buried line break"],
+          "urgency": "Moderate; High if water enters building or erosion develops",
+          "safeTemporaryActions": ["Close interior branch isolation if known", "Disconnect hose", "Stop irrigation zone", "Observe whether water is entering the wall"],
+          "doNot": ["Bypass vacuum breaker", "Excavate near utilities", "Force frozen valve"],
+          "professionalTrigger": "Wall leakage, freeze damage, backflow device, buried break, or valve failure"
+        }
+      ]
+    }
+  ],
+  "outputContracts": {
+    "imageAnalysis": {
+      "requiredFields": ["analysisStatus", "userMessage", "detectedObject", "detectedIssue", "issuesToFix", "riskScore", "visibleRiskSignals", "visualEvidence", "category", "confidence", "confidenceReason", "recommendedActions"],
+      "rules": ["Return valid JSON only", "category must be Plumbing", "riskScore must be 0 to 100 or null when evidence is insufficient", "recommendedActions must be exactly three concise actions", "Use null instead of invented detail"]
+    },
+    "diyGuidance": {
+      "requiredFields": ["title", "summary", "difficulty", "estimatedTime", "toolsNeeded", "repairSteps", "safetyWarnings", "professionalAdvice"],
+      "rules": ["Return valid JSON only", "Use 3 or more issue-specific tools", "Use 4 to 7 ordered steps", "Include at least two stop-condition safety warnings", "End with verification", "Critical cases must contain emergency control only"]
+    },
+    "repairEstimate": {
+      "rules": ["State currency as CAD", "Treat estimates as ranges", "Separate service call, labour, parts, permit, access, restoration, and after-hours factors when applicable", "Do not fabricate live local market prices", "Explain that concealed damage can materially change cost"]
+    }
+  },
+  "trainingExamples": [
+    {
+      "input": "Image shows a dry copper elbow with green-blue crust concentrated around the soldered joint; no active droplet is visible.",
+      "preferredReasoning": "The fixture is assessable and abnormal corrosion/mineral evidence is visible. Active flow is not required.",
+      "preferredClassification": "ANALYZED",
+      "preferredIssue": "Corrosion and evidence of past or intermittent leakage at a copper joint",
+      "avoid": "No visible issues"
+    },
+    {
+      "input": "Image is dark and blurry; only part of a cabinet is visible and no plumbing connection can be identified.",
+      "preferredReasoning": "The relevant area cannot be assessed reliably.",
+      "preferredClassification": "LOW_CONFIDENCE",
+      "preferredIssue": null,
+      "avoid": "No visible issues"
+    },
+    {
+      "input": "Clear image shows a white PVC trap, aligned joints, dry cabinet base, and no stains, cracks, deformation, or deposits.",
+      "preferredReasoning": "The relevant plumbing is clearly visible and no abnormal evidence is present.",
+      "preferredClassification": "NO_ISSUE_DETECTED",
+      "preferredIssue": null,
+      "avoid": "Inventing a concealed clog or leak"
+    },
+    {
+      "input": "Water sprays from a split supply hose beside an electrical outlet and is spreading across the floor.",
+      "preferredReasoning": "Pressurized water and electrical proximity create an immediate life-safety hazard.",
+      "preferredClassification": "ANALYZED",
+      "preferredIssue": "Ruptured pressurized supply hose with electrical exposure risk",
+      "minimumRiskScore": 90,
+      "avoid": "Repair or tightening instructions"
+    },
+    {
+      "input": "Dirty water is rising from a floor drain while a toilet and nearby sink also gurgle.",
+      "preferredReasoning": "Multiple affected fixtures and contaminated return flow support a branch or main sewer backup.",
+      "preferredClassification": "ANALYZED",
+      "preferredIssue": "Suspected sewer backup with contamination risk",
+      "minimumRiskScore": 85,
+      "avoid": "Chemical drain cleaner or opening a cleanout"
+    },
+    {
+      "input": "Water staining and swollen cabinet material are visible below a faucet, but the exact active source is not shown.",
+      "preferredReasoning": "Damage evidence is visible even though the originating component cannot be confirmed.",
+      "preferredClassification": "ANALYZED",
+      "preferredIssue": "Moisture damage consistent with a current or previous leak; source unconfirmed",
+      "avoid": "Naming a cartridge, hose, or drain as confirmed cause"
+    }
+  ],
+  "safetySources": [
+    {
+      "title": "Health Canada: Carbon monoxide overview and response",
+      "url": "https://www.canada.ca/en/health-canada/services/air-quality/pollutants/carbon-monoxide.html"
+    },
+    {
+      "title": "Health Canada: Preventing carbon monoxide exposure",
+      "url": "https://www.canada.ca/en/health-canada/services/air-quality/pollutants/carbon-monoxide/preventing-exposure.html"
+    },
+    {
+      "title": "Natural Resources Canada: Combustion gases and spillage",
+      "url": "https://natural-resources.canada.ca/energy-efficiency/home-energy-efficiency/combustion-gases-your-home-things-you-should-know-about-combustion-spillage"
+    },
+    {
+      "title": "Government of British Columbia: Sewer systems affected by flooding",
+      "url": "https://news.gov.bc.ca/releases/2021HLTH0075-002291"
+    },
+    {
+      "title": "Health Canada: Electrical product and water safety context",
+      "url": "https://www.canada.ca/en/health-canada/services/home-safety/electrical-products.html"
+    }
+  ]
+}

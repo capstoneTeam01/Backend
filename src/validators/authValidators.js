@@ -14,8 +14,9 @@ const registerSchema = z.object({
   location: z
     .string()
     .trim()
-    .min(2, "location is required")
-    .max(200, "location must be at most 200 characters"),
+    .min(2, "location must be at least 2 characters")
+    .max(200, "location must be at most 200 characters")
+    .optional(),
   role: z.enum(["user", "provider"]).optional().default("user"),
 });
 
@@ -24,4 +25,19 @@ const loginSchema = z.object({
   password: z.string().min(1, "password is required"),
 });
 
-export { registerSchema, loginSchema };
+const googleSchema = z.object({
+  idToken: z.string().min(10, "idToken is required"),
+});
+
+const appleSchema = z.object({
+  identityToken: z.string().min(10, "identityToken is required"),
+  fullName: z
+    .object({
+      givenName: z.string().trim().optional().nullable(),
+      familyName: z.string().trim().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+});
+
+export { registerSchema, loginSchema, googleSchema, appleSchema };

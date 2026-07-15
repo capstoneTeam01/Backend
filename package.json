@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch app.js",
+    "ollama": "ollama serve",
     "start": "node app.js"
   },
   "repository": {
@@ -16,16 +17,26 @@
   "license": "ISC",
   "dependencies": {
     "@vercel/blob": "^2.4.0",
+    "apple-signin-auth": "^2.0.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.2.1",
+    "google-auth-library": "^10.7.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.2",
     "multer": "^2.0.2",
+    "nodemailer": "9.0.1",
     "openai": "^6.39.0",
+    "pdfkit": "^0.19.1",
     "redis": "^5.8.2",
     "sharp": "^0.34.5",
     "zod": "^4.4.3"
-  }
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/capstoneTeam01/Backend/issues"
+  },
+  "homepage": "https://github.com/capstoneTeam01/Backend#readme"
 }

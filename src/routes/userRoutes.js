@@ -4,8 +4,10 @@ import {
   GetUser,
   UpdateUser,
   DeleteUser,
+  UploadAvatar,
 } from "../handlers/userHandler.js";
 import { AuthMiddleware } from "../middlewares/authMiddleware.js";
+import { upload } from "../middlewares/uploadMiddleware.js";
 
 const userRoutes = (services) => {
   const router = express.Router();
@@ -16,6 +18,7 @@ const userRoutes = (services) => {
   router.get("/", GetAllUsers(services));
   router.get("/me", GetUser(services));
   router.put("/update", UpdateUser(services));
+  router.post("/avatar", upload.single("image"), UploadAvatar(services));
   router.delete("/delete", DeleteUser(services));
 
   return router;

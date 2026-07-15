@@ -66,6 +66,7 @@ const generateAndCacheDiyInstructions = async ({
   analysisResult,
   urgency,
   expectedAiResponse,
+  useLocalLlm = false,
 }) => {
   if (
     !photoId ||
@@ -102,7 +103,8 @@ const generateAndCacheDiyInstructions = async ({
     const diyInstructions =
       await generateDiyInstructions(
         analysisResult,
-        urgency || "Low"
+        urgency || "Low",
+        { useLocalLlm }
       );
 
     if (!hasValidDiyInstructions(diyInstructions)) {

@@ -1,6 +1,7 @@
 import {
   getProvider,
   createAIClient,
+  isOllamaEnabled,
 } from "./aiClientService.js";
 import fs from "fs/promises";
 
@@ -82,6 +83,12 @@ const analyzeImageWithOllama = async (imageUrl) => {
 ${SYSTEM_PROMPT}
 
 IMPORTANT:
+Inspect the image evidence before selecting analysisStatus.
+Use ANALYZED when any visible leak, moisture, wet area, water staining, discoloration, corrosion, rust, crack, rupture, deformation, blockage, pooling, overflow, loose component, or other damage is present.
+Active flowing water is not required for ANALYZED. Visible moisture damage, staining, corrosion, or deterioration is a repair concern.
+Use NO_ISSUE_DETECTED only for a clearly visible, dry, undamaged, normal plumbing fixture with no abnormal evidence anywhere in the affected area.
+If the plumbing area cannot be assessed reliably, use LOW_CONFIDENCE instead of NO_ISSUE_DETECTED.
+Populate detectedIssue, issuesToFix, visibleRiskSignals, and recommendedActions whenever visible abnormal evidence is present.
 Return ONLY the JSON object.
 Do not use markdown.
 Do not wrap the response in \`\`\`json.
@@ -854,6 +861,24 @@ const hasVisibleIssueEvidence = (visualEvidence) => {
   );
 };
 
+const inferVisibleIssue = (aiResult) => {
+  const candidates = [
+    ...(Array.isArray(aiResult?.visibleRiskSignals)
+      ? aiResult.visibleRiskSignals
+      : []),
+    ...(Array.isArray(aiResult?.issuesToFix)
+      ? aiResult.issuesToFix
+      : []),
+  ].filter((value) => typeof value === "string");
+
+  const issuePattern =
+    /\b(leak|leaking|moisture|wet|stain|discoloration|corrosion|rust|crack|rupture|damage|deterioration|pooling|overflow|blockage|clog|loose|spray|gushing|sewage)\b/i;
+
+  return candidates.find((value) => {
+    return issuePattern.test(value);
+  })?.trim() || "";
+};
+
 const createNormalizedResult = (
   aiResult,
   imageUrl
@@ -871,6 +896,9 @@ const createNormalizedResult = (
     typeof aiResult?.detectedIssue === "string"
       ? aiResult.detectedIssue.trim()
       : "";
+
+  const effectiveDetectedIssue =
+    detectedIssue || inferVisibleIssue(aiResult);
 
   const analysisStatus =
     normalizeAnalysisStatus(
@@ -896,7 +924,7 @@ const createNormalizedResult = (
 
     if (
       detectedObject &&
-      !detectedIssue &&
+      !effectiveDetectedIssue &&
       !hasVisibleIssueEvidence(visualEvidence)
     ) {
       return getNoIssueResult(
@@ -907,7 +935,7 @@ const createNormalizedResult = (
     }
   }
 
-  if (!detectedObject || !detectedIssue) {
+  if (!detectedObject || !effectiveDetectedIssue) {
     return getLowConfidenceResult(
       aiResult,
       imageUrl,
@@ -917,7 +945,7 @@ const createNormalizedResult = (
 
   const issuesToFix = cleanIssuesToFix(
     aiResult?.issuesToFix,
-    detectedIssue
+    effectiveDetectedIssue
   );
 
   const riskScore = normalizeRiskScore(
@@ -947,7 +975,7 @@ const createNormalizedResult = (
     userMessage: null,
 
     detectedObject: detectedObject,
-    detectedIssue: detectedIssue,
+    detectedIssue: effectiveDetectedIssue,
     issuesToFix: issuesToFix,
     riskScore: riskScore,
     visibleRiskSignals: visibleRiskSignals,
@@ -970,7 +998,8 @@ const createNormalizedResult = (
 };
 
 const analyzeImageWithAI = async (
-  imageUrl
+  imageUrl,
+  { useLocalLlm = false } = {}
 ) => {
 
 
@@ -982,7 +1011,7 @@ const analyzeImageWithAI = async (
     return getFallbackResult(imageUrl);
   }
 
-  const provider = getProvider();
+  const provider = getProvider({ useLocalLlm });
     if (provider === "ollama") {
   return analyzeImageWithOllama(imageUrl);
 }
@@ -996,7 +1025,20 @@ const analyzeImageWithAI = async (
   }
 
   const aiClient =
-    createAIClient(provider);
+    createAIClient(provider, {
+      fallbackToOllama: false,
+    });
+
+  const getBackupAnalysis = async () => {
+    if (isOllamaEnabled()) {
+      console.warn(
+        `[FixBee][AI] ${provider} vision analysis failed; retrying with Ollama`
+      );
+      return analyzeImageWithOllama(imageUrl);
+    }
+
+    return getFallbackResult(imageUrl);
+  };
 
   const model =
     getModelForProvider(provider);
@@ -1060,7 +1102,7 @@ const analyzeImageWithAI = async (
           `${provider} returned empty image-analysis content`
         );
 
-        return getFallbackResult(imageUrl);
+        return getBackupAnalysis();
       }
 
       let aiResult;
@@ -1073,7 +1115,7 @@ const analyzeImageWithAI = async (
           content
         );
 
-        return getFallbackResult(imageUrl);
+        return getBackupAnalysis();
       }
 
       return createNormalizedResult(
@@ -1116,11 +1158,11 @@ const analyzeImageWithAI = async (
         error.message
       );
 
-      return getFallbackResult(imageUrl);
+      return getBackupAnalysis();
     }
   }
 
-  return getFallbackResult(imageUrl);
+  return getBackupAnalysis();
 };
 
 export { analyzeImageWithAI };

@@ -34,6 +34,8 @@ const AnalyzeImage = () => {
       }
 
       const userId = req.user._id || req.user.id;
+      const useLocalLlm =
+        req.user?.aiSettings?.useLocalLlm === true;
 
       let finalImageUrl = imageUrl;
       let photo = null;
@@ -62,11 +64,15 @@ const AnalyzeImage = () => {
         });
       }
 
-      const analysisResult = await analyzeImageWithAI(finalImageUrl);
+      const analysisResult = await analyzeImageWithAI(
+        finalImageUrl,
+        { useLocalLlm }
+      );
 
       const finalAnalysisResult = await generateRecommendation(
         analysisResult,
-        req.body.location
+        req.body.location,
+        { useLocalLlm }
       );
 
       const lowConfidence = isLowConfidence(finalAnalysisResult);
@@ -127,6 +133,7 @@ const AnalyzeImage = () => {
             analysisResult: finalAnalysisResult,
             urgency: finalAnalysisResult.urgency,
             expectedAiResponse: serializedAnalysis,
+            useLocalLlm,
           }).catch((error) => {
             console.error(
               "Unable to start background DIY generation:",
@@ -138,6 +145,7 @@ const AnalyzeImage = () => {
             photoId: responsePhotoId,
             userId: userId,
             expectedAiResponse: serializedAnalysis,
+            useLocalLlm,
           }).catch((error) => {
             console.error(
               "Unable to start background expert report generation:",

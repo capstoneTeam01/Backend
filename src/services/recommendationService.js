@@ -877,7 +877,8 @@ const getNoIssueRecommendation = (
 
 const generateRecommendation = async (
   analysisResult,
-  location = "Vancouver, BC, Canada"
+  location = "Vancouver, BC, Canada",
+  { useLocalLlm = false } = {}
 ) => {
   if (isNoIssueDetected(analysisResult)) {
     return getNoIssueRecommendation(
@@ -898,7 +899,8 @@ const generateRecommendation = async (
     await estimateRepairCost(
       analysisResult,
       urgencyResult.urgency,
-      location
+      location,
+      { useLocalLlm }
     );
 
   const userActions = getUserActions(

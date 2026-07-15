@@ -353,7 +353,8 @@ const getFallbackCostEstimate = (
 const estimateRepairCost = async (
   analysisResult,
   urgency = "Low",
-  location = DEFAULT_LOCATION
+  location = DEFAULT_LOCATION,
+  { useLocalLlm = false } = {}
 ) => {
   if (isLowConfidence(analysisResult)) {
     console.log(
@@ -363,7 +364,7 @@ const estimateRepairCost = async (
     return getUnavailableCostEstimate();
   }
 
-  const provider = getProvider();
+  const provider = getProvider({ useLocalLlm });
 
   if (!provider) {
     console.error(

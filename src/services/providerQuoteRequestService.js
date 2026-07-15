@@ -158,10 +158,14 @@ const getCachedPdfAttachment = async (photo) => {
   }
 };
 
-const generatePdfAttachment = async (reportData) => {
+const generatePdfAttachment = async (
+  reportData,
+  { useLocalLlm = false } = {}
+) => {
   const technicalReport =
     await generateExpertTechnicalReport(
-      reportData
+      reportData,
+      { useLocalLlm }
     );
 
   const pdfBuffer =
@@ -462,7 +466,13 @@ const sendProviderQuoteRequest = async ({
 
   const pdfAttachment =
     cachedPdfAttachment ||
-    await generatePdfAttachment(reportData);
+    await generatePdfAttachment(
+      reportData,
+      {
+        useLocalLlm:
+          user?.aiSettings?.useLocalLlm === true,
+      }
+    );
 
   console.log(
     "[FixBee][QuoteEmail] sending official quote email",

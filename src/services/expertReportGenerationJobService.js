@@ -79,6 +79,7 @@ const generateAndCacheExpertReport = async ({
   photoId,
   userId,
   expectedAiResponse,
+  useLocalLlm = false,
 }) => {
   if (!photoId || !userId || !expectedAiResponse) {
     console.error(
@@ -138,7 +139,10 @@ const generateAndCacheExpertReport = async ({
 
     const reportData = buildReportData(photo, analysis);
     const technicalReport =
-      await generateExpertTechnicalReport(reportData);
+      await generateExpertTechnicalReport(
+        reportData,
+        { useLocalLlm }
+      );
 
     const pdfBuffer =
       await generateIssueReportPdf({

@@ -40,6 +40,13 @@ const getReportModel = (provider) => {
     );
   }
 
+  if (provider === "ollama") {
+    return (
+      process.env.OLLAMA_TEXT_MODEL ||
+      "llama3.2"
+    );
+  }
+
   return null;
 };
 
@@ -215,12 +222,13 @@ Rules:
 `;
 
 const generateExpertTechnicalReport = async (
-  analysis = {}
+  analysis = {},
+  { useLocalLlm = false } = {}
 ) => {
   const fallbackReport =
     createFallbackReport(analysis);
 
-  const provider = getProvider();
+  const provider = getProvider({ useLocalLlm });
 
   if (!provider) {
     console.warn(

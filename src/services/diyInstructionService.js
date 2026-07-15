@@ -298,7 +298,8 @@ const hasUsefulDiyContent = (
 
 const generateDiyInstructions = async (
   analysisResult,
-  urgency = "Low"
+  urgency = "Low",
+  { useLocalLlm = false } = {}
 ) => {
   const normalizedUrgency = normalizeUrgency(urgency);
 
@@ -310,7 +311,7 @@ const generateDiyInstructions = async (
     return null;
   }
 
-  const provider = getProvider();
+  const provider = getProvider({ useLocalLlm });
 
   if (!provider) {
     console.error(

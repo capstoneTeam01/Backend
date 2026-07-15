@@ -59,6 +59,7 @@ const UpdateUser = (services) => {
         password,
         phone,
         notificationSettings,
+        aiSettings,
         profileImage,
       } = req.body;
 
@@ -86,6 +87,15 @@ const UpdateUser = (services) => {
             notificationSettings.appointmentReminders,
           );
         }
+      }
+
+      if (
+        aiSettings &&
+        typeof aiSettings === "object" &&
+        aiSettings.useLocalLlm !== undefined
+      ) {
+        update["aiSettings.useLocalLlm"] =
+          Boolean(aiSettings.useLocalLlm);
       }
 
       if (Object.keys(update).length === 0) {

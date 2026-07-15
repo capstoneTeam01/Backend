@@ -59,6 +59,12 @@ const UserSchema = new mongoose.Schema({
       default: true,
     },
   },
+  aiSettings: {
+    useLocalLlm: {
+      type: Boolean,
+      default: false,
+    },
+  },
   isDeleted: {
     type: Boolean,
     default: false,

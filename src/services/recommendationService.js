@@ -59,19 +59,6 @@ const exposedPipeSourceKeywords = [
 ];
 
 
-const containedFixtureKeywords = [
-  "faucet",
-  "tap",
-  "sink",
-  "basin",
-  "shower head",
-  "showerhead",
-  "bathtub faucet",
-  "tub faucet",
-  "tub spout",
-];
-
-
 const lowRiskKeywords = [
   "small drip",
   "minor drip",
@@ -83,30 +70,6 @@ const lowRiskKeywords = [
   "routine maintenance",
 ];
 
-
-const mediumRiskKeywords = [
-  "leak",
-  "active leak",
-  "continuous leak",
-  "drip",
-  "dripping",
-  "steady flow",
-  "pressurized spray",
-  "strong water spray",
-  "heavy water spray",
-  "water shooting out",
-  "spraying water",
-  "faucet spray",
-  "spraying faucet",
-  "clog",
-  "clogged",
-  "slow drain",
-  "blocked drain",
-  "blockage",
-  "water stain",
-  "minor pooling",
-  "localized standing water",
-];
 
 const allowedUrgencyLevels = [
   "Low",
@@ -259,27 +222,6 @@ const getRiskScore = (analysisResult) => {
   }
 
   return Math.round(riskScore);
-};
-
-const isContainedFixtureIssue = (
-  combinedText
-) => {
-  const containsFixture =
-    containsKeyword(
-      combinedText,
-      containedFixtureKeywords
-    );
-
-  const containsExposedPipeSource =
-    containsKeyword(
-      combinedText,
-      exposedPipeSourceKeywords
-    );
-
-  return (
-    containsFixture &&
-    !containsExposedPipeSource
-  );
 };
 
 const hasExposedPipeSource = (
@@ -469,16 +411,16 @@ const hasSpecificLowRiskEvidence = (
   return !hasSeriousHazard;
 };
 
-const hasLowRiskContainedDrip = (
-  analysisResult,
-  combinedText
+const hasLowRiskVisualEvidence = (
+  analysisResult
 ) => {
-  if (!isContainedFixtureIssue(combinedText)) {
-    return false;
-  }
-
   const visualEvidence =
     getVisualEvidence(analysisResult);
+
+  const activeLeakVisible =
+    normalizeBoolean(
+      visualEvidence.activeLeakVisible
+    );
 
   const waterFlow = String(
     visualEvidence.waterFlow || ""
@@ -501,29 +443,20 @@ const hasLowRiskContainedDrip = (
     normalizeBoolean(
       visualEvidence.immediateHazardVisible
     ) ||
-    floodingLevel === "major" ||
-    waterFlow === "gushing" ||
-    waterFlow === "spraying" ||
-    waterFlow === "steady";
+    floodingLevel === "minor" ||
+    floodingLevel === "major";
 
   if (hasHazard) {
     return false;
   }
 
+  if (activeLeakVisible) {
+    return waterFlow === "dripping";
+  }
+
   return (
-    waterFlow === "dripping" ||
-    containsKeyword(
-      combinedText,
-      [
-        "small drip",
-        "minor drip",
-        "occasional drip",
-        "faucet drip",
-        "dripping faucet",
-        "tap drip",
-        "dripping tap",
-      ]
-    )
+    waterFlow === "none" ||
+    waterFlow === "dripping"
   );
 };
 
@@ -532,11 +465,6 @@ const hasMediumRiskVisualEvidence = (
 ) => {
   const visualEvidence =
     getVisualEvidence(analysisResult);
-
-  const activeLeakVisible =
-    normalizeBoolean(
-      visualEvidence.activeLeakVisible
-    );
 
   const waterFlow = String(
     visualEvidence.waterFlow || ""
@@ -547,8 +475,6 @@ const hasMediumRiskVisualEvidence = (
   ).toLowerCase();
 
   return (
-    activeLeakVisible ||
-    waterFlow === "dripping" ||
     waterFlow === "steady" ||
     waterFlow === "spraying" ||
     floodingLevel === "minor"
@@ -709,10 +635,15 @@ const assignUrgencyLevel = (
     };
   }
 
+  const riskScore = getRiskScore(
+    analysisResult
+  );
+
   if (
-    hasLowRiskContainedDrip(
-      analysisResult,
-      combinedText
+    riskScore !== null &&
+    riskScore <= 30 &&
+    hasLowRiskVisualEvidence(
+      analysisResult
     )
   ) {
     return {
@@ -723,12 +654,18 @@ const assignUrgencyLevel = (
   }
 
   if (
-    hasMediumRiskVisualEvidence(
-      analysisResult
-    ) ||
-    containsKeyword(
-      combinedText,
-      mediumRiskKeywords
+    (
+      riskScore === null ||
+      riskScore <= 70
+    ) &&
+    (
+      hasMediumRiskVisualEvidence(
+        analysisResult
+      ) ||
+      (
+        riskScore !== null &&
+        riskScore >= 31
+      )
     )
   ) {
     return {
@@ -740,6 +677,10 @@ const assignUrgencyLevel = (
 
 
   if (
+    (
+      riskScore === null ||
+      riskScore <= 30
+    ) &&
     hasSpecificLowRiskEvidence(
       analysisResult,
       combinedText
@@ -754,7 +695,7 @@ const assignUrgencyLevel = (
 
   const scoreUrgency =
     getUrgencyFromRiskScore(
-      getRiskScore(analysisResult)
+      riskScore
     );
 
   if (scoreUrgency) {
@@ -913,6 +854,7 @@ const generateRecommendation = async (
 
     urgency: urgencyResult.urgency,
     urgencyDescription:
+      analysisResult?.heroDescription ||
       urgencyResult.urgencyDescription,
 
     ...costEstimate,

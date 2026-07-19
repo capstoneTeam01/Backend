@@ -3,7 +3,6 @@ import {
   createAIClient,
   isOllamaEnabled,
 } from "./aiClientService.js";
-import fs from "fs/promises";
 import { visionAnalysisKnowledge } from "./plumbingKnowledgeService.js";
 
 const GROQ_VISION_MODEL =
@@ -142,6 +141,139 @@ const normalizeConfidence = (confidence) => {
   }
 
   return "Low";
+};
+
+const countWords = (text) => {
+  if (typeof text !== "string") {
+    return 0;
+  }
+
+  const cleanedText = text.trim();
+
+  if (cleanedText === "") {
+    return 0;
+  }
+
+  return cleanedText.split(/\s+/).length;
+};
+
+const containsHeroExcludedContent = (text) => {
+  const excludedPattern =
+    /\b(low|medium|high|urgent|urgency|risk|cost|price|estimate|estimated|time|hour|hours|minute|minutes|day|days|week|weeks|diy|provider|professional|recommendation|contact|call|hire|replace|repair|fix|monitor|avoid|shut|turn|book|schedule|dollar|dollars|cad|usd)\b|\$|\d/i;
+
+  return excludedPattern.test(text);
+};
+
+const hasIncompleteHeroTitleEnding = (text) => {
+  const incompleteEndingPattern =
+    /\b(from|with|at|near|of|in|on|to|for|by|and|or|but|the|a|an)$/i;
+
+  return incompleteEndingPattern.test(text.trim());
+};
+
+const toTitleCase = (text) => {
+  return text
+    .replace(/[.!?]+$/g, "")
+    .trim()
+    .split(/\s+/)
+    .map((word) => {
+      return word
+        .split("-")
+        .map((part) => {
+          if (part === "") {
+            return part;
+          }
+
+          return (
+            part.charAt(0).toUpperCase() +
+            part.slice(1).toLowerCase()
+          );
+        })
+        .join("-");
+    })
+    .join(" ");
+};
+
+const getAnalyzedHeroTitle = (
+  heroTitle,
+  detectedObject
+) => {
+  if (typeof heroTitle === "string") {
+    const cleanedTitle = heroTitle
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (
+      countWords(cleanedTitle) <= 4 &&
+      countWords(cleanedTitle) > 0 &&
+      !containsHeroExcludedContent(cleanedTitle) &&
+      !hasIncompleteHeroTitleEnding(cleanedTitle)
+    ) {
+      return toTitleCase(cleanedTitle);
+    }
+  }
+
+  if (
+    typeof detectedObject === "string" &&
+    countWords(detectedObject) > 0 &&
+    countWords(detectedObject) <= 2 &&
+    !containsHeroExcludedContent(detectedObject)
+  ) {
+    return `${toTitleCase(detectedObject)} Issue Detected`;
+  }
+
+  return "Plumbing Issue Detected";
+};
+
+const getAnalyzedHeroDescription = (heroDescription) => {
+  const fallbackDescription =
+    "FixBee found a visible plumbing issue.";
+
+  if (typeof heroDescription !== "string") {
+    return fallbackDescription;
+  }
+
+  const cleanedDescription = heroDescription
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (
+    cleanedDescription === "" ||
+    countWords(cleanedDescription) > 10 ||
+    containsHeroExcludedContent(cleanedDescription)
+  ) {
+    return fallbackDescription;
+  }
+
+  const sentenceEndingCount =
+    (cleanedDescription.match(/[.!?]/g) || []).length;
+
+  if (
+    sentenceEndingCount > 1 ||
+    (
+      sentenceEndingCount === 1 &&
+      !/[.!?]$/.test(cleanedDescription)
+    )
+  ) {
+    return fallbackDescription;
+  }
+
+  const sentenceCaseDescription =
+    cleanedDescription.toLowerCase();
+
+  const sentence = (
+    sentenceCaseDescription.charAt(0).toUpperCase() +
+    sentenceCaseDescription.slice(1)
+  )
+    .replace(/\bfixbee\b/gi, "FixBee")
+    .replace(/\bpvc\b/gi, "PVC")
+    .replace(/\babs\b/gi, "ABS");
+
+  if (/[.!?]$/.test(sentence)) {
+    return sentence;
+  }
+
+  return `${sentence}.`;
 };
 
 const normalizeAnalysisStatus = (status) => {
@@ -366,6 +498,10 @@ const getFallbackResult = (imageUrl) => {
 
     detectedObject: null,
     detectedIssue: null,
+    headline: "Retake Photo Needed",
+    heroTitle: "Retake Photo Needed",
+    heroDescription:
+      "Please retake the photo because the image is unclear.",
     issuesToFix: [],
     riskScore: null,
     visibleRiskSignals: [],
@@ -401,9 +537,12 @@ Return exactly these fields:
   "analysisStatus": "NO_ISSUE_DETECTED, ANALYZED, or LOW_CONFIDENCE",
   "detectedObject": "string or null",
   "detectedIssue": "string or null",
+  "heroTitle": "frontend headline with 4 words maximum",
+  "heroDescription": "frontend sentence with 10 words maximum",
   "issuesToFix": [
     "first visible repair concern",
-    "second visible repair concern"
+    "second visible repair concern",
+    "third visible repair concern"
   ],
   "riskScore": "number from 0 to 100 or null",
   "visibleRiskSignals": [
@@ -441,12 +580,38 @@ Allowed waterFlow values:
 Allowed floodingLevel values:
 ["Unknown", "None", "Minor", "Major"]
 
+HERO DISPLAY TEXT RULES:
+
+- heroTitle and heroDescription are frontend-facing display fields.
+- Generate complete short text. Do not write longer text for the frontend to trim.
+- heroTitle must contain no more than four words.
+- heroTitle must use Title Case, with every word starting with an uppercase letter.
+- heroTitle must clearly name the visible issue.
+- heroTitle must not end with an incomplete word such as "From", "With", "Near", "Of", "In", "On", "To", "For", "And", or "The".
+- heroTitle must not include urgency, risk, cost, time, recommendations, or actions.
+- heroDescription must contain no more than ten words.
+- heroDescription must be one complete, grammatically correct sentence.
+- heroDescription must use sentence case.
+- heroDescription must briefly explain what FixBee visibly found.
+- heroDescription must not include urgency, risk, cost, time, DIY steps, provider advice, recommendations, or actions.
+- Do not shorten either field by cutting off a longer sentence or phrase.
+
 Risk score meaning:
 - Use null for LOW_CONFIDENCE.
 - Use 0 for NO_ISSUE_DETECTED.
 - Use 1 to 30 for Low risk visible repair concerns.
 - Use 31 to 70 for Medium risk visible repair concerns.
 - Use 71 to 100 for High risk visible repair concerns.
+
+LOW AND MEDIUM RISK DISTINCTION:
+
+- Base the riskScore on the complete visible situation, not the issue name or one word such as "leak" or "drip".
+- A visible active leak does not automatically require a Medium score.
+- Use the Low range when the concern is minor and localized, water is absent or limited to isolated dripping, there is no visible pooling or spreading water, there is no immediate hazard, and the fixture remains usable.
+- Minor wear, deposits, surface corrosion, staining, or an isolated drip can remain Low when there is no visible damage progression or meaningful loss of function.
+- Use the Medium range when water is continuous or steadily escaping, a contained fixture is spraying abnormally, localized pooling or spreading is visible, material damage is visible, or the fixture has reduced or unreliable function.
+- Do not increase Low to Medium only because water is visible. Consider flow, containment, visible damage, safety, and functional impact together.
+- Keep all High-risk signal rules below unchanged.
 
 CLASSIFICATION RULES:
 
@@ -483,6 +648,8 @@ If analysisStatus is "NO_ISSUE_DETECTED":
 
 - detectedObject must be populated with the visible plumbing object.
 - detectedIssue must be null.
+- heroTitle must be "No Issue Detected".
+- heroDescription must be "No visible repair issue was found in this image.".
 - issuesToFix must be an empty array.
 - riskScore must be 0.
 - visibleRiskSignals must be an empty array.
@@ -504,6 +671,8 @@ LOW-CONFIDENCE OUTPUT RULES:
 If analysisStatus is "LOW_CONFIDENCE" or confidence is Low:
 
 - detectedIssue must be null;
+- heroTitle must be "Retake Photo Needed";
+- heroDescription must be "Please retake the photo because the image is unclear.";
 - issuesToFix must be an empty array;
 - riskScore must be null;
 - visibleRiskSignals must be an empty array;
@@ -523,6 +692,8 @@ If analysisStatus is "ANALYZED" and confidence is Medium or High:
 
 - detectedObject must be populated;
 - detectedIssue must be populated;
+- heroTitle must follow all hero display text rules;
+- heroDescription must follow all hero display text rules;
 - issuesToFix must contain exactly three concise visible repair concerns;
 - riskScore must be between 1 and 100;
 - visibleRiskSignals must contain short visible evidence phrases such as "active leak", "pressurized spray", "gushing water", "minor pooling", "slow drain", "visible corrosion", "burst pipe", "sewage backup", or "water near electrical";
@@ -602,6 +773,10 @@ const getLowConfidenceResult = (
 
     detectedObject: detectedObject,
     detectedIssue: null,
+    headline: "Retake Photo Needed",
+    heroTitle: "Retake Photo Needed",
+    heroDescription:
+      "Please retake the photo because the image is unclear.",
     issuesToFix: [],
     riskScore: null,
     visibleRiskSignals: [],
@@ -642,6 +817,10 @@ const getNoIssueResult = (
 
     detectedObject: detectedObject,
     detectedIssue: null,
+    headline: "No Issue Detected",
+    heroTitle: "No Issue Detected",
+    heroDescription:
+      "No visible repair issue was found in this image.",
     issuesToFix: [],
     riskScore: 0,
     visibleRiskSignals: [],
@@ -973,12 +1152,25 @@ const createNormalizedResult = (
   const recommendedActions =
     ensureThreeIssueActions(cleanedActions);
 
+  const heroTitle = getAnalyzedHeroTitle(
+    aiResult?.heroTitle,
+    detectedObject
+  );
+
+  const heroDescription =
+    getAnalyzedHeroDescription(
+      aiResult?.heroDescription
+    );
+
   return {
     analysisStatus: "ANALYZED",
     userMessage: null,
 
     detectedObject: detectedObject,
     detectedIssue: effectiveDetectedIssue,
+    headline: heroTitle,
+    heroTitle: heroTitle,
+    heroDescription: heroDescription,
     issuesToFix: issuesToFix,
     riskScore: riskScore,
     visibleRiskSignals: visibleRiskSignals,

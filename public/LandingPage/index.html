@@ -8,20 +8,56 @@
       content="FixBee helps homeowners identify repair issues, follow safe DIY guidance, and connect with trusted professionals."
     />
     <title>FixBee — Buzzing Solutions for Your Home</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              honey: "#fbb800",
+              pale: "#fde68a",
+              cream: "#fff9e6",
+              ink: "#4a2f0b",
+              deep: "#2b1a0e",
+              muted: "#6b5344",
+              video: "#d9d9d9",
+            },
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+            },
+            keyframes: {
+              float: {
+                "0%,100%": { transform: "translateY(0)" },
+                "50%": { transform: "translateY(-10px)" },
+              },
+            },
+            animation: { float: "float 4s ease-in-out infinite" },
+          },
+        },
+      };
+    </script>
+
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
   </head>
-  <body>
-    <header class="site-header">
-      <div class="header-shell">
+
+  <body class="font-sans text-ink bg-white antialiased">
+    <header
+      class="site-header fixed inset-x-0 top-0 z-40 pointer-events-none px-[clamp(10px,1.2vw,18px)]"
+    >
+      <div
+        class="header-shell pointer-events-auto relative flex h-[clamp(72px,6vw,88px)] w-full items-center justify-between gap-6 px-[clamp(72px,8vw,120px)]"
+      >
         <svg
-          class="header-shape"
+          class="header-shape absolute inset-0 z-0 block h-full w-full"
           viewBox="0 0 1500 120"
           preserveAspectRatio="none"
           aria-hidden="true"
@@ -32,54 +68,91 @@
           />
         </svg>
 
-        <a class="brand" href="#home" aria-label="FixBee home">
-          <img src="assets/logo.png" alt="FixBee" class="brand-logo" />
+        <a
+          class="brand relative z-[1] flex flex-shrink-0 items-center"
+          href="#home"
+          aria-label="FixBee home"
+        >
+          <img
+            src="assets/logo.png"
+            alt="FixBee"
+            class="h-[clamp(30px,2.6vw,40px)] w-auto"
+          />
         </a>
 
+        <nav
+          id="primary-nav"
+          class="primary-nav relative z-[1] flex items-center gap-[clamp(28px,2.8vw,40px)] text-[clamp(13px,1vw,15px)] font-semibold text-deep"
+          aria-label="Primary navigation"
+        >
+          <a class="hover:text-honey transition-colors" href="#home">Home</a>
+          <a class="hover:text-honey transition-colors" href="#features"
+            >Features</a
+          >
+          <a class="hover:text-honey transition-colors" href="#team">Team</a>
+          <a class="hover:text-honey transition-colors" href="#contact"
+            >Contact</a
+          >
+          <a
+            class="nav-cta whitespace-nowrap rounded-full bg-deep px-[22px] py-[10px] font-semibold leading-tight text-pale"
+            href="#project-files"
+            >Project Files</a
+          >
+        </nav>
+
         <button
-          class="menu-button"
+          class="menu-button relative z-[1] hidden h-10 w-10 rounded-full bg-deep p-[11px]"
           type="button"
           aria-expanded="false"
           aria-controls="primary-nav"
         >
-          <span></span><span></span><span></span>
+          <span class="block h-0.5 rounded-sm bg-pale"></span>
+          <span class="mt-[7px] block h-0.5 rounded-sm bg-pale"></span>
+          <span class="mt-[7px] block h-0.5 rounded-sm bg-pale"></span>
           <span class="sr-only">Open navigation</span>
         </button>
-
-        <nav
-          id="primary-nav"
-          class="primary-nav"
-          aria-label="Primary navigation"
-        >
-          <a href="#home">Home</a>
-          <a href="#features">Features</a>
-          <a href="#team">Team</a>
-          <a href="#contact">Contact</a>
-          <a class="nav-cta" href="#project-files">Project Files</a>
-        </nav>
       </div>
     </header>
 
     <main>
-      <section id="home" class="hero">
-        <div class="container hero-grid">
-          <div class="hero-copy reveal">
-            <h1><span>Buzzing Solutions</span><br />for Your Home</h1>
-            <p class="hero-lead">
+      <section id="home" class="bg-white pb-16 pt-[150px]">
+        <div
+          class="container-x grid grid-cols-1 items-center gap-10 md:grid-cols-[1.05fr_0.95fr]"
+        >
+          <div class="reveal flex flex-col items-center md:items-start">
+            <div class="mascot-obj hero-bee -mb-2">
+              <object
+                data="assets/animated/Idetentifying.svg"
+                type="image/svg+xml"
+                aria-label="FixBee mascot inspecting with a magnifying glass"
+              ></object>
+            </div>
+            <h1
+              class="mb-5 text-[clamp(42px,5.5vw,70px)] font-extrabold leading-[1.05] tracking-[-0.03em] text-deep text-center md:text-left"
+            >
+              <span class="text-honey">Buzzing Solutions</span> for<br />Your
+              Home
+            </h1>
+            <p
+              class="mb-7 max-w-[500px] text-[17px] text-muted text-center md:text-left"
+            >
               Identify repair issues, get DIY guidance, and connect with trusted
               professionals in minutes.
             </p>
-            <div id="project-files" class="button-row">
+            <div
+              id="project-files"
+              class="flex flex-wrap justify-center gap-3 md:justify-start"
+            >
               <a
-                class="button button-primary"
+                class="btn btn-primary"
                 href="https://www.figma.com/design/AWy8lNUYOab5AG0FnhzwB5/UI---Branding?node-id=1-2"
                 target="_blank"
                 rel="noreferrer"
                 >Figma Files</a
               >
-              <a class="button button-primary" href="#demo">Prototype</a>
+              <a class="btn btn-primary" href="#demo">Prototype</a>
               <a
-                class="button button-primary"
+                class="btn btn-primary"
                 href="https://github.com/capstoneTeam01"
                 target="_blank"
                 rel="noreferrer"
@@ -88,111 +161,183 @@
             </div>
           </div>
 
-          <div class="hero-art reveal">
-            <div class="hero-hex" aria-hidden="true"></div>
+          <div
+            class="reveal relative order-first grid min-h-[440px] place-items-center md:order-none"
+          >
             <img
-              src="assets/fixbee-mascot-friendly.svg"
-              alt="FixBee bee mascot giving a thumbs up"
+              class="relative z-[1] w-[min(100%,380px)] animate-float [filter:drop-shadow(0_22px_28px_rgba(68,38,0,0.18))]"
+              src="assets/hexmobile.svg"
+              alt="FixBee app home screen"
+              data-ph="hexmobile"
             />
           </div>
         </div>
       </section>
 
-      <section id="demo" class="demo-section">
-        <div class="container">
-          <div class="video-shell reveal"><span>App Promo Video</span></div>
+      <section id="demo" class="bg-white pb-[96px] pt-8">
+        <div class="container-x">
+          <div
+            class="reveal mb-[80px] grid min-h-[340px] place-items-center rounded-[40px] bg-video text-[22px] font-semibold text-deep"
+          >
+            <span>App Promo Video</span>
+          </div>
 
-          <div class="section-heading reveal">
-            <h2>How FixBee <span>Works</span></h2>
-            <p>
+          <div class="reveal mx-auto mb-[56px] max-w-[640px] text-center">
+            <h2
+              class="mb-3 text-[clamp(32px,3.8vw,46px)] font-extrabold tracking-[-0.03em] text-deep"
+            >
+              How FixBee <span class="text-honey">Works</span>
+            </h2>
+            <p class="text-[16px] text-muted">
               A simple process designed to help you solve home repair issues
               quickly.
             </p>
           </div>
 
-          <div class="steps-grid">
-            <article class="step reveal">
-              <span class="hex yellow" aria-hidden="true"
-                ><img src="assets/icons/camera.svg" alt=""
-              /></span>
-              <h3>Scan Your Issue</h3>
-              <p>Take a photo of the problem using FixBee.</p>
+          <div class="grid grid-cols-1 gap-10 md:grid-cols-3">
+            <article class="reveal px-2 text-center">
+              <span class="hex-tile hex-yellow mx-auto">
+                <img
+                  src="assets/icons/camera.svg"
+                  alt=""
+                  class="h-[26px] w-[26px]"
+                />
+              </span>
+              <h3 class="mb-2 mt-[18px] text-[20px] font-extrabold text-deep">
+                Smart Issue Detection
+              </h3>
+              <p class="mx-auto max-w-[260px] text-[14px] text-muted">
+                Upload a photo and let FixBee identify the issue, explain its
+                possible cause, and show how urgent the repair is.
+              </p>
             </article>
-            <article class="step reveal">
-              <span class="hex yellow" aria-hidden="true"
-                ><img src="assets/icons/wrench.svg" alt=""
-              /></span>
-              <h3>DIY Guidance</h3>
-              <p>Receive step-by-step instructions for minor repairs.</p>
+            <article class="reveal px-2 text-center">
+              <span class="hex-tile hex-yellow mx-auto">
+                <img
+                  src="assets/icons/wrench.svg"
+                  alt=""
+                  class="h-[26px] w-[26px]"
+                />
+              </span>
+              <h3 class="mb-2 mt-[18px] text-[20px] font-extrabold text-deep">
+                DIY Repair Solutions
+              </h3>
+              <p class="mx-auto max-w-[260px] text-[14px] text-muted">
+                Follow simple repair guides, safety tips, and recommended tools
+                to fix minor household issues safely on your own.
+              </p>
             </article>
-            <article class="step reveal">
-              <span class="hex yellow" aria-hidden="true"
-                ><img src="assets/icons/people.svg" alt=""
-              /></span>
-              <h3>Professional Help</h3>
-              <p>Request quotes from trusted professionals when needed.</p>
+            <article class="reveal px-2 text-center">
+              <span class="hex-tile hex-yellow mx-auto">
+                <img
+                  src="assets/icons/people.svg"
+                  alt=""
+                  class="h-[26px] w-[26px]"
+                />
+              </span>
+              <h3 class="mb-2 mt-[18px] text-[20px] font-extrabold text-deep">
+                Provider Recommendations
+              </h3>
+              <p class="mx-auto max-w-[260px] text-[14px] text-muted">
+                Find trusted local professionals, compare ratings and prices,
+                and choose the right expert for your home repair.
+              </p>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="features" class="features">
-        <div class="container">
-          <div class="section-heading reveal">
-            <h2>Home Repair Simplified</h2>
-            <p>
+      <section id="features" class="bg-honey pb-[104px] pt-[96px]">
+        <div class="container-x">
+          <div class="reveal mx-auto mb-[56px] max-w-[640px] text-center">
+            <h2
+              class="mb-3 text-[clamp(32px,3.8vw,46px)] font-extrabold tracking-[-0.03em] text-deep"
+            >
+              Home Repair Simplified
+            </h2>
+            <p class="mx-auto max-w-[560px] text-[16px] text-deep opacity-90">
               Your trusted companion for faster decisions and hassle-free home
               maintenance every day.
             </p>
           </div>
 
-          <div class="feature-row">
-            <ul class="feature-list left reveal">
+          <div
+            class="mx-auto grid max-w-[1000px] grid-cols-1 items-center gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-x-8"
+          >
+            <ul
+              class="feature-list feature-left reveal grid list-none gap-8 p-0"
+            >
               <li>
-                <span class="hex dark" aria-hidden="true"
-                  ><img src="assets/icons/scan.svg" alt=""
-                /></span>
+                <span class="hex-tile hex-dark">
+                  <img
+                    src="assets/icons/scan.svg"
+                    alt=""
+                    class="h-[20px] w-[20px]"
+                  />
+                </span>
                 Smart Issue Detection
               </li>
               <li>
-                <span class="hex dark" aria-hidden="true"
-                  ><img src="assets/icons/checklist.svg" alt=""
-                /></span>
+                <span class="hex-tile hex-dark">
+                  <img
+                    src="assets/icons/checklist.svg"
+                    alt=""
+                    class="h-[20px] w-[20px]"
+                  />
+                </span>
                 DIY Repair Solutions
               </li>
               <li>
-                <span class="hex dark" aria-hidden="true"
-                  ><img src="assets/icons/alert.svg" alt=""
-                /></span>
+                <span class="hex-tile hex-dark">
+                  <img
+                    src="assets/icons/alert.svg"
+                    alt=""
+                    class="h-[20px] w-[20px]"
+                  />
+                </span>
                 Emergency Alerts
               </li>
             </ul>
 
-            <div class="feature-mascot reveal">
-              <img
-                class="feature-bee"
-                src="assets/fixbee-mascot.svg"
-                alt="FixBee mascot"
-              />
+            <div class="mascot-obj feature-bee reveal mx-auto">
+              <object
+                data="assets/animated/On_Tablet.svg"
+                type="image/svg+xml"
+                aria-label="FixBee mascot holding a tablet"
+              ></object>
             </div>
 
-            <ul class="feature-list right reveal">
+            <ul
+              class="feature-list feature-right reveal grid list-none gap-8 p-0"
+            >
               <li>
-                <span class="hex dark" aria-hidden="true"
-                  ><img src="assets/icons/star.svg" alt=""
-                /></span>
+                <span class="hex-tile hex-dark">
+                  <img
+                    src="assets/icons/star.svg"
+                    alt=""
+                    class="h-[20px] w-[20px]"
+                  />
+                </span>
                 Provider Recommendations
               </li>
               <li>
-                <span class="hex dark" aria-hidden="true"
-                  ><img src="assets/icons/chat.svg" alt=""
-                /></span>
+                <span class="hex-tile hex-dark">
+                  <img
+                    src="assets/icons/chat.svg"
+                    alt=""
+                    class="h-[20px] w-[20px]"
+                  />
+                </span>
                 Multiple Quote Requests
               </li>
               <li>
-                <span class="hex dark" aria-hidden="true"
-                  ><img src="assets/icons/clock.svg" alt=""
-                /></span>
+                <span class="hex-tile hex-dark">
+                  <img
+                    src="assets/icons/clock.svg"
+                    alt=""
+                    class="h-[20px] w-[20px]"
+                  />
+                </span>
                 Repair History Tracking
               </li>
             </ul>
@@ -200,56 +345,79 @@
         </div>
       </section>
 
-      <section class="details">
-        <div class="container">
-          <article class="safety reveal">
-            <div class="phone-wrap">
-              <div class="phone-device" aria-hidden="false">
-                <img
-                  class="phone-screen"
-                  src="assets/issue-detected-fitted.png"
-                  alt="FixBee app showing a high-risk pipe leak on the Issue Detected screen"
-                />
-              </div>
+      <section class="bg-cream pb-[88px] pt-[104px]">
+        <div class="container-x">
+          <article
+            class="reveal mb-[112px] grid grid-cols-1 items-center gap-16 md:grid-cols-[0.95fr_1.05fr]"
+          >
+            <div class="grid place-items-center">
+              <img
+                class="mockup-hex w-[min(100%,360px)]"
+                src="assets/hexmobile.svg"
+                alt="FixBee app — Issue Detected screen"
+                data-ph="hexmobile"
+              />
             </div>
-            <div class="copy">
-              <h2><span>Safety</span> Comes First</h2>
-              <p>
+            <div class="max-w-[520px]">
+              <h2
+                class="mb-3.5 text-[clamp(32px,3.8vw,46px)] font-extrabold leading-[1.15] tracking-[-0.03em] text-deep"
+              >
+                <span class="text-honey">Safety</span> Comes First
+              </h2>
+              <p class="max-w-[460px] text-[15px] leading-[1.55] text-muted">
                 FixBee detects high-risk issues and provides immediate guidance
                 when professional attention may be required.
               </p>
-              <ul class="detail-list">
-                <li>
-                  <span class="hex soft" aria-hidden="true"
-                    ><img src="assets/icons/checklist-ink.svg" alt=""
-                  /></span>
+              <ul class="detail-list mt-[34px] grid list-none gap-[26px] p-0">
+                <li class="flex items-start gap-4">
+                  <span class="hex-tile hex-soft">
+                    <img
+                      src="assets/icons/checklist-ink.svg"
+                      alt=""
+                      class="h-[22px] w-[22px]"
+                    />
+                  </span>
                   <div>
-                    <strong>Risk Assessment</strong>
-                    <small
+                    <strong class="mb-1 block text-[16px] font-bold text-deep"
+                      >Risk Assessment</strong
+                    >
+                    <small class="block text-[14px] leading-[1.5] text-muted"
                       >Identify dangerous situations before attempting
                       repairs.</small
                     >
                   </div>
                 </li>
-                <li>
-                  <span class="hex soft" aria-hidden="true"
-                    ><img src="assets/icons/wrench.svg" alt=""
-                  /></span>
+                <li class="flex items-start gap-4">
+                  <span class="hex-tile hex-soft">
+                    <img
+                      src="assets/icons/wrench.svg"
+                      alt=""
+                      class="h-[22px] w-[22px]"
+                    />
+                  </span>
                   <div>
-                    <strong>Repair Prevention</strong>
-                    <small
+                    <strong class="mb-1 block text-[16px] font-bold text-deep"
+                      >Repair Prevention</strong
+                    >
+                    <small class="block text-[14px] leading-[1.5] text-muted"
                       >Avoid actions that could cause injury or additional
                       damage.</small
                     >
                   </div>
                 </li>
-                <li>
-                  <span class="hex soft" aria-hidden="true"
-                    ><img src="assets/icons/shield.svg" alt=""
-                  /></span>
+                <li class="flex items-start gap-4">
+                  <span class="hex-tile hex-soft">
+                    <img
+                      src="assets/icons/shield.svg"
+                      alt=""
+                      class="h-[22px] w-[22px]"
+                    />
+                  </span>
                   <div>
-                    <strong>Professional Recommendations</strong>
-                    <small
+                    <strong class="mb-1 block text-[16px] font-bold text-deep"
+                      >Professional Recommendations</strong
+                    >
+                    <small class="block text-[14px] leading-[1.5] text-muted"
                       >Get connected with trusted emergency service
                       providers.</small
                     >
@@ -259,45 +427,70 @@
             </div>
           </article>
 
-          <article class="quickfix reveal">
-            <div class="copy">
-              <h2><span>Quick Fix</span> or <span>Pro Fix</span></h2>
-              <p>
+          <article
+            class="reveal grid grid-cols-1 items-center gap-16 md:grid-cols-[1.05fr_0.95fr]"
+          >
+            <div class="order-2 max-w-[560px] md:order-1">
+              <h2
+                class="mb-3.5 text-[clamp(32px,3.8vw,46px)] font-extrabold leading-[1.15] tracking-[-0.03em] text-deep"
+              >
+                <span class="text-honey">Quick Fix</span> or
+                <span class="text-honey">Pro Fix</span>
+              </h2>
+              <p class="max-w-[460px] text-[15px] leading-[1.55] text-muted">
                 Handle home repairs confidently with DIY guidance or find
                 trusted experts for professional assistance.
               </p>
-              <ul class="detail-list">
-                <li>
-                  <span class="hex soft" aria-hidden="true"
-                    ><img src="assets/icons/people.svg" alt=""
-                  /></span>
+              <ul class="detail-list mt-[34px] grid list-none gap-[26px] p-0">
+                <li class="flex items-start gap-4">
+                  <span class="hex-tile hex-soft">
+                    <img
+                      src="assets/icons/people.svg"
+                      alt=""
+                      class="h-[22px] w-[22px]"
+                    />
+                  </span>
                   <div>
-                    <strong>DIY Repair Guidance</strong>
-                    <small
+                    <strong class="mb-1 block text-[16px] font-bold text-deep"
+                      >DIY Repair Guidance</strong
+                    >
+                    <small class="block text-[14px] leading-[1.5] text-muted"
                       >Easy-to-follow instructions with recommended tools and
                       safety guidance.</small
                     >
                   </div>
                 </li>
-                <li>
-                  <span class="hex soft" aria-hidden="true"
-                    ><img src="assets/icons/star-ink.svg" alt=""
-                  /></span>
+                <li class="flex items-start gap-4">
+                  <span class="hex-tile hex-soft">
+                    <img
+                      src="assets/icons/star-ink.svg"
+                      alt=""
+                      class="h-[22px] w-[22px]"
+                    />
+                  </span>
                   <div>
-                    <strong>Trusted Service Providers</strong>
-                    <small
+                    <strong class="mb-1 block text-[16px] font-bold text-deep"
+                      >Trusted Service Providers</strong
+                    >
+                    <small class="block text-[14px] leading-[1.5] text-muted"
                       >Get matched with qualified experts for advanced repairs
                       and emergencies.</small
                     >
                   </div>
                 </li>
-                <li>
-                  <span class="hex soft" aria-hidden="true"
-                    ><img src="assets/icons/chat-ink.svg" alt=""
-                  /></span>
+                <li class="flex items-start gap-4">
+                  <span class="hex-tile hex-soft">
+                    <img
+                      src="assets/icons/chat-ink.svg"
+                      alt=""
+                      class="h-[22px] w-[22px]"
+                    />
+                  </span>
                   <div>
-                    <strong>Compare Quotes &amp; Reviews</strong>
-                    <small
+                    <strong class="mb-1 block text-[16px] font-bold text-deep"
+                      >Compare Quotes &amp; Reviews</strong
+                    >
+                    <small class="block text-[14px] leading-[1.5] text-muted"
                       >Review pricing, ratings, and availability to choose the
                       best provider for the job.</small
                     >
@@ -305,302 +498,93 @@
                 </li>
               </ul>
             </div>
+            <div class="order-1 grid place-items-center md:order-2">
+              <img
+                class="mockup-hex w-[min(100%,360px)]"
+                src="assets/hexmobile.svg"
+                alt="FixBee app — Quick Fix screen"
+                data-ph="hexmobile"
+              />
+            </div>
           </article>
         </div>
       </section>
 
-      <section id="team" class="team">
-        <div class="container">
-          <div class="team-heading reveal">
-            <h2>Meet the <b>Team</b></h2>
-            <p>The people behind FixBee</p>
+      <section
+        id="team"
+        class="relative overflow-hidden bg-honey pb-[80px] pt-[88px]"
+      >
+        <div class="container-x !w-[min(1320px,calc(100%-48px))]">
+          <div class="mascot-obj team-bee reveal mx-auto mb-3">
+            <object
+              data="assets/animated/Solution.svg"
+              type="image/svg+xml"
+              aria-label="FixBee mascot presenting an idea"
+            ></object>
+          </div>
+          <div class="reveal mb-14 text-center">
+            <h2
+              class="text-[clamp(36px,4vw,52px)] font-extrabold leading-[1.12] tracking-[-0.03em] text-[#5c4010]"
+            >
+              Meet the <b class="font-extrabold text-deep">Team</b>
+            </h2>
+            <p
+              class="mx-auto mt-2.5 max-w-[620px] text-[16px] text-deep opacity-85"
+            >
+              We are a team of designers and developers working together to make
+              home repairs simpler, faster, and less stressful for everyone.
+            </p>
           </div>
 
-          <div class="team-grid" role="list">
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/anmol.jpg"
-                  alt="Anmol Singh"
-                />
-              </div>
-              <strong>Anmol Singh</strong>
-              <span class="role">Full-Stack Developer (PM)</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/anmol-singh-tech"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/anmol-singh-tech
-              </a>
-              <a
-                class="social-link"
-                href="https://github.com/anmolss-tech"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img src="assets/icons/github.svg" alt="GitHub" />/anmolss-tech
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/kumara.jpg"
-                  alt="Kumara Swamy"
-                />
-              </div>
-              <strong>Kumara Swamy</strong>
-              <span class="role">Full-Stack Developer (Lead)</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/kumaraswamy-barapati"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/kumaraswamy-barapati
-              </a>
-              <a
-                class="social-link"
-                href="https://github.com/kumaraswamy-barapati"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/github.svg"
-                  alt="GitHub"
-                />/kumaraswamy-barapati
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/ankit.jpg"
-                  alt="Ankit Kate"
-                />
-              </div>
-              <strong>Ankit Kate</strong>
-              <span class="role">UI/UX Designer (Co-Lead)</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/ankitkate"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img src="assets/icons/linkedin.svg" alt="LinkedIn" />/ankitkate
-              </a>
-              <a
-                class="social-link"
-                href="https://www.ankitkate.com"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/globe.svg"
-                  alt="Website"
-                />www.ankitkate.com
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/theertha.jpg"
-                  alt="Theertha Vinod"
-                />
-              </div>
-              <strong>Theertha Vinod</strong>
-              <span class="role">UI/UX Designer (Co-Lead)</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/theerthaavinod"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/theerthaavinod
-              </a>
-              <a
-                class="social-link"
-                href="https://www.theerthavinod.com"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/globe.svg"
-                  alt="Website"
-                />www.theerthavinod.com
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/dalbir.jpg"
-                  alt="Dalbir Singh"
-                />
-              </div>
-              <strong>Dalbir Singh</strong>
-              <span class="role">Full-Stack Developer</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/dalbir-singh-tech"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/dalbir-singh-tech
-              </a>
-              <a
-                class="social-link"
-                href="https://github.com/dalbirSodhi"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img src="assets/icons/github.svg" alt="GitHub" />/dalbirSodhi
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/amritpal.jpg"
-                  alt="Amritpal Singh"
-                />
-              </div>
-              <strong>Amritpal Singh</strong>
-              <span class="role">Full-Stack Developer</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/amritpal-singh-tech"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/amritpal-singh-tech
-              </a>
-              <a
-                class="social-link"
-                href="https://github.com/Amritpalx"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/github.svg"
-                  alt="GitHub"
-                />/Amritpalx
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/deep.jpg"
-                  alt="Deep Patel"
-                />
-              </div>
-              <strong>Deep Patel</strong>
-              <span class="role">Full-Stack Developer</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/deep-patel-tech"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/deep-patel-tech
-              </a>
-              <a
-                class="social-link"
-                href="https://github.com/deep-patel-tech"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/github.svg"
-                  alt="GitHub"
-                />/deep-patel-tech
-              </a>
-            </article>
-
-            <article class="team-card" role="listitem">
-              <div class="team-photo-wrap">
-                <img
-                  class="team-photo"
-                  src="assets/mekhala.jpg"
-                  alt="Mekhala Mannapatt"
-                />
-              </div>
-              <strong>Mekhala Mannapatt</strong>
-              <span class="role">UI/UX Designer</span>
-              <a
-                class="social-link"
-                href="https://linkedin.com/in/mekhalamanappatt"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/linkedin.svg"
-                  alt="LinkedIn"
-                />/mekhalamanappatt
-              </a>
-              <a
-                class="social-link"
-                href="https://behance.net/mekhalamuraly"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src="assets/icons/behance.svg"
-                  alt="Behance"
-                />/mekhalamuraly
-              </a>
-            </article>
-          </div>
+          <div
+            id="team-grid"
+            class="grid grid-cols-1 justify-items-center gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4"
+            role="list"
+          ></div>
         </div>
       </section>
 
-      <section id="contact" class="contact">
-        <div class="honeycomb" aria-hidden="true">
-          <img src="assets/connect-honeycomb.svg" alt="" />
+      <section id="contact" class="relative overflow-hidden bg-honey pt-[72px]">
+        <div
+          class="honeycomb pointer-events-none absolute inset-0 z-0 overflow-hidden"
+        >
+          <img
+            class="absolute inset-0 h-full w-full select-none object-cover [object-position:58%_45%]"
+            src="assets/connect-honeycomb.svg"
+            alt=""
+          />
         </div>
-        <div class="container contact-grid">
-          <div class="contact-copy reveal">
-            <h2>Let's <b>Connect</b></h2>
-            <p>
+
+        <div
+          class="container-x relative z-[1] grid grid-cols-1 items-center gap-[72px] pb-16 md:grid-cols-[1fr_0.88fr]"
+        >
+          <div class="reveal max-w-[440px] mx-auto md:mx-0">
+            <div class="mascot-obj connect-bee mb-4 mx-auto md:mx-0">
+              <object
+                data="assets/animated/All_Done.svg"
+                type="image/svg+xml"
+                aria-label="FixBee mascot giving a thumbs up"
+              ></object>
+            </div>
+            <h2
+              class="mb-3 text-[clamp(32px,3.8vw,46px)] font-extrabold tracking-[-0.03em] text-deep"
+            >
+              Let's <b class="font-extrabold">Connect</b>
+            </h2>
+            <p class="text-deep">
               Have questions, feedback, or want to learn more about FixBee? We'd
               love to hear from you.
             </p>
           </div>
 
-          <form class="contact-form reveal" novalidate>
-            <h3>Get In Touch</h3>
-            <label>
+          <form class="contact-form reveal rounded-[22px] p-[30px]" novalidate>
+            <h3 class="mb-[18px] text-[24px] font-extrabold text-deep">
+              Get In Touch
+            </h3>
+            <label class="mb-3 block text-[13px] font-bold text-deep">
               Full Name
               <input
+                class="mt-1.5 w-full rounded-[10px] border border-transparent bg-white px-3.5 py-3 text-deep outline-none"
                 name="name"
                 type="text"
                 autocomplete="name"
@@ -608,9 +592,10 @@
                 required
               />
             </label>
-            <label>
+            <label class="mb-3 block text-[13px] font-bold text-deep">
               Email Address
               <input
+                class="mt-1.5 w-full rounded-[10px] border border-transparent bg-white px-3.5 py-3 text-deep outline-none"
                 name="email"
                 type="email"
                 autocomplete="email"
@@ -618,25 +603,27 @@
                 required
               />
             </label>
-            <label>
+            <label class="mb-3 block text-[13px] font-bold text-deep">
               Subject
               <input
+                class="mt-1.5 w-full rounded-[10px] border border-transparent bg-white px-3.5 py-3 text-deep outline-none"
                 name="subject"
                 type="text"
                 placeholder="What is this about?"
                 required
               />
             </label>
-            <label>
+            <label class="mb-3 block text-[13px] font-bold text-deep">
               Message
               <textarea
+                class="mt-1.5 min-h-[110px] w-full resize-y rounded-[10px] border border-transparent bg-white px-3.5 py-3 text-deep outline-none"
                 name="message"
                 rows="5"
                 placeholder="Tell us more..."
                 required
               ></textarea>
             </label>
-            <button class="button button-dark" type="submit">
+            <button class="btn btn-dark" type="submit">
               Send Message
               <svg
                 width="16"
@@ -654,21 +641,38 @@
                 />
               </svg>
             </button>
-            <p class="form-status" role="status" aria-live="polite"></p>
+            <p
+              class="form-status min-h-[18px] mt-2.5 text-center text-[12px] font-bold text-deep"
+              role="status"
+              aria-live="polite"
+            ></p>
           </form>
         </div>
 
-        <footer class="site-footer">
-          <div class="container footer-row">
-            <nav aria-label="Footer navigation">
-              <a href="#home">Home</a>
-              <a href="#features">Features</a>
-              <a href="#team">Team</a>
-              <a href="#contact">Contact</a>
+        <footer class="relative z-[1] pb-9 pt-6">
+          <div
+            class="container-x flex flex-col items-center justify-between gap-5 text-deep md:flex-row"
+          >
+            <nav
+              class="flex gap-[26px] text-[14px] font-semibold"
+              aria-label="Footer navigation"
+            >
+              <a class="hover:text-honey transition-colors" href="#home"
+                >Home</a
+              >
+              <a class="hover:text-honey transition-colors" href="#features"
+                >Features</a
+              >
+              <a class="hover:text-honey transition-colors" href="#team"
+                >Team</a
+              >
+              <a class="hover:text-honey transition-colors" href="#contact"
+                >Contact</a
+              >
             </nav>
-            <div class="footer-social">
+            <div class="flex gap-2.5">
               <a
-                class="social"
+                class="social-btn"
                 href="https://www.figma.com/design/AWy8lNUYOab5AG0FnhzwB5/UI---Branding?node-id=1-2"
                 target="_blank"
                 rel="noreferrer"
@@ -687,7 +691,7 @@
                 </svg>
               </a>
               <a
-                class="social"
+                class="social-btn"
                 href="https://github.com/capstoneTeam01"
                 target="_blank"
                 rel="noreferrer"
@@ -706,7 +710,7 @@
                 </svg>
               </a>
             </div>
-            <p>
+            <p class="m-0 text-[13px]">
               © <span data-current-year>2026</span> FixBee. All rights reserved.
             </p>
           </div>

@@ -110,7 +110,7 @@ GROQ_REPORT_MODEL=
 OLLAMA_ENABLED=true
 OLLAMA_URL=http://127.0.0.1:11434
 OLLAMA_TEXT_MODEL=llama3.2
-OLLAMA_VISION_MODEL=llava
+OLLAMA_VISION_MODEL=qwen3-vl:8b
 
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_IDS=
@@ -146,7 +146,7 @@ Install Ollama, then pull the configured text and vision models:
 
 ```bash
 ollama pull llama3.2
-ollama pull llava
+ollama pull qwen3-vl:8b
 ```
 
 Start and verify Ollama:

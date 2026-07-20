@@ -16,7 +16,7 @@ const OPENAI_VISION_MODEL =
 
 const OLLAMA_VISION_MODEL =
   process.env.OLLAMA_VISION_MODEL ||
-  "llava";
+  "qwen3-vl:8b";
 
 const WATER_FLOW_LEVELS = [
   "Unknown",
@@ -69,6 +69,96 @@ const extractJsonObject = (text) => {
 
   return cleanedText.substring(firstBraceIndex, lastBraceIndex + 1);
 };
+
+const VISION_GATE_PROMPT = `
+Inspect only the visible plumbing evidence in the image and return one JSON object with this exact structure:
+{
+  "classification": "NORMAL, VISIBLE_ISSUE, or UNCLEAR",
+  "detectedObject": "visible plumbing object or null",
+  "abnormalEvidence": ["directly visible abnormal sign"],
+  "confidence": "Medium or High",
+  "reason": "brief evidence-based reason"
+}
+
+Use NORMAL when a recognizable plumbing fixture is clearly visible and there is no directly visible leak, liquid, pooling, blockage, crack, rupture, corrosion, irregular deposit, material damage, overflow, sewage, loose part, or abnormal water flow.
+Use VISIBLE_ISSUE only when abnormal physical evidence is directly visible. Do not infer a concealed problem or maintenance need.
+Use UNCLEAR only when the plumbing area cannot be assessed reliably.
+Clean PVC union nuts, moulded seams, fitting edges, normal joint geometry, harmless alignment differences, reflections, highlights, and shadows are normal—not wetness, deposits, looseness, misalignment, or damage.
+A wet ring requires directly visible liquid, droplets, or credible surrounding moisture. Mineral deposits require irregular crust, scale, residue, or discolouration.
+A suspended droplet, forming droplet, or thin intermittent stream hanging from a faucet spout or aerator is VISIBLE_ISSUE evidence of dripping, even when no pooling is visible.
+Irregular white crust, scale, or residue around a faucet aerator is VISIBLE_ISSUE evidence of mineral buildup. Do not confuse irregular crust with clean manufactured plastic or a smooth reflected highlight.
+The normal-PVC safeguards apply to clean pipe fittings and union geometry; they must not suppress directly visible faucet droplets, thin drip streams, or irregular aerator deposits.
+Return JSON only.
+`;
+
+const createResultFromVisualGate = (gateResult, imageUrl) => {
+  const classification = String(
+    gateResult?.classification || ""
+  ).trim().toUpperCase();
+
+  const detectedObject =
+    typeof gateResult?.detectedObject === "string"
+      ? gateResult.detectedObject.trim()
+      : "";
+
+  if (classification === "NORMAL" && detectedObject) {
+    return getNoIssueResult(
+      {
+        confidence: gateResult?.confidence,
+        confidenceReason: gateResult?.reason,
+        visualEvidence: getUnknownVisualEvidence(),
+      },
+      imageUrl,
+      detectedObject
+    );
+  }
+
+  if (classification === "UNCLEAR") {
+    return getLowConfidenceResult(
+      {
+        confidenceReason: gateResult?.reason,
+      },
+      imageUrl,
+      detectedObject || null
+    );
+  }
+
+  return null;
+};
+
+const requestOllamaVisionJson = async ({
+  base64Image,
+  prompt,
+}) => {
+  const response = await fetch(`${process.env.OLLAMA_URL}/api/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.OLLAMA_VISION_MODEL || "qwen3-vl:8b",
+      prompt,
+      images: [base64Image],
+      stream: false,
+      format: "json",
+      options: {
+        num_ctx: 8192,
+        temperature: 0,
+        seed: 42,
+        top_k: 1,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Ollama vision request failed");
+  }
+
+  const data = await response.json();
+  const modelOutput = data.response || data.thinking;
+  return JSON.parse(extractJsonObject(modelOutput));
+};
+
 const analyzeImageWithOllama = async (imageUrl) => {
   try {
     const imageResponse = await fetch(imageUrl);
@@ -80,43 +170,42 @@ const analyzeImageWithOllama = async (imageUrl) => {
     const arrayBuffer = await imageResponse.arrayBuffer();
     const base64Image = Buffer.from(arrayBuffer).toString("base64");
 
-    const ollamaPrompt = `
-${SYSTEM_PROMPT}
-
-IMPORTANT:
-Inspect the image evidence before selecting analysisStatus.
-Use ANALYZED when any visible leak, moisture, wet area, water staining, discoloration, corrosion, rust, crack, rupture, deformation, blockage, pooling, overflow, loose component, or other damage is present.
-Active flowing water is not required for ANALYZED. Visible moisture damage, staining, corrosion, or deterioration is a repair concern.
-Use NO_ISSUE_DETECTED only for a clearly visible, dry, undamaged, normal plumbing fixture with no abnormal evidence anywhere in the affected area.
-If the plumbing area cannot be assessed reliably, use LOW_CONFIDENCE instead of NO_ISSUE_DETECTED.
-Populate detectedIssue, issuesToFix, visibleRiskSignals, and recommendedActions whenever visible abnormal evidence is present.
-Return ONLY the JSON object.
-Do not use markdown.
-Do not wrap the response in \`\`\`json.
-Do not add explanation before or after the JSON.
-`;
-
-    const ollamaResponse = await fetch(`${process.env.OLLAMA_URL}/api/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.OLLAMA_VISION_MODEL || "llava",
-        prompt: ollamaPrompt,
-        images: [base64Image],
-        stream: false,
-        format: "json",
-      }),
+    const gateResult = await requestOllamaVisionJson({
+      base64Image,
+      prompt: VISION_GATE_PROMPT,
     });
 
-    if (!ollamaResponse.ok) {
-      throw new Error("Ollama vision request failed");
+    const gatedResult = createResultFromVisualGate(
+      gateResult,
+      imageUrl
+    );
+
+    if (gatedResult) {
+      return gatedResult;
     }
 
-    const data = await ollamaResponse.json();
-    const cleanedResponse = extractJsonObject(data.response);
-    const aiResult = JSON.parse(cleanedResponse);
+    const ollamaPrompt = `
+${SHARED_SYSTEM_PROMPT}
+
+${ANALYSIS_REQUEST_PROMPT}
+
+VISUAL GATE RESULT:
+${JSON.stringify(gateResult)}
+`;
+
+    const detailedResult = await requestOllamaVisionJson({
+      base64Image,
+      prompt: ollamaPrompt,
+    });
+
+    const aiResult = {
+      ...detailedResult,
+      visibleRiskSignals:
+        Array.isArray(detailedResult?.visibleRiskSignals) &&
+        detailedResult.visibleRiskSignals.length > 0
+          ? detailedResult.visibleRiskSignals
+          : gateResult?.abnormalEvidence,
+    };
 
     return createNormalizedResult(aiResult, imageUrl);
   } catch (error) {
@@ -189,6 +278,63 @@ const normalizeRiskScore = (score, fallbackScore = null) => {
   }
 
   return Math.round(numberScore);
+};
+
+const normalizeIssueRiskScore = (
+  aiResult,
+  visualEvidence
+) => {
+  const requestedScore = normalizeRiskScore(
+    aiResult?.riskScore,
+    1
+  );
+
+  const evidenceText = [
+    aiResult?.detectedIssue,
+    ...(Array.isArray(aiResult?.visibleRiskSignals)
+      ? aiResult.visibleRiskSignals
+      : []),
+  ]
+    .filter((value) => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
+
+  const waterFlow = String(
+    visualEvidence?.waterFlow || ""
+  ).toLowerCase();
+
+  const floodingLevel = String(
+    visualEvidence?.floodingLevel || ""
+  ).toLowerCase();
+
+  const hasHighRiskEvidence =
+    waterFlow === "spraying" ||
+    waterFlow === "gushing" ||
+    floodingLevel === "major" ||
+    normalizeBoolean(visualEvidence?.burstOrRuptureVisible) ||
+    normalizeBoolean(visualEvidence?.sewageVisible) ||
+    normalizeBoolean(visualEvidence?.waterNearElectrical) ||
+    normalizeBoolean(visualEvidence?.immediateHazardVisible) ||
+    /\b(pressurized spray|gushing|burst|ruptured|major flooding|sewage|water near electrical|scalding|steam release|structural danger)\b/.test(
+      evidenceText
+    );
+
+  if (hasHighRiskEvidence) {
+    return Math.max(71, requestedScore);
+  }
+
+  const hasMediumRiskEvidence =
+    waterFlow === "steady" ||
+    floodingLevel === "minor" ||
+    /\b(continuous leak|steady leak|steady flow|pooling|standing water|overflow|blockage|blocked|clogged|visible crack|significant corrosion|moisture damage)\b/.test(
+      evidenceText
+    );
+
+  if (hasMediumRiskEvidence) {
+    return Math.min(70, Math.max(31, requestedScore));
+  }
+
+  return Math.min(30, Math.max(1, requestedScore));
 };
 
 const cleanRiskSignals = (signals, maximumItems = 6) => {
@@ -390,8 +536,6 @@ const getFallbackResult = (imageUrl) => {
 const SYSTEM_PROMPT = `
 You are a practical and cautious plumbing image-analysis assistant for a mobile app called FixBee.
 
-${visionAnalysisKnowledge}
-
 Analyze the uploaded image and return ONLY one valid JSON object.
 Do not include markdown, comments, explanations, or extra text.
 
@@ -447,6 +591,17 @@ Risk score meaning:
 - Use 1 to 30 for Low risk visible repair concerns.
 - Use 31 to 70 for Medium risk visible repair concerns.
 - Use 71 to 100 for High risk visible repair concerns.
+
+VISIBLE-EVIDENCE SEVERITY RUBRIC:
+
+- No issue requires a recognizable plumbing object, an assessable relevant area, dry and intact visible surfaces, and no abnormal visible evidence.
+- Low risk requires at least one localized minor visible concern, such as an isolated droplet, thin intermittent drip, small seepage without spread, light irregular mineral crust, minor surface corrosion, or a slightly loose accessible component without pooling.
+- Suggested Low anchors: minor deposit only 5 to 10; occasional drip 10 to 20; repeated localized dripping 20 to 30.
+- Medium risk requires visible continuous leakage, steady flow, localized pooling, overflow, blockage, visible cracking without spray, significant corrosion, or moisture damage requiring timely repair.
+- High risk requires a visible critical override: pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, water near electrical equipment, scalding water or steam, or structural danger.
+- Do not increase severity because of a possible concealed cause, repair complexity, cost, or a condition that is not visible.
+- Confidence describes image reliability only. Never use Low confidence to represent Low issue severity.
+- The visual gate evidence and detailed analysis must agree. Do not replace directly visible gate evidence with an unsupported different issue.
 
 CLASSIFICATION RULES:
 
@@ -587,6 +742,27 @@ RECOMMENDED ACTION RULES FOR MEDIUM OR HIGH CONFIDENCE:
 - Do not include camera or image-capture instructions.
 - Do not repeat the same recommendation in different wording.
 - Keep each action short and suitable for a mobile app.
+`;
+
+const SHARED_SYSTEM_PROMPT = `
+${SYSTEM_PROMPT}
+
+FIXBEE PLUMBING KNOWLEDGE:
+${visionAnalysisKnowledge}
+
+Use this knowledge as supporting reference for issue terminology and visible evidence. The uploaded image and the FixBee rules above remain authoritative.
+`;
+
+const ANALYSIS_REQUEST_PROMPT = `
+Analyze this plumbing image. First classify it as NO_ISSUE_DETECTED, ANALYZED, or LOW_CONFIDENCE.
+Return riskScore and visibleRiskSignals.
+Use NO_ISSUE_DETECTED for a clear normal dry plumbing fixture with no visible leak, pooling, clog, crack, rupture, corrosion, damage, stain, overflow, sewage, moisture, loose part, or abnormal water behavior.
+Use LOW_CONFIDENCE only when the image is genuinely unusable.
+Use ANALYZED only when a visible repair concern is supported by the image.
+Clearly identify visible dripping, steady flow, pressurized spraying, gushing, burst pipes, standing water, major flooding, sewage, or water near electrical equipment.
+Pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, or water near electrical must produce high-risk evidence and a riskScore of at least 71.
+Populate detectedIssue, issuesToFix, visibleRiskSignals, and recommendedActions whenever visible abnormal evidence is present.
+Return only the required JSON object with no markdown or additional explanation.
 `;
 
 const getLowConfidenceResult = (
@@ -951,11 +1127,6 @@ const createNormalizedResult = (
     effectiveDetectedIssue
   );
 
-  const riskScore = normalizeRiskScore(
-    aiResult?.riskScore,
-    null
-  );
-
   const visibleRiskSignals = cleanRiskSignals(
     aiResult?.visibleRiskSignals
   );
@@ -964,6 +1135,11 @@ const createNormalizedResult = (
     normalizeVisualEvidence(
       aiResult?.visualEvidence
     );
+
+  const riskScore = normalizeIssueRiskScore(
+    aiResult,
+    visualEvidence
+  );
 
   const cleanedActions =
     cleanRecommendedActions(
@@ -1062,6 +1238,68 @@ const analyzeImageWithAI = async (
         model
       );
 
+      const gateResponse =
+        await aiClient.chat.completions.create({
+          model: model,
+          messages: [
+            {
+              role: "system",
+              content: VISION_GATE_PROMPT,
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Classify the visible plumbing evidence in this image.",
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: imageUrl,
+                  },
+                },
+              ],
+            },
+          ],
+          response_format: {
+            type: "json_object",
+          },
+          temperature: 0,
+          max_tokens: 300,
+        });
+
+      const gateContent =
+        gateResponse.choices?.[0]?.message?.content;
+
+      if (!gateContent) {
+        console.error(
+          `${provider} returned empty visual-gate content`
+        );
+        return getBackupAnalysis();
+      }
+
+      let gateResult;
+
+      try {
+        gateResult = JSON.parse(gateContent);
+      } catch (error) {
+        console.error(
+          `${provider} returned invalid visual-gate JSON:`,
+          gateContent
+        );
+        return getBackupAnalysis();
+      }
+
+      const gatedResult = createResultFromVisualGate(
+        gateResult,
+        imageUrl
+      );
+
+      if (gatedResult) {
+        return gatedResult;
+      }
+
       const response =
         await aiClient.chat.completions.create({
           model: model,
@@ -1069,15 +1307,14 @@ const analyzeImageWithAI = async (
           messages: [
             {
               role: "system",
-              content: SYSTEM_PROMPT,
+              content: SHARED_SYSTEM_PROMPT,
             },
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text:
-                    "Analyze this plumbing image. First classify it as NO_ISSUE_DETECTED, ANALYZED, or LOW_CONFIDENCE. Return riskScore and visibleRiskSignals. Use NO_ISSUE_DETECTED for a clear normal dry plumbing fixture with no visible leak, pooling, clog, crack, rupture, corrosion, damage, stain, overflow, sewage, moisture, loose part, or abnormal water behavior. Use LOW_CONFIDENCE only when the image is genuinely unusable. Use ANALYZED only when a visible repair concern is supported by the image. Clearly identify visible dripping, steady flow, pressurized spraying, gushing, burst pipes, standing water, major flooding, sewage, or water near electrical equipment. Pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, or water near electrical must produce high-risk evidence and a riskScore of at least 71. Return only the required JSON object.",
+                  text: `${ANALYSIS_REQUEST_PROMPT}\n\nVISUAL GATE RESULT:\n${JSON.stringify(gateResult)}`,
                 },
                 {
                   type: "image_url",
@@ -1119,6 +1356,14 @@ const analyzeImageWithAI = async (
         );
 
         return getBackupAnalysis();
+      }
+
+      if (
+        !Array.isArray(aiResult?.visibleRiskSignals) ||
+        aiResult.visibleRiskSignals.length === 0
+      ) {
+        aiResult.visibleRiskSignals =
+          gateResult?.abnormalEvidence;
       }
 
       return createNormalizedResult(

@@ -100,7 +100,7 @@ const createAIClient = (
             );
 
             const model = requestUsesVision(request)
-              ? process.env.OLLAMA_VISION_MODEL || "llava"
+              ? process.env.OLLAMA_VISION_MODEL || "qwen3-vl:8b"
               : process.env.OLLAMA_TEXT_MODEL || "llama3.2";
 
             return ollamaClient.chat.completions.create({

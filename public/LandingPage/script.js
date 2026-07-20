@@ -2,7 +2,7 @@ const TEAM = [
   {
     name: "Anmol Singh",
     role: "Full-Stack Developer (PM)",
-    photo: "assets/anmol.png",
+    photo: "assets/Anmol.png",
     badge: "PM",
     socials: [
       {
@@ -20,7 +20,7 @@ const TEAM = [
   {
     name: "Kumara Swamy",
     role: "Full-Stack Developer (Lead)",
-    photo: "assets/kumara.png",
+    photo: "assets/Kumara.png",
     badge: "Lead",
     socials: [
       {
@@ -38,7 +38,7 @@ const TEAM = [
   {
     name: "Ankit Kate",
     role: "UI/UX Designer (Co-Lead)",
-    photo: "assets/ankit.png",
+    photo: "assets/Ankit.png",
     badge: "Co-Lead",
     socials: [
       {
@@ -56,7 +56,7 @@ const TEAM = [
   {
     name: "Theertha Vinod",
     role: "UI/UX Designer (Co-Lead)",
-    photo: "assets/theertha.png",
+    photo: "assets/Theertha.png",
     badge: "Co-Lead",
     socials: [
       {
@@ -74,7 +74,7 @@ const TEAM = [
   {
     name: "Dalbir Singh",
     role: "Full-Stack Developer",
-    photo: "assets/dalbir.png",
+    photo: "assets/Dalbir.png",
     badge: "",
     socials: [
       {
@@ -92,7 +92,7 @@ const TEAM = [
   {
     name: "Amritpal Singh",
     role: "Full-Stack Developer",
-    photo: "assets/amritpal.png",
+    photo: "assets/Amritpal.png",
     badge: "",
     socials: [
       {
@@ -110,7 +110,7 @@ const TEAM = [
   {
     name: "Deep Patel",
     role: "Full-Stack Developer",
-    photo: "assets/deep.png",
+    photo: "assets/Deep.png",
     badge: "",
     socials: [
       {
@@ -128,7 +128,7 @@ const TEAM = [
   {
     name: "Mekhala Mannapatt",
     role: "UI/UX Designer",
-    photo: "assets/mekhala.png",
+    photo: "assets/Mekhala.png",
     badge: "",
     socials: [
       {

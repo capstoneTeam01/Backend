@@ -98,6 +98,7 @@ class User {
     password,
     name,
     location,
+    phone = "",
     role = "user",
     profileImage = null,
     provider = "local",
@@ -107,6 +108,7 @@ class User {
     this.password = password;
     this.name = name;
     this.location = location;
+    this.phone = phone;
     this.role = role;
     this.profileImage = profileImage;
     this.provider = provider;

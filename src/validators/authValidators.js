@@ -11,6 +11,12 @@ const registerSchema = z.object({
     .string()
     .min(8, "password must be at least 8 characters")
     .max(128, "password must be at most 128 characters"),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "phone must be at least 7 digits")
+    .max(20, "phone must be at most 20 characters")
+    .optional(),
   location: z
     .string()
     .trim()

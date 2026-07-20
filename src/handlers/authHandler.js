@@ -54,7 +54,7 @@ const RegisterUser = (services) => {
       });
     }
 
-    const { name, email, password, location, role } = parsed.data;
+    const { name, email, phone, password, location, role } = parsed.data;
 
     try {
       const existing = await UserModel.findOne({
@@ -65,7 +65,7 @@ const RegisterUser = (services) => {
         return res.status(409).json({ message: "email already registered" });
       }
 
-      const user = new User(email, password, name, location, role);
+      const user = new User(email, password, name, location, phone, role);
       const savedUser = await user.save();
 
       let token;

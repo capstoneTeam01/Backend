@@ -2,17 +2,16 @@ const TEAM = [
   {
     name: "Anmol Singh",
     role: "Full-Stack Developer (PM)",
-    photo: "assets/Anmol.png",
-    badge: "PM",
+    photo: "assets/new/Anmol.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/anmol-singh-tech",
+        label: "Anmol Singh on LinkedIn",
         href: "https://linkedin.com/in/anmol-singh-tech",
       },
       {
         icon: "github",
-        label: "/anmolss-tech",
+        label: "Anmol Singh on GitHub",
         href: "https://github.com/anmolss-tech",
       },
     ],
@@ -20,17 +19,16 @@ const TEAM = [
   {
     name: "Kumara Swamy",
     role: "Full-Stack Developer (Lead)",
-    photo: "assets/Kumara.png",
-    badge: "Lead",
+    photo: "assets/new/Kumara.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/kumaraswamy-barapati",
+        label: "Kumara Swamy on LinkedIn",
         href: "https://linkedin.com/in/kumaraswamy-barapati",
       },
       {
         icon: "github",
-        label: "/kumaraswamy-barapati",
+        label: "Kumara Swamy on GitHub",
         href: "https://github.com/kumaraswamy-barapati",
       },
     ],
@@ -38,17 +36,16 @@ const TEAM = [
   {
     name: "Ankit Kate",
     role: "UI/UX Designer (Co-Lead)",
-    photo: "assets/Ankit.png",
-    badge: "Co-Lead",
+    photo: "assets/new/Ankit.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/ankitkate",
+        label: "Ankit Kate on LinkedIn",
         href: "https://linkedin.com/in/ankitkate",
       },
       {
         icon: "globe",
-        label: "www.ankitkate.com",
+        label: "Ankit Kate portfolio",
         href: "https://www.ankitkate.com",
       },
     ],
@@ -56,17 +53,16 @@ const TEAM = [
   {
     name: "Theertha Vinod",
     role: "UI/UX Designer (Co-Lead)",
-    photo: "assets/Theertha.png",
-    badge: "Co-Lead",
+    photo: "assets/new/Theertha.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/theerthaavinod",
+        label: "Theertha Vinod on LinkedIn",
         href: "https://linkedin.com/in/theerthaavinod",
       },
       {
         icon: "globe",
-        label: "www.theerthavinod.com",
+        label: "Theertha Vinod portfolio",
         href: "https://www.theerthavinod.com",
       },
     ],
@@ -74,17 +70,16 @@ const TEAM = [
   {
     name: "Dalbir Singh",
     role: "Full-Stack Developer",
-    photo: "assets/Dalbir.png",
-    badge: "",
+    photo: "assets/new/Dalbir.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/dalbir-singh-tech",
+        label: "Dalbir Singh on LinkedIn",
         href: "https://linkedin.com/in/dalbir-singh-tech",
       },
       {
         icon: "github",
-        label: "/dalbirSodhi",
+        label: "Dalbir Singh on GitHub",
         href: "https://github.com/dalbirSodhi",
       },
     ],
@@ -92,70 +87,73 @@ const TEAM = [
   {
     name: "Amritpal Singh",
     role: "Full-Stack Developer",
-    photo: "assets/Amritpal.png",
-    badge: "",
+    photo: "assets/new/Amritpal.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/amritpal-singh-tech",
+        label: "Amritpal Singh on LinkedIn",
         href: "https://linkedin.com/in/amritpal-singh-tech",
       },
       {
         icon: "github",
-        label: "/Amritpalx",
+        label: "Amritpal Singh on GitHub",
         href: "https://github.com/Amritpalx",
-      },
-    ],
-  },
-  {
-    name: "Deep Patel",
-    role: "Full-Stack Developer",
-    photo: "assets/Deep.png",
-    badge: "",
-    socials: [
-      {
-        icon: "linkedin",
-        label: "/deep-patel-tech",
-        href: "https://linkedin.com/in/deep-patel-tech",
-      },
-      {
-        icon: "github",
-        label: "/deep-patel-tech",
-        href: "https://github.com/deep-patel-tech",
       },
     ],
   },
   {
     name: "Mekhala Mannapatt",
     role: "UI/UX Designer",
-    photo: "assets/Mekhala.png",
-    badge: "",
+    photo: "assets/new/Mekhala.svg",
     socials: [
       {
         icon: "linkedin",
-        label: "/mekhalamanappatt",
+        label: "Mekhala Mannapatt on LinkedIn",
         href: "https://linkedin.com/in/mekhalamanappatt",
       },
       {
         icon: "behance",
-        label: "/mekhalamuraly",
+        label: "Mekhala Mannapatt on Behance",
         href: "https://behance.net/mekhalamuraly",
+      },
+    ],
+  },
+  {
+    name: "Deep Patel",
+    role: "Full-Stack Developer",
+    photo: "assets/new/Deep.svg",
+    socials: [
+      {
+        icon: "linkedin",
+        label: "Deep Patel on LinkedIn",
+        href: "https://linkedin.com/in/deep-patel-tech",
+      },
+      {
+        icon: "github",
+        label: "Deep Patel on GitHub",
+        href: "https://github.com/deep-patel-tech",
       },
     ],
   },
 ];
 
+const TEAM_SOCIAL_ICON = {
+  linkedin: "assets/new/linkedIn-member.svg",
+  github: "assets/new/github-member.svg",
+  behance: "assets/new/behance-member.svg",
+  globe: "assets/icons/globe.svg",
+};
+
 function renderTeam() {
   const grid = document.querySelector("#team-grid");
   if (!grid) return;
 
-  grid.innerHTML = TEAM.map((m) => {
-    const badge = m.badge ? `<span class="team-badge">${m.badge}</span>` : "";
-    const socials = m.socials
+  grid.innerHTML = TEAM.map((member) => {
+    const socials = member.socials
       .map(
-        (s) => `
-        <a href="${s.href}" target="_blank" rel="noreferrer" aria-label="${s.icon}">
-          <img src="assets/icons/${s.icon}.svg" alt="${s.icon}" />
+        (social) => `
+        <a href="${social.href}" target="_blank" rel="noreferrer" aria-label="${social.label}">
+          <img src="${TEAM_SOCIAL_ICON[social.icon]}" alt="" />
         </a>`,
       )
       .join("");
@@ -163,15 +161,15 @@ function renderTeam() {
     return `
       <article class="team-card reveal" role="listitem">
         <div class="team-photo-wrap">
-          ${badge}
-          <img class="team-photo" src="${m.photo}" alt="${m.name}" loading="lazy" />
+          <img class="team-photo" src="${member.photo}" alt="${member.name}" loading="lazy" />
         </div>
-        <strong>${m.name}</strong>
-        <span class="role">${m.role}</span>
+        <strong>${member.name}</strong>
+        <span class="role">${member.role}</span>
         <div class="team-socials">${socials}</div>
       </article>`;
   }).join("");
 }
+
 
 function wirePlaceholders() {
   document.querySelectorAll("img[data-ph]").forEach((img) => {
@@ -211,6 +209,10 @@ function init() {
 
   navigation?.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", closeMenu);
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 420) closeMenu();
   });
 
   window.addEventListener(
@@ -259,7 +261,7 @@ function init() {
     );
 
     formStatus.textContent = "Opening your email app...";
-    window.location.href = `mailto:fixbee.team@gmail.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:capstonet01@gmail.com?subject=${subject}&body=${body}`;
   });
 
   document.querySelectorAll("[data-current-year]").forEach((el) => {

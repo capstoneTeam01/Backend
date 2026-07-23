@@ -197,14 +197,22 @@ function init() {
   const closeMenu = () => {
     menuButton?.setAttribute("aria-expanded", "false");
     navigation?.classList.remove("open");
-    document.body.classList.remove("menu-open");
   };
 
-  menuButton?.addEventListener("click", () => {
+  menuButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
     const isOpen = menuButton.getAttribute("aria-expanded") === "true";
     menuButton.setAttribute("aria-expanded", String(!isOpen));
-    navigation.classList.toggle("open", !isOpen);
-    document.body.classList.toggle("menu-open", !isOpen);
+    navigation?.classList.toggle("open", !isOpen);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (window.innerWidth > 420 || !navigation?.classList.contains("open")) return;
+    if (!header?.contains(event.target)) closeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMenu();
   });
 
   navigation?.querySelectorAll("a").forEach((link) => {

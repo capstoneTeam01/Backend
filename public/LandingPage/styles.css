@@ -982,10 +982,87 @@ picture {
 
 /* The original max-width: 900px block controls the stacked page layout.
    These header-only rules restore the dedicated mobile navigation boundary. */
-@media (min-width: 421px) and (max-width: 900px) {
+@media (min-width: 450px) and (max-width: 900px) {
   .primary-nav.open {
     opacity: 1;
     visibility: visible;
+  }
+}
+
+
+/* Mobile navigation dropdown
+   At 420px and below, the menu opens as a compact panel directly beneath the
+   hamburger instead of covering the viewport. */
+@media (max-width: 450px) {
+  .site-header,
+  .header-shell {
+    overflow: visible;
+  }
+
+  .menu-button {
+    z-index: 5 !important;
+  }
+
+  .primary-nav {
+    position: absolute !important;
+    top: calc(50% + 25px) !important;
+    right: clamp(12px, 5vw, 20px) !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: 4;
+    width: min(220px, calc(100vw - 24px));
+    padding: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 3px !important;
+    border: 1px solid rgba(138, 86, 17, 0.22);
+    border-radius: 14px;
+    background: var(--cream);
+    box-shadow: 0 14px 30px rgba(74, 47, 11, 0.18);
+    font-size: 15px !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
+    transition:
+      opacity 180ms ease,
+      visibility 180ms ease,
+      transform 180ms ease;
+  }
+
+  .primary-nav.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  .primary-nav > a {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    text-align: left;
+  }
+
+  .primary-nav > a:not(.nav-cta):hover,
+  .primary-nav > a:not(.nav-cta):focus-visible {
+    background: rgba(253, 230, 138, 0.58);
+  }
+
+  .primary-nav .nav-cta {
+    justify-content: center;
+    margin-top: 5px;
+    padding: 10px 12px !important;
+    background: var(--secondary);
+    color: var(--cream);
+    font-size: 14px;
+  }
+
+  .primary-nav .nav-cta img {
+    width: 16px;
+    height: 16px;
   }
 }
 

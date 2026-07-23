@@ -103,7 +103,7 @@ picture {
 
 .hero-device,
 .feature-phone-display {
-  filter: drop-shadow(0 22px 28px rgba(68, 38, 0, 0.16));
+  /* filter: drop-shadow(0 22px 28px rgba(68, 38, 0, 0.16)); */
 }
 
 .feature-phone-one {
@@ -134,10 +134,6 @@ picture {
   aspect-ratio: 282 / 452;
 }
 
-.hero-bee object {
-  animation: float 4s ease-in-out infinite;
-}
-
 .feature-bee {
   width: 240px;
   aspect-ratio: 322 / 452;
@@ -157,6 +153,11 @@ picture {
 /* Hero */
 .hero-copy {
   justify-self: start;
+}
+
+.hero-device {
+  width: min(118%, 640px);
+  max-width: none;
 }
 
 .hero-project-link {
@@ -223,6 +224,8 @@ picture {
 }
 
 .feature-phone-display {
+  width: min(118%, 640px);
+  max-width: none;
   object-fit: contain;
 }
 
@@ -497,7 +500,7 @@ picture {
   }
 
   .hero-device {
-    width: min(100%, 500px) !important;
+    width: min(100%, 560px) !important;
     max-width: none;
   }
 
@@ -637,7 +640,7 @@ picture {
   }
 
   .feature-phone-display {
-    width: min(100%, 440px) !important;
+    width: min(100%, 520px) !important;
   }
 
   .feature-display-copy {

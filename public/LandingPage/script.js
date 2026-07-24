@@ -16,23 +16,7 @@ const TEAM = [
       },
     ],
   },
-  {
-    name: "Kumara Swamy",
-    role: "Full-Stack Developer (Lead)",
-    photo: "assets/new/Kumara.svg",
-    socials: [
-      {
-        icon: "linkedin",
-        label: "Kumara Swamy on LinkedIn",
-        href: "https://linkedin.com/in/kumaraswamy-barapati",
-      },
-      {
-        icon: "github",
-        label: "Kumara Swamy on GitHub",
-        href: "https://github.com/kumaraswamy-barapati",
-      },
-    ],
-  },
+
   {
     name: "Ankit Kate",
     role: "UI/UX Designer (Co-Lead)",
@@ -64,6 +48,40 @@ const TEAM = [
         icon: "globe",
         label: "Theertha Vinod portfolio",
         href: "https://www.theerthavinod.com",
+      },
+    ],
+  },
+  {
+    name: "Mekhala Mannapatt",
+    role: "UI/UX Designer",
+    photo: "assets/new/Mekhala.svg",
+    socials: [
+      {
+        icon: "linkedin",
+        label: "Mekhala Mannapatt on LinkedIn",
+        href: "https://linkedin.com/in/mekhalamanappatt",
+      },
+      {
+        icon: "behance",
+        label: "Mekhala Mannapatt on Behance",
+        href: "https://behance.net/mekhalamuraly",
+      },
+    ],
+  },
+  {
+    name: "Kumara Swamy",
+    role: "Full-Stack Developer (Lead)",
+    photo: "assets/new/Kumara.svg",
+    socials: [
+      {
+        icon: "linkedin",
+        label: "Kumara Swamy on LinkedIn",
+        href: "https://linkedin.com/in/kumaraswamy-barapati",
+      },
+      {
+        icon: "github",
+        label: "Kumara Swamy on GitHub",
+        href: "https://github.com/kumaraswamy-barapati",
       },
     ],
   },
@@ -101,23 +119,7 @@ const TEAM = [
       },
     ],
   },
-  {
-    name: "Mekhala Mannapatt",
-    role: "UI/UX Designer",
-    photo: "assets/new/Mekhala.svg",
-    socials: [
-      {
-        icon: "linkedin",
-        label: "Mekhala Mannapatt on LinkedIn",
-        href: "https://linkedin.com/in/mekhalamanappatt",
-      },
-      {
-        icon: "behance",
-        label: "Mekhala Mannapatt on Behance",
-        href: "https://behance.net/mekhalamuraly",
-      },
-    ],
-  },
+
   {
     name: "Deep Patel",
     role: "Full-Stack Developer",
@@ -170,7 +172,6 @@ function renderTeam() {
   }).join("");
 }
 
-
 function wirePlaceholders() {
   document.querySelectorAll("img[data-ph]").forEach((img) => {
     const flag = () => img.classList.add("is-placeholder");
@@ -207,7 +208,8 @@ function init() {
   });
 
   document.addEventListener("click", (event) => {
-    if (window.innerWidth > 420 || !navigation?.classList.contains("open")) return;
+    if (window.innerWidth > 420 || !navigation?.classList.contains("open"))
+      return;
     if (!header?.contains(event.target)) closeMenu();
   });
 

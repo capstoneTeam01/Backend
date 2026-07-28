@@ -27,8 +27,20 @@ const TOOL_IMAGES = {
     name: "Absorbent towels",
     imageUrl: `${TOOL_IMAGE_BASE}/towels.jpg`,
   },
+  "absorbent towel": {
+    name: "Absorbent towel",
+    imageUrl: `${TOOL_IMAGE_BASE}/towels.jpg`,
+  },
   towels: {
     name: "Absorbent towels",
+    imageUrl: `${TOOL_IMAGE_BASE}/towels.jpg`,
+  },
+  towel: {
+    name: "Towel",
+    imageUrl: `${TOOL_IMAGE_BASE}/towels.jpg`,
+  },
+  "towel or rag": {
+    name: "Towel or rag",
     imageUrl: `${TOOL_IMAGE_BASE}/towels.jpg`,
   },
 

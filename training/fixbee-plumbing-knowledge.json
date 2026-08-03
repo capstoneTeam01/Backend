@@ -1,7 +1,7 @@
 {
   "dataset": {
     "name": "FixBee Plumbing Issue Knowledge Base",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "locale": "Canada, with Vancouver and British Columbia defaults",
     "purpose": "Ground Groq, OpenAI, and Ollama responses used by FixBee for plumbing image analysis, urgency classification, safe temporary control, DIY guidance, repair estimates, and professional escalation.",
     "limitations": [
@@ -480,8 +480,8 @@
   ],
   "outputContracts": {
     "imageAnalysis": {
-      "requiredFields": ["analysisStatus", "userMessage", "detectedObject", "detectedIssue", "issuesToFix", "riskScore", "visibleRiskSignals", "visualEvidence", "category", "confidence", "confidenceReason", "recommendedActions"],
-      "rules": ["Return valid JSON only", "category must be Plumbing", "Use riskScore null for LOW_CONFIDENCE", "Use riskScore 0 for NO_ISSUE_DETECTED", "Use riskScore 1 to 30 for Low risk, 31 to 70 for Medium risk, and 71 to 100 for High risk", "Require directly visible abnormal evidence before using ANALYZED", "Require a visible critical override before assigning High risk", "Do not use confidence as issue severity", "recommendedActions must be exactly three concise actions", "Use null instead of invented detail"]
+      "requiredFields": ["analysisStatus", "userMessage", "detectedObject", "detectedIssue", "heroTitle", "heroDescription", "issuesToFix", "riskScore", "visibleRiskSignals", "visualEvidence", "category", "confidence", "confidenceReason", "recommendedActions"],
+      "rules": ["Return valid JSON only", "category must be Plumbing", "heroTitle must be a complete meaningful issue title with no more than four words", "heroTitle should identify the visible issue and affected plumbing object when both fit naturally", "Never shorten heroTitle by cutting off a phrase", "Use riskScore null for LOW_CONFIDENCE", "Use riskScore 0 for NO_ISSUE_DETECTED", "Use riskScore 1 to 30 for Low risk, 31 to 70 for Medium risk, and 71 to 100 for High risk", "Require directly visible abnormal evidence before using ANALYZED", "Require a visible critical override before assigning High risk", "Do not use confidence as issue severity", "recommendedActions must be exactly three concise actions", "Use null instead of invented detail"]
     },
     "diyGuidance": {
       "requiredFields": ["title", "summary", "difficulty", "estimatedTime", "toolsNeeded", "repairSteps", "safetyWarnings", "professionalAdvice"],

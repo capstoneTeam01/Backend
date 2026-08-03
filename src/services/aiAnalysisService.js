@@ -681,7 +681,7 @@ Return exactly these fields:
   "analysisStatus": "NO_ISSUE_DETECTED, ANALYZED, or LOW_CONFIDENCE",
   "detectedObject": "string or null",
   "detectedIssue": "string or null",
-  "heroTitle": "frontend headline with 4 words maximum",
+  "heroTitle": "meaningful issue title with 4 words maximum",
   "heroDescription": "frontend sentence with 10 words maximum",
   "issuesToFix": [
     "first visible repair concern",
@@ -730,7 +730,10 @@ HERO DISPLAY TEXT RULES:
 - Generate complete short text. Do not write longer text for the frontend to trim.
 - heroTitle must contain no more than four words.
 - heroTitle must use Title Case, with every word starting with an uppercase letter.
-- heroTitle must clearly name the visible issue.
+- heroTitle must be a complete, meaningful title that clearly names the visible issue.
+- Include the affected plumbing object when it can fit naturally within four words.
+- Prefer specific titles such as "Leaking PVC Pipe Joint", "Loose Sink Drain Connection", or "Corroded Copper Pipe".
+- Do not return a vague title such as "Plumbing Problem" when the visible issue is identifiable.
 - heroTitle must not end with an incomplete word such as "From", "With", "Near", "Of", "In", "On", "To", "For", "And", or "The".
 - heroTitle must not include urgency, risk, cost, time, recommendations, or actions.
 - heroDescription must contain no more than ten words.
@@ -923,6 +926,7 @@ Use ANALYZED only when a visible repair concern is supported by the image.
 Clearly identify visible dripping, steady flow, pressurized spraying, gushing, burst pipes, standing water, major flooding, sewage, or water near electrical equipment.
 Pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, or water near electrical must produce high-risk evidence and a riskScore of at least 71.
 Populate detectedIssue, issuesToFix, visibleRiskSignals, and recommendedActions whenever visible abnormal evidence is present.
+Return a complete, meaningful heroTitle containing no more than four words. Never shorten it by cutting off a phrase.
 Return only the required JSON object with no markdown or additional explanation.
 `;
 

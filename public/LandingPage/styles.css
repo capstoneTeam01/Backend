@@ -530,10 +530,19 @@ picture {
   }
 
   .hero-project-links {
+    width: min(100%, 600px);
+    margin-right: auto;
+    margin-left: auto;
     flex-direction: column;
     flex-wrap: nowrap;
-    align-items: flex-start;
-    justify-content: flex-start !important;
+    align-items: stretch;
+    justify-content: center !important;
+  }
+
+  .hero-project-link {
+    width: 100%;
+    justify-content: center;
+    background-color: #fde68a;
   }
 
   #demo {

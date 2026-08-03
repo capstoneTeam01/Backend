@@ -530,7 +530,7 @@ picture {
   }
 
   .hero-project-links {
-    width: min(100%, 600px);
+    width: min(100%, 400px);
     margin-right: auto;
     margin-left: auto;
     flex-direction: column;

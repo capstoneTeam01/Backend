@@ -1,0 +1,563 @@
+<svg width="323" height="452" viewBox="0 0 323 452" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+@keyframes kf_Bee_Body_transform_0 {
+  0% {
+    transform: translateX(16.856px) translateY(7px) translateX(0px) translateY(0px);
+  }
+  49.95% {
+    transform: translateX(16.856px) translateY(7px) translateX(0.144px) translateY(15.72px);
+  }
+  100% {
+    transform: translateX(16.856px) translateY(7px) translateX(0px) translateY(0px);
+  }
+}
+#Bee_Body {
+  transform-origin: 0 0;
+  animation: kf_Bee_Body_transform_0 0.799382s linear infinite;
+}
+@keyframes kf_Group_39_transform_0 {
+  0% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  0.81% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  1.62% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  2.53% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  3.34% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  4.05% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  4.96% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  5.87% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  6.68% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  7.59% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  8.4% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  9.21% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  10.12% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  11.03% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  11.84% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  12.75% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  13.56% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  14.27% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  15.18% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  16.09% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  16.9% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  17.81% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  18.62% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  19.43% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  20.34% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  21.15% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  21.96% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  22.87% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  23.68% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  24.39% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  25.3% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  26.21% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  27.02% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  27.94% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  28.74% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  29.55% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  30.47% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  31.07% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  31.88% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  32.79% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  33.6% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  34.31% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  35.22% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  36.13% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  36.94% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  37.85% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  38.66% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  39.47% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  40.38% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  41.19% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  42% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  42.92% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  43.72% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  44.43% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  45.34% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  46.26% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  47.06% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  47.98% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  48.79% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  49.6% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  50.51% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  51.32% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  52.13% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  53.04% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  53.85% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  54.55% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  55.47% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  56.38% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  57.19% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  58.1% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  58.91% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  59.72% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  60.63% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  61.34% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  62.15% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  63.06% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  63.87% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  64.57% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  65.49% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  66.4% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  67.21% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  68.12% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  68.93% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  69.74% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  70.65% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  71.46% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  72.27% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  73.18% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  73.99% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  74.7% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  75.61% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  76.52% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  77.33% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  78.24% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  79.05% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  79.86% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  80.77% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  81.48% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  82.29% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  83.2% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  84.01% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  84.72% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  85.63% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  86.54% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  87.35% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  88.26% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  89.07% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  89.88% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  90.79% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  91.6% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  92.41% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  93.32% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  94.13% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  94.84% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  95.75% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  96.66% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  97.47% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  98.38% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+  99.33% {
+    animation-timing-function: cubic-bezier(1, -0.008, 0, 1.007);
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(1) scaleY(1) translate(-142.938px, -44.474px);
+  }
+  100% {
+    transform: translateY(140.553px) translate(142.938px, 44.474px) scaleX(0.6) scaleY(0.6) translate(-142.938px, -44.474px);
+  }
+}
+#Group_39 {
+  transform-origin: 0 0;
+  animation: kf_Group_39_transform_0 0.799382s linear infinite;
+}
+@keyframes kf_Shadow_transform_0 {
+  0% {
+    animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1);
+    transform: translateX(131.5px) translateY(436.56px) translate(30px, 4px) scaleX(0.5) scaleY(0.5) translate(-30px, -4px) scaleX(1) scaleY(1);
+  }
+  50.1% {
+    transform: translateX(131.5px) translateY(436.56px) translate(30px, 4px) scaleX(1) scaleY(1) translate(-30px, -4px) scaleX(1) scaleY(1);
+  }
+  100% {
+    transform: translateX(131.5px) translateY(436.56px) translate(30px, 4px) scaleX(0.5) scaleY(0.5) translate(-30px, -4px) scaleX(1) scaleY(1);
+  }
+}
+#Shadow {
+  transform-origin: 0 0;
+  animation: kf_Shadow_transform_0 0.799382s linear infinite;
+}
+</style>
+<g id="All_Done" clip-path="url(#clip0_2359_3900)">
+<g id="Bee_Body" transform="translate(16.8559 7)">
+<g id="Group_39" transform="translate(0 140.553)">
+<path id="e9jnoUMD2mq4" transform="translate(190.511 1.85486)" d="M46.8083 9.17769C52.6453 5.72069 61.7303 1.09069 70.6343 0.164693C75.0433 -0.294307 79.2773 0.169705 83.0303 2.0177C86.7533 3.8517 90.2163 7.1517 92.9403 12.7497C97.2513 21.6107 95.6393 33.5917 89.4933 45.7017C83.3873 57.7347 73.0383 69.3847 60.8363 77.2367C54.1093 81.5657 40.2443 85.8617 27.1733 86.8717C20.6643 87.3747 14.5743 87.0437 9.8043 85.6217C5.0363 84.1997 1.9443 81.8147 0.668296 78.4437C-0.643704 74.9797 -0.0247056 69.7447 2.53229 63.1717C5.04229 56.7207 9.2233 49.4817 14.2633 42.3467C24.3883 28.0167 37.6033 14.6287 46.8083 9.17769Z" fill="#CDF0F6" fill-opacity="0.65" stroke="#28899A" stroke-width="5"/>
+<path id="e9jnoUMD2mq10" d="M48.5574 9.17856C42.7199 5.72156 33.635 1.09155 24.7314 0.164554C20.3222 -0.294446 16.0876 0.170558 12.3346 2.01856C8.61154 3.85156 5.14864 7.15156 2.42494 12.7496C-1.88606 21.6116 -0.274061 33.5916 5.87174 45.7026C11.9777 57.7346 22.3267 69.3855 34.5286 77.2375C41.2555 81.5665 55.1212 85.8616 68.1923 86.8716C74.7007 87.3756 80.7905 87.0436 85.5607 85.6216C90.3287 84.2006 93.4217 81.8155 94.6977 78.4445C96.0087 74.9795 95.3897 69.7446 92.8327 63.1726C90.3227 56.7206 86.1427 49.4826 81.1015 42.3476C70.9772 28.0166 57.762 14.6286 48.5574 9.17856Z" fill="#CDF0F6" fill-opacity="0.65" stroke="#28899A" stroke-width="5"/>
+</g>
+<g id="e9jnoUMD2mq5" transform="translate(191.168 152.996)">
+<path id="Vector" d="M53.5408 38.7723C42.5818 47.9123 23.5758 47.8673 13.5128 46.4603C12.2718 46.2863 0.64 46.6519 0 47.7289L2.51259 55.5036C2.23759 55.9666 3.20732 58.5758 3.20732 59.1148L5.29283 73.7353C5.29283 74.6733 5.73183 75.5583 6.47983 76.1253L12.9868 81.0592C13.3338 81.3222 13.7218 81.5063 14.1488 81.5913C27.1728 84.1863 56.7218 82.7353 72.0858 62.2943C76.2028 62.9403 80.5088 62.5193 83.6698 61.9313C85.2498 61.6373 86.1938 60.0633 85.8408 58.4953L77.4148 21.0103C77.2898 20.4533 77.3318 19.8743 77.5018 19.3303C80.1268 10.9173 76.0978 4.32325 73.4218 1.74225C73.2198 1.54725 72.9718 1.38727 72.7158 1.27227C60.4028 -4.28973 59.7798 9.60326 61.2918 19.3983C61.5378 20.9913 60.5108 22.5033 59.2168 23.4633C55.4578 26.2533 54.5198 32.3683 54.5578 36.3873C54.5658 37.2953 54.2388 38.1913 53.5408 38.7723Z" fill="#2C2626"/>
+<path id="Vector_2" transform="translate(68.4311 19.3774)" d="M29.5647 21.1939C30.0667 -0.475122 16.9628 -3.09712 8.00176 2.58888C6.80576 3.34788 3.27675 6.83287 2.35075 10.9019C2.30275 11.1139 2.23875 11.3229 2.15575 11.5229C-2.16525 21.9089 0.372757 33.8159 6.54076 39.7729C6.77276 39.9979 7.05874 40.1789 7.35674 40.3059C27.1737 48.7309 30.4297 31.1279 29.5647 21.1939Z" fill="#2C2626" stroke="black" stroke-width="5"/>
+<path id="Vector_3" transform="translate(0.122436)" d="M75.5454 21.0103C75.4204 20.4533 75.4624 19.8743 75.6324 19.3303C78.2574 10.9173 74.2284 4.32325 71.5524 1.74225C71.3504 1.54725 71.1024 1.38727 70.8464 1.27227C58.5334 -4.28973 57.9104 9.60326 59.4224 19.3983C59.6684 20.9913 58.6414 22.5033 57.3474 23.4633C53.5884 26.2533 52.6504 32.3683 52.6884 36.3873C52.6964 37.2953 52.3694 38.1913 51.6714 38.7723C40.7124 47.9123 21.7064 47.8673 11.6434 46.4603C10.4024 46.2863 0.64 45.7827 0 46.8597L3.84338 55.8153C3.56838 56.2783 3.42339 56.8073 3.42339 57.3463V73.7353C3.42339 74.6733 3.86238 75.5583 4.61038 76.1253L11.1174 81.0592C11.4644 81.3222 11.8524 81.5063 12.2794 81.5913C25.3034 84.1863 54.8524 82.7353 70.2164 62.2943" stroke="black" stroke-width="5"/>
+<path id="Vector_4" transform="translate(60.0628 56.5233)" d="M0 0C4.901 7.079 15.615 6.57 21.86 5.408" stroke="black" stroke-width="5"/>
+</g>
+<path id="Vector_5" transform="translate(96.3736 299.673)" d="M28.9431 52.9226C10.0221 63.8356 2.03611 26.7936 0.0111106 3.17263C-0.168889 1.06463 1.86911 -0.506362 3.88011 0.151638L38.6411 11.5297C39.9161 11.9467 40.7631 13.1626 40.6791 14.5016C39.4961 33.2216 33.2351 46.9307 29.8381 52.0847C29.6141 52.4247 29.2961 52.7196 28.9431 52.9226Z" fill="#2C2626" stroke="black" stroke-width="5"/>
+<path id="Vector_6" transform="translate(155.776 299.673)" d="M11.7417 52.9226C30.6637 63.8356 38.6487 26.7936 40.6737 3.17263C40.8537 1.06463 38.8157 -0.506362 36.8047 0.151638L2.04473 11.5297C0.769727 11.9467 -0.0782748 13.1626 0.00572519 14.5016C1.18973 33.2216 7.44973 46.9307 10.8467 52.0847C11.0707 52.4247 11.3897 52.7196 11.7417 52.9226Z" fill="#2C2626" stroke="black" stroke-width="5"/>
+<path id="Vector_7" transform="translate(37.5214 183.491)" d="M55.5903 1.02702C57.7753 -0.936984 61.2623 0.0470212 62.0983 2.86402L62.6823 4.83102H160.274L170.551 34.963C180.415 48.262 182.538 70.289 182.881 79.639C182.88 120.38 138.695 144.056 100.675 139.9C71.5063 134.844 46.3943 122.416 37.9444 96.167C34.2939 100.672 29.0987 101.63 26.2256 101.452C25.8195 101.427 25.435 101.32 25.1036 101.181C18.7457 98.528 15.7176 95.242 15.0499 91.714C14.39 88.227 16.1222 84.922 18.2774 82.411C19.424 81.075 19.1476 78.879 17.7979 78.029C6.85924 71.139 1.67544 61.117 0.309638 56.217C0.254038 56.017 0.219839 55.82 0.199339 55.628C-1.37446 40.873 6.56954 29.559 17.0049 21.454C26.2082 14.306 37.4573 9.55802 46.2133 7.01402V4.83102H51.3573L55.5903 1.02702ZM40.4893 46.758C38.9323 47.105 37.6526 47.417 36.6084 47.694C34.8648 48.157 33.8249 48.512 33.254 48.756C34.8171 52.432 36.1064 55.665 37.1797 58.55C38.0337 54.612 39.1335 50.573 40.4893 46.758Z" fill="#2C2626"/>
+<g id="Mask_group" transform="translate(37.5214 183.491)">
+<mask id="mask0_2359_3900" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="323" height="452">
+<g id="Group">
+<path id="Vector_8" d="M55.5903 1.02702C57.7753 -0.936984 61.2623 0.0470212 62.0983 2.86402L62.6823 4.83102H160.274L170.551 34.963C180.415 48.262 182.538 70.289 182.881 79.639C182.88 120.38 138.695 144.056 100.675 139.9C71.5063 134.844 46.3943 122.416 37.9444 96.167C34.2939 100.672 29.0987 101.63 26.2256 101.452C25.8195 101.427 25.435 101.32 25.1036 101.181C18.7457 98.528 15.7176 95.242 15.0499 91.714C14.39 88.227 16.1222 84.922 18.2774 82.411C19.424 81.075 19.1476 78.879 17.7979 78.029C6.85924 71.139 1.67544 61.117 0.309638 56.217C0.254038 56.017 0.219839 55.82 0.199339 55.628C-1.37446 40.873 6.56954 29.559 17.0049 21.454C26.2082 14.306 37.4573 9.55802 46.2133 7.01402V4.83102H51.3573L55.5903 1.02702ZM40.4893 46.758C38.9323 47.105 37.6526 47.417 36.6084 47.694C34.8648 48.157 33.8249 48.512 33.254 48.756C34.8171 52.432 36.1064 55.665 37.1797 58.55C38.0337 54.612 39.1335 50.573 40.4893 46.758Z" fill="white"/>
+</g>
+</mask>
+<g mask="url(#mask0_2359_3900)">
+<g id="Group_2" transform="translate(-5.00188 -5.00279)">
+<path id="Vector_9" d="M67.6842 9.8338L62.8912 11.2568L63.9532 14.8338H67.6842V9.8338ZM165.276 9.8338L170.009 8.2198L168.854 4.8338H165.276V9.8338ZM175.553 39.9658L170.82 41.5798L171.072 42.3178L171.537 42.9438L175.553 39.9658ZM187.883 84.6418L192.883 84.6428V84.5508L192.879 84.4588L187.883 84.6418ZM105.677 144.903L104.823 149.83L104.977 149.857L105.133 149.874L105.677 144.903ZM42.9463 101.17L47.7058 99.6378L44.8758 90.8468L39.0615 98.0218L42.9463 101.17ZM51.2152 12.0168L52.6092 16.8188L56.2152 15.7718V12.0168H51.2152ZM51.2152 9.8338V4.8338H46.2148V9.8338H51.2152ZM56.3592 9.8338V14.8338H58.2762L59.7012 13.5528L56.3592 9.8338ZM45.4912 51.7608L50.2022 53.4348L53.2332 44.9078L44.4012 46.8808L45.4912 51.7608ZM38.2559 53.7588L36.2921 49.1598L31.7012 51.1208L33.6545 55.7148L38.2559 53.7588ZM42.1816 63.5528L37.4955 65.2958L43.4492 81.2988L47.068 64.6118L42.1816 63.5528ZM60.5922 6.0298L63.9342 9.74879C63.3872 10.2398 62.5162 9.99379 62.3072 9.28979L67.1002 7.8668L71.8942 6.4438C70.0122 0.105797 62.1672 -2.1082 57.2492 2.3108L60.5922 6.0298ZM67.1002 7.8668L62.3072 9.28979L62.8912 11.2568L67.6842 9.8338L72.4782 8.41079L71.8942 6.4438L67.1002 7.8668ZM67.6842 9.8338V14.8338H165.276V9.8338V4.8338H67.6842V9.8338ZM165.276 9.8338L160.544 11.4478L170.82 41.5798L175.553 39.9658L180.285 38.3518L170.009 8.2198L165.276 9.8338ZM175.553 39.9658L171.537 42.9438C175.854 48.7648 178.658 56.7958 180.402 64.8438C182.128 72.8108 182.722 80.3468 182.886 84.8258L187.883 84.6418L192.879 84.4588C192.701 79.5868 192.062 71.4338 190.175 62.7258C188.305 54.0978 185.116 44.4658 179.568 36.9868L175.553 39.9658ZM187.883 84.6418H182.883C182.882 102.986 172.995 117.665 158.271 127.444C143.469 137.274 124.093 141.886 106.22 139.933L105.677 144.903L105.133 149.874C125.281 152.076 147.008 146.928 163.803 135.774C180.677 124.569 192.882 107.039 192.883 84.6428L187.883 84.6418ZM105.677 144.903L106.53 139.977C77.9362 135.02 55.2802 123.166 47.7058 99.6378L42.9463 101.17L38.1868 102.702C47.513 131.673 75.0812 144.674 104.823 149.83L105.677 144.903ZM42.9463 101.17L39.0615 98.0218C36.6971 100.94 33.2743 101.572 31.5363 101.465L31.2275 106.455L30.9185 111.445C34.9266 111.693 41.8944 110.41 46.8311 104.318L42.9463 101.17ZM31.2275 106.455L31.5363 101.465C31.7947 101.481 31.9594 101.54 32.0312 101.57L30.1055 106.184L28.1796 110.799C28.9144 111.105 29.8478 111.379 30.9185 111.445L31.2275 106.455ZM30.1055 106.184L32.0312 101.57C26.3218 99.1868 25.1732 96.8888 24.9645 95.7868L20.0518 96.7168L15.1389 97.6458C16.2657 103.6 21.1733 107.874 28.1796 110.799L30.1055 106.184ZM20.0518 96.7168L24.9645 95.7868C24.7246 94.5198 25.2967 92.7398 27.0734 90.6698L23.2793 87.4138L19.4853 84.1568C16.9517 87.1088 14.059 91.9398 15.1389 97.6458L20.0518 96.7168ZM23.2793 87.4138L27.0733 90.6708C28.6633 88.8178 29.1762 86.4988 28.943 84.4698C28.713 82.4688 27.6765 80.1948 25.4646 78.8008L22.7998 83.0318L20.135 87.2628C19.2728 86.7198 19.0494 85.9688 19.0084 85.6118C18.9642 85.2268 19.0419 84.6738 19.4853 84.1568L23.2793 87.4138ZM22.7998 83.0318L25.4646 78.8008C15.7028 72.6528 11.2024 63.7318 10.128 59.8768L5.31152 61.2198L0.495122 62.5618C2.15222 68.5078 8.01942 79.6308 20.135 87.2628L22.7998 83.0318ZM5.31152 61.2198L10.128 59.8768C10.1587 59.9878 10.1695 60.0678 10.1729 60.0998L5.20122 60.6308L0.229421 61.1608C0.273921 61.5778 0.353022 62.0518 0.495122 62.5618L5.31152 61.2198ZM5.20122 60.6308L10.1729 60.0998C8.85382 47.7338 15.3772 37.9368 25.0739 30.4058L22.0068 26.4568L18.9398 22.5078C7.76562 31.1868 -1.59908 44.0178 0.229421 61.1608L5.20122 60.6308ZM22.0068 26.4568L25.0739 30.4058C33.6363 23.7548 44.2592 19.2448 52.6092 16.8188L51.2152 12.0168L49.8202 7.2158C40.6592 9.8768 28.7839 14.8618 18.9398 22.5078L22.0068 26.4568ZM51.2152 12.0168H56.2152V9.8338H51.2152H46.2148V12.0168H51.2152ZM51.2152 9.8338V14.8338H56.3592V9.8338V4.8338H51.2152V9.8338ZM56.3592 9.8338L59.7012 13.5528L63.9342 9.74879L60.5922 6.0298L57.2492 2.3108L53.0172 6.1148L56.3592 9.8338ZM45.4912 51.7608L44.4012 46.8808C42.7961 47.2388 41.4499 47.5658 40.327 47.8648L41.6103 52.6968L42.8937 57.5298C43.8592 57.2728 45.0724 56.9768 46.5812 56.6398L45.4912 51.7608ZM41.6103 52.6968L40.327 47.8648C38.497 48.3508 37.1891 48.7768 36.2921 49.1598L38.2559 53.7588L40.2196 58.3568C40.4645 58.2518 41.2364 57.9698 42.8937 57.5298L41.6103 52.6968ZM38.2559 53.7588L33.6545 55.7148C35.1923 59.3318 36.4526 62.4928 37.4955 65.2958L42.1816 63.5528L46.8678 61.8088C45.764 58.8418 44.4456 55.5378 42.8572 51.8018L38.2559 53.7588ZM42.1816 63.5528L47.068 64.6118C47.8855 60.8428 48.9306 57.0138 50.2022 53.4348L45.4912 51.7608L40.7799 50.0858C39.3401 54.1378 38.1857 58.3868 37.2952 62.4928L42.1816 63.5528Z" fill="black"/>
+</g>
+</g>
+</g>
+<path id="Vector_10" transform="translate(65.2382 59.4856)" d="M6.85925 47.8769C-11.9205 98.4039 12.2765 127.513 26.7226 135.751C65.7266 159.184 108.583 149.176 125.135 141.243C159.083 127.329 160.178 97.6769 159.275 84.8619C156.274 42.2629 139.92 20.1119 113.034 7.97592C55.4895 -17.999 15.2859 25.9079 6.85925 47.8769Z" fill="#FDE68A" stroke="black" stroke-width="5"/>
+<path id="Vector_11" transform="translate(71.1732 75.9893)" d="M126.608 108.979C164.759 78.1662 139.078 17.6632 117.499 0C141.499 16.5 144.515 35.0002 148.999 52.0002C151.739 62.3902 154.499 88.0002 141.499 105C137.389 110.887 124.878 123.428 96.8235 128.956C55.9995 137 11.0005 125 0 87.5002C47.2685 149.84 109.501 120.83 126.608 108.979Z" fill="#FBB800"/>
+<path id="Vector_12" transform="translate(79.6248 152.996)" d="M30.8279 9.351C30.8279 14.515 25.6899 18.702 15.4139 18.702C6.9009 18.702 0 15.585 0 9.351C0 3.117 6.9009 0 15.4139 0C23.9269 0 30.8279 3.117 30.8279 9.351Z" fill="#FA9C90"/>
+<path id="Vector_13" transform="translate(182.383 150.918)" d="M30.827 9.35101C30.827 14.515 25.689 18.702 15.414 18.702C6.90099 18.702 0 15.585 0 9.35101C0 3.11701 6.90099 0 15.414 0C23.926 0 30.827 3.11701 30.827 9.35101Z" fill="#FA9C90"/>
+<path id="Vector_14" transform="translate(159.552)" d="M10.003 73.3278C3.69601 78.6591 0.707 73.9635 0 70.9493L5.116 44.4149C10.997 19.1297 23.316 11.5505 28.53 7.28863C42.356 -2.23181 47.946 -0.546831 50.888 1.93168C63.646 16.0656 48.478 25.9075 34.593 31.1445C15.766 39.4757 11.473 59.446 10.003 73.3278Z" fill="black"/>
+<path id="Vector_15" transform="translate(69.7805)" d="M45.6882 73.3278C51.9952 78.6591 54.9842 73.9635 55.6902 70.9493L50.5752 44.4149C44.6942 19.1297 32.3752 11.5505 27.1612 7.28863C13.3352 -2.23181 7.74508 -0.546831 4.80288 1.93168C-7.95502 16.0656 7.21249 25.9075 21.0982 31.1445C39.9252 39.4757 44.2182 59.446 45.6882 73.3278Z" fill="black"/>
+<path id="Vector_16" transform="translate(98.1212 115.591)" d="M13.3585 35.3258C20.7362 35.3258 26.717 27.4179 26.717 17.6629C26.717 7.90795 20.7362 0 13.3585 0C5.9808 0 0 7.90795 0 17.6629C0 27.4179 5.9808 35.3258 13.3585 35.3258Z" fill="#281E1F"/>
+<path id="Vector_17" transform="translate(110.452 121.826)" d="M5.1379 10.39C7.97548 10.39 10.2758 8.06409 10.2758 5.19498C10.2758 2.32587 7.97548 0 5.1379 0C2.30032 0 0 2.32587 0 5.19498C0 8.06409 2.30032 10.39 5.1379 10.39Z" fill="white"/>
+<path id="Vector_18" transform="translate(167.996 115.591)" d="M13.3585 35.3258C20.7362 35.3258 26.717 27.4179 26.717 17.6629C26.717 7.90795 20.7362 0 13.3585 0C5.9808 0 0 7.90795 0 17.6629C0 27.4179 5.9808 35.3258 13.3585 35.3258Z" fill="#281E1F"/>
+<path id="Vector_19" transform="translate(172.106 121.826)" d="M5.1379 10.39C7.97548 10.39 10.2758 8.06409 10.2758 5.19498C10.2758 2.32587 7.97548 0 5.1379 0C2.30032 0 0 2.32587 0 5.19498C0 8.06409 2.30032 10.39 5.1379 10.39Z" fill="white"/>
+<path id="Vector_20" transform="translate(131.004 157.151)" d="M0 0C5.138 6.234 16.441 14.962 28.772 0" stroke="black" stroke-width="5" stroke-linecap="round"/>
+<path id="Vector_21" transform="translate(80.0892 220.677)" d="M121.897 0.310881C74.2526 23.3449 29.2316 11.3529 9.21656 0.803877C7.43456 -0.135123 5.19156 0.783877 4.68856 2.73488L0.0947581 20.5399C-0.237342 21.8269 0.32236 23.1879 1.47796 23.8449C56.8046 55.3099 132.093 27.8459 132.093 22.7109C132.093 19.1579 128.589 8.77188 126.074 1.93788C125.457 0.26388 123.503 -0.466119 121.897 0.310881Z" fill="#FDE68A" stroke="black" stroke-width="2"/>
+<path id="Vector_22" transform="translate(88.4222 276.737)" d="M106.596 0.353828C62.3285 23.5848 29.1325 12.8828 7.82848 0.779823C6.14348 -0.177177 3.99048 0.631814 3.39648 2.47681L0.142476 12.5908C-0.280524 13.9048 0.262474 15.3518 1.45147 16.0528C55.5615 47.9578 111.595 22.0138 112.456 12.3668C112.688 9.76083 112.113 5.74481 110.615 1.73481C110.018 0.13481 108.108 -0.439172 106.596 0.353828Z" fill="#FDE68A" stroke="black" stroke-width="2"/>
+<path id="Vector_23" transform="translate(97.5872 263.012)" d="M92.2495 0.0861925C65.0725 6.53719 23.3025 3.28617 3.44653 0.66917C1.46853 0.40817 -0.234468 2.0872 0.0265317 4.0652L1.31853 13.8652C1.46753 14.9912 2.22953 15.9382 3.31053 16.2832C31.1075 25.1432 73.6725 21.1202 93.8715 16.2642C95.1935 15.9462 96.0985 14.7552 96.0985 13.3952V3.06617C96.0985 1.07017 94.1925 -0.374807 92.2495 0.0861925Z" fill="#8A5611" stroke="black" stroke-width="2"/>
+<path id="Vector_24" transform="translate(71.4042 259.141)" d="M3.62805 35.9887C-1.04355 31.6287 -0.231542 19.1317 0.779558 13.3387L3.31645 3.93372C3.64425 2.71772 4.69606 1.83674 5.95016 1.72574L25.4536 0.0117188C26.6856 -0.0972812 27.8576 0.561739 28.4056 1.66974L29.2416 3.35873C29.4456 3.77273 29.5516 4.22772 29.5516 4.68872V30.2127C29.5516 30.7297 29.4196 31.2467 29.1466 31.6857C22.5486 42.3347 9.97086 39.3497 4.13626 36.3407C3.95056 36.2447 3.78075 36.1307 3.62805 35.9887Z" fill="#8A5611" stroke="black" stroke-width="3"/>
+<path id="Vector_25" transform="translate(71.4042 250.661)" d="M22.4365 17.4217C22.8595 14.5977 25.9045 11.8557 27.6375 10.6887C29.1055 9.49773 28.4975 7.22774 27.8625 5.91874C27.7235 5.63174 27.5155 5.38275 27.2705 5.17775C20.8825 -0.194254 12.2415 -0.375256 8.39064 0.250744C8.20384 0.280744 8.01883 0.334742 7.84353 0.405742C-2.29407 4.52574 -0.521865 14.0737 1.78073 18.6767C1.88953 18.8947 2.03333 19.0967 2.19903 19.2757C9.56223 27.1887 17.4225 23.6567 21.3725 20.1207C22.1135 19.4567 22.2895 18.4047 22.4365 17.4217Z" fill="#8A5611" stroke="black" stroke-width="3"/>
+<path id="Vector_26" transform="translate(79.6246 263.129)" d="M2.05516 6.23398C3.19019 6.23398 4.11032 4.83846 4.11032 3.11699C4.11032 1.39552 3.19019 0 2.05516 0C0.920127 0 0 1.39552 0 3.11699C0 4.83846 0.920127 6.23398 2.05516 6.23398Z" fill="black"/>
+<path id="Vector_27" transform="translate(192.658 261.219)" d="M25.924 35.9887C30.596 31.6287 29.783 19.1317 28.772 13.3387L26.236 3.93372C25.908 2.71772 24.856 1.83671 23.602 1.72571L4.09799 0.0117193C2.86599 -0.0972807 1.694 0.561709 1.146 1.66971L0.311005 3.35873C0.106005 3.77273 0 4.22772 0 4.68872V30.2127C0 30.7297 0.132999 31.2467 0.404999 31.6857C7.003 42.3347 19.581 39.3497 25.416 36.3407C25.601 36.2447 25.771 36.1317 25.924 35.9887Z" fill="#8A5611" stroke="black" stroke-width="3"/>
+<path id="Vector_28" transform="translate(193.664 252.739)" d="M6.10933 17.4217C5.68633 14.5977 2.64032 11.8557 0.908321 10.6887C-0.560679 9.49773 0.0473232 7.22874 0.682323 5.91874C0.822323 5.63174 1.03033 5.38375 1.27433 5.17775C7.66233 -0.194254 16.3033 -0.375256 20.1543 0.250744C20.3413 0.280744 20.5263 0.334742 20.7023 0.405742C30.8393 4.52574 29.0673 14.0737 26.7643 18.6777C26.6563 18.8947 26.5123 19.0977 26.3463 19.2757C18.9833 27.1897 11.1223 23.6567 7.17332 20.1207C6.43232 19.4567 6.25633 18.4047 6.10933 17.4217Z" fill="#8A5611" stroke="black" stroke-width="3"/>
+<path id="Vector_29" transform="matrix(-1 0 0 1 213.99 265.207)" d="M2.05516 6.23398C3.19019 6.23398 4.11032 4.83846 4.11032 3.11699C4.11032 1.39552 3.19019 0 2.05516 0C0.920127 0 0 1.39552 0 3.11699C0 4.83846 0.920127 6.23398 2.05516 6.23398Z" fill="black"/>
+<g id="Group_3" transform="translate(129.673 259.99)">
+<path id="Vector_30" d="M29.9377 0H5C2.23858 0 0 2.23858 0 5V26.1699C0 28.9313 2.23858 31.1699 5 31.1699H29.9377C32.6991 31.1699 34.9377 28.9313 34.9377 26.1699V5C34.9377 2.23858 32.6991 0 29.9377 0Z" fill="#D1D3D2"/>
+<path id="Vector_31" transform="translate(1 1)" d="M28.9377 0H4C1.79086 0 0 1.79086 0 4V25.1699C0 27.379 1.79086 29.1699 4 29.1699H28.9377C31.1468 29.1699 32.9377 27.379 32.9377 25.1699V4C32.9377 1.79086 31.1468 0 28.9377 0Z" stroke="black" stroke-width="2"/>
+</g>
+<g id="Group_4" transform="translate(135.839 266.224)">
+<path id="Vector_32" d="M19.6067 0H3C1.34315 0 0 1.34315 0 3V15.7019C0 17.3588 1.34315 18.7019 3 18.7019H19.6067C21.2636 18.7019 22.6067 17.3588 22.6067 15.7019V3C22.6067 1.34315 21.2636 0 19.6067 0Z" fill="#8A5611"/>
+<path id="Vector_33" transform="translate(1 1)" d="M18.6067 0H2C0.89543 0 0 0.89543 0 2V14.7019C0 15.8065 0.89543 16.7019 2 16.7019H18.6067C19.7113 16.7019 20.6067 15.8065 20.6067 14.7019V2C20.6067 0.89543 19.7113 0 18.6067 0Z" stroke="black" stroke-width="2"/>
+</g>
+</g>
+<path id="Shadow" transform="translate(131.5 436.56)" d="M30 8C46.5685 8 60 6.20914 60 4C60 1.79086 46.5685 0 30 0C13.4315 0 0 1.79086 0 4C0 6.20914 13.4315 8 30 8Z" fill="#8A5611"/>
+</g>
+<defs>
+<clipPath id="clip0_2359_3900">
+<rect width="323" height="451.56" fill="white"/>
+</clipPath>
+</defs>
+</svg>

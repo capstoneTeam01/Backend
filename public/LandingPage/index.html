@@ -156,9 +156,18 @@
       <section id="demo" class="bg-white pb-[96px] pt-8">
         <div class="container-x">
           <div
-            class="reveal mb-[80px] grid min-h-[340px] place-items-center rounded-[40px] bg-video text-[22px] font-medium text-secondary"
+            class="reveal mb-[80px] overflow-hidden rounded-[40px] bg-video"
           >
-            <span>App Promo Video</span>
+            <video
+              class="block h-auto w-full"
+              controls
+              playsinline
+              preload="metadata"
+              aria-label="FixBee app demonstration video"
+            >
+              <source src="assets/fixbee-long-video.mp4" type="video/mp4" />
+              Your browser does not support HTML video.
+            </video>
           </div>
 
           <div class="reveal mx-auto mb-[56px] max-w-[640px] text-center">

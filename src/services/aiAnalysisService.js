@@ -4,6 +4,10 @@ import {
   isOllamaEnabled,
 } from "./aiClientService.js";
 import { visionAnalysisKnowledge } from "./plumbingKnowledgeService.js";
+import {
+  calculatePlumbingRiskScore,
+  getUrgencyFromRiskScore,
+} from "./plumbingRiskService.js";
 
 const GROQ_VISION_MODEL =
   process.env.GROQ_VISION_MODEL ||
@@ -75,6 +79,13 @@ Inspect only the visible plumbing evidence in the image and return one JSON obje
   "classification": "NORMAL, VISIBLE_ISSUE, or UNCLEAR",
   "detectedObject": "visible plumbing object or null",
   "abnormalEvidence": ["directly visible abnormal sign"],
+  "visualEvidence": {
+    "corrosionExtent": "Unknown, None, Minor, Significant, or Heavy",
+    "leakSeverity": "Unknown, None, Dripping, Steady, Spraying, or Gushing",
+    "damageExtent": "Unknown, None, Minor, Significant, or Severe",
+    "pipeIntegrity": "Unknown, Intact, Affected, Deteriorated, or Ruptured",
+    "waterDamageVisible": false
+  },
   "confidence": "Medium or High",
   "reason": "brief evidence-based reason"
 }
@@ -86,6 +97,8 @@ Clean PVC union nuts, moulded seams, fitting edges, normal joint geometry, harml
 A wet ring requires directly visible liquid, droplets, or credible surrounding moisture. Mineral deposits require irregular crust, scale, residue, or discolouration.
 A suspended droplet, forming droplet, or thin intermittent stream hanging from a faucet spout or aerator is VISIBLE_ISSUE evidence of dripping, even when no pooling is visible.
 Irregular white crust, scale, or residue around a faucet aerator is VISIBLE_ISSUE evidence of mineral buildup. Do not confuse irregular crust with clean manufactured plastic or a smooth reflected highlight.
+Use Heavy corrosionExtent for widespread, thick, advanced, flaking, or deeply scaled rust/corrosion visibly affecting a pipe or joint.
+Use Significant corrosionExtent for clear localized corrosion that is more than a small surface mark.
 The normal-PVC safeguards apply to clean pipe fittings and union geometry; they must not suppress directly visible faucet droplets, thin drip streams, or irregular aerator deposits.
 Return JSON only.
 `;
@@ -99,18 +112,6 @@ const createResultFromVisualGate = (gateResult, imageUrl) => {
     typeof gateResult?.detectedObject === "string"
       ? gateResult.detectedObject.trim()
       : "";
-
-  if (classification === "NORMAL" && detectedObject) {
-    return getNoIssueResult(
-      {
-        confidence: gateResult?.confidence,
-        confidenceReason: gateResult?.reason,
-        visualEvidence: getUnknownVisualEvidence(),
-      },
-      imageUrl,
-      detectedObject
-    );
-  }
 
   if (classification === "UNCLEAR") {
     return getLowConfidenceResult(
@@ -199,6 +200,10 @@ ${JSON.stringify(gateResult)}
 
     const aiResult = {
       ...detailedResult,
+      visualEvidence: {
+        ...(gateResult?.visualEvidence || {}),
+        ...(detailedResult?.visualEvidence || {}),
+      },
       visibleRiskSignals:
         Array.isArray(detailedResult?.visibleRiskSignals) &&
         detailedResult.visibleRiskSignals.length > 0
@@ -394,33 +399,10 @@ const normalizeAnalysisStatus = (status) => {
   return null;
 };
 
-const normalizeRiskScore = (score, fallbackScore = null) => {
-  const numberScore = Number(score);
-
-  if (!Number.isFinite(numberScore)) {
-    return fallbackScore;
-  }
-
-  if (numberScore < 0) {
-    return 0;
-  }
-
-  if (numberScore > 100) {
-    return 100;
-  }
-
-  return Math.round(numberScore);
-};
-
 const normalizeIssueRiskScore = (
   aiResult,
   visualEvidence
 ) => {
-  const requestedScore = normalizeRiskScore(
-    aiResult?.riskScore,
-    1
-  );
-
   const evidenceText = [
     aiResult?.detectedIssue,
     ...(Array.isArray(aiResult?.visibleRiskSignals)
@@ -431,42 +413,11 @@ const normalizeIssueRiskScore = (
     .join(" ")
     .toLowerCase();
 
-  const waterFlow = String(
-    visualEvidence?.waterFlow || ""
-  ).toLowerCase();
-
-  const floodingLevel = String(
-    visualEvidence?.floodingLevel || ""
-  ).toLowerCase();
-
-  const hasHighRiskEvidence =
-    waterFlow === "spraying" ||
-    waterFlow === "gushing" ||
-    floodingLevel === "major" ||
-    normalizeBoolean(visualEvidence?.burstOrRuptureVisible) ||
-    normalizeBoolean(visualEvidence?.sewageVisible) ||
-    normalizeBoolean(visualEvidence?.waterNearElectrical) ||
-    normalizeBoolean(visualEvidence?.immediateHazardVisible) ||
-    /\b(pressurized spray|gushing|burst|ruptured|major flooding|sewage|water near electrical|scalding|steam release|structural danger)\b/.test(
-      evidenceText
-    );
-
-  if (hasHighRiskEvidence) {
-    return Math.max(71, requestedScore);
-  }
-
-  const hasMediumRiskEvidence =
-    waterFlow === "steady" ||
-    floodingLevel === "minor" ||
-    /\b(continuous leak|steady leak|steady flow|pooling|standing water|overflow|blockage|blocked|clogged|visible crack|significant corrosion|moisture damage)\b/.test(
-      evidenceText
-    );
-
-  if (hasMediumRiskEvidence) {
-    return Math.min(70, Math.max(31, requestedScore));
-  }
-
-  return Math.min(30, Math.max(1, requestedScore));
+  return calculatePlumbingRiskScore({
+    requestedScore: aiResult?.riskScore,
+    visualEvidence,
+    evidenceText,
+  });
 };
 
 const cleanRiskSignals = (signals, maximumItems = 6) => {
@@ -549,6 +500,11 @@ const getUnknownVisualEvidence = () => {
     sewageVisible: false,
     waterNearElectrical: false,
     immediateHazardVisible: false,
+    corrosionExtent: "Unknown",
+    leakSeverity: "Unknown",
+    damageExtent: "Unknown",
+    pipeIntegrity: "Unknown",
+    waterDamageVisible: false,
   };
 };
 
@@ -561,6 +517,11 @@ const getEmptyVisualEvidence = () => {
     sewageVisible: false,
     waterNearElectrical: false,
     immediateHazardVisible: false,
+    corrosionExtent: "None",
+    leakSeverity: "None",
+    damageExtent: "None",
+    pipeIntegrity: "Intact",
+    waterDamageVisible: false,
   };
 };
 
@@ -606,6 +567,34 @@ const normalizeVisualEvidence = (
 
     immediateHazardVisible: normalizeBoolean(
       visualEvidence.immediateHazardVisible
+    ),
+
+    corrosionExtent: normalizeAllowedValue(
+      visualEvidence.corrosionExtent,
+      ["Unknown", "None", "Minor", "Significant", "Heavy"],
+      "None"
+    ),
+
+    leakSeverity: normalizeAllowedValue(
+      visualEvidence.leakSeverity || visualEvidence.waterFlow,
+      WATER_FLOW_LEVELS,
+      "None"
+    ),
+
+    damageExtent: normalizeAllowedValue(
+      visualEvidence.damageExtent,
+      ["Unknown", "None", "Minor", "Significant", "Severe"],
+      "None"
+    ),
+
+    pipeIntegrity: normalizeAllowedValue(
+      visualEvidence.pipeIntegrity,
+      ["Unknown", "Intact", "Affected", "Deteriorated", "Ruptured"],
+      "Intact"
+    ),
+
+    waterDamageVisible: normalizeBoolean(
+      visualEvidence.waterDamageVisible
     ),
   };
 };
@@ -703,7 +692,12 @@ Return exactly these fields:
     "burstOrRuptureVisible": false,
     "sewageVisible": false,
     "waterNearElectrical": false,
-    "immediateHazardVisible": false
+    "immediateHazardVisible": false,
+    "corrosionExtent": "Unknown, None, Minor, Significant, or Heavy",
+    "leakSeverity": "Unknown, None, Dripping, Steady, Spraying, or Gushing",
+    "damageExtent": "Unknown, None, Minor, Significant, or Severe",
+    "pipeIntegrity": "Unknown, Intact, Affected, Deteriorated, or Ruptured",
+    "waterDamageVisible": false
   },
   "recommendedActions": [
     "first issue-specific action",
@@ -723,6 +717,26 @@ Allowed waterFlow values:
 
 Allowed floodingLevel values:
 ["Unknown", "None", "Minor", "Major"]
+
+Allowed corrosionExtent values:
+["Unknown", "None", "Minor", "Significant", "Heavy"]
+
+Allowed damageExtent values:
+["Unknown", "None", "Minor", "Significant", "Severe"]
+
+Allowed pipeIntegrity values:
+["Unknown", "Intact", "Affected", "Deteriorated", "Ruptured"]
+
+STRUCTURED EVIDENCE RULES:
+
+- Always populate every visualEvidence field.
+- Use corrosionExtent "Heavy" for widespread, thick, advanced, flaking, or deeply scaled rust/corrosion visibly affecting a pipe or joint.
+- Use corrosionExtent "Significant" for clear localized corrosion beyond a small surface mark.
+- Use corrosionExtent "Minor" only for a small superficial rust or discoloration area.
+- Use damageExtent "Significant" when visible staining, material damage, or deterioration extends beyond the immediate fitting.
+- Use damageExtent "Severe" when visible material failure or widespread damage indicates a major property-damage risk.
+- Use pipeIntegrity "Deteriorated" when the visible pipe surface has extensive material loss, flaking, scaling, or advanced corrosion.
+- Structured evidence values must describe what is visible and must not be inferred from the requested risk level.
 
 HERO DISPLAY TEXT RULES:
 
@@ -756,7 +770,7 @@ VISIBLE-EVIDENCE SEVERITY RUBRIC:
 - Low risk requires at least one localized minor visible concern, such as an isolated droplet, thin intermittent drip, small seepage without spread, light irregular mineral crust, minor surface corrosion, or a slightly loose accessible component without pooling.
 - Suggested Low anchors: minor deposit only 5 to 10; occasional drip 10 to 20; repeated localized dripping 20 to 30.
 - Medium risk requires visible continuous leakage, steady flow, localized pooling, overflow, blockage, visible cracking without spray, significant corrosion, or moisture damage requiring timely repair.
-- High risk requires a visible critical override: pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, water near electrical equipment, scalding water or steam, or structural danger.
+- High risk requires a visible critical condition: pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, water near electrical equipment, scalding water or steam, structural danger, or heavy/extensive rust or corrosion showing visible pipe deterioration.
 - Do not increase severity because of a possible concealed cause, repair complexity, cost, or a condition that is not visible.
 - Confidence describes image reliability only. Never use Low confidence to represent Low issue severity.
 - The visual gate evidence and detailed analysis must agree. Do not replace directly visible gate evidence with an unsupported different issue.
@@ -880,7 +894,9 @@ HIGH-RISK SIGNAL RULES:
 - If heavy uncontrolled water is visibly flowing from a pipe or plumbing component, set waterFlow to "Gushing", include "gushing water" in visibleRiskSignals, and use riskScore 85 or higher.
 - If a pipe or water line appears split, ruptured, broken, or burst, set burstOrRuptureVisible to true, include "burst pipe" or "ruptured pipe" in visibleRiskSignals, and use riskScore 85 or higher.
 - If major flooding, sewage overflow, sewer backup, or water near electrical equipment is visible, use riskScore 85 or higher.
-- Use High risk evidence for words and visuals such as gushing, spraying, pressurized spray, water shooting out, water jet, rapid water flow, uncontrolled leak, burst pipe, ruptured pipe, split pipe, broken pipe, broken water line, active flooding, major flooding, sewage backup, sewage overflow, water near electrical, electrical hazard, ceiling leak, wall leak, main water line, or supply line leak.
+- If heavy, extensive, severe, or advanced rust/corrosion is visibly affecting a pipe or joint, include that evidence in visibleRiskSignals and use riskScore 71 or higher.
+- Do not classify light surface rust, minor discoloration, or a small localized corrosion mark as High risk.
+- Use High risk evidence for words and visuals such as gushing, spraying, pressurized spray, water shooting out, water jet, rapid water flow, uncontrolled leak, burst pipe, ruptured pipe, split pipe, broken pipe, broken water line, active flooding, major flooding, sewage backup, sewage overflow, water near electrical, electrical hazard, heavy rust, extensive rust, severe corrosion, advanced corrosion, severe scaling, visible pipe deterioration, ceiling leak, wall leak, main water line, or supply line leak.
 
 ISSUE ANALYSIS RULES:
 
@@ -1004,6 +1020,11 @@ const getNoIssueResult = (
       sewageVisible: false,
       waterNearElectrical: false,
       immediateHazardVisible: false,
+      corrosionExtent: "None",
+      leakSeverity: "None",
+      damageExtent: "None",
+      pipeIntegrity: "Intact",
+      waterDamageVisible: false,
     },
 
     category: "Plumbing",
@@ -1198,6 +1219,18 @@ const hasVisibleIssueEvidence = (visualEvidence) => {
     visualEvidence.floodingLevel || ""
   ).toLowerCase();
 
+  const corrosionExtent = String(
+    visualEvidence.corrosionExtent || ""
+  ).toLowerCase();
+
+  const damageExtent = String(
+    visualEvidence.damageExtent || ""
+  ).toLowerCase();
+
+  const pipeIntegrity = String(
+    visualEvidence.pipeIntegrity || ""
+  ).toLowerCase();
+
   return (
     normalizeBoolean(visualEvidence.activeLeakVisible) ||
     waterFlow === "dripping" ||
@@ -1206,6 +1239,10 @@ const hasVisibleIssueEvidence = (visualEvidence) => {
     waterFlow === "gushing" ||
     floodingLevel === "minor" ||
     floodingLevel === "major" ||
+    ["minor", "significant", "heavy"].includes(corrosionExtent) ||
+    ["minor", "significant", "severe"].includes(damageExtent) ||
+    ["affected", "deteriorated", "ruptured"].includes(pipeIntegrity) ||
+    normalizeBoolean(visualEvidence.waterDamageVisible) ||
     normalizeBoolean(visualEvidence.burstOrRuptureVisible) ||
     normalizeBoolean(visualEvidence.sewageVisible) ||
     normalizeBoolean(visualEvidence.waterNearElectrical) ||
@@ -1235,7 +1272,7 @@ const createNormalizedResult = (
   aiResult,
   imageUrl
 ) => {
-  const confidence = normalizeConfidence(
+  const normalizedConfidence = normalizeConfidence(
     aiResult?.confidence
   );
 
@@ -1257,9 +1294,34 @@ const createNormalizedResult = (
       aiResult?.analysisStatus || aiResult?.status
     );
 
+  const preliminaryVisualEvidence =
+    normalizeVisualEvidence(
+      aiResult?.visualEvidence
+    );
+
+  const preliminaryRiskScore =
+    normalizeIssueRiskScore(
+      aiResult,
+      preliminaryVisualEvidence
+    );
+
+  const hasVisibleCriticalOverride =
+    preliminaryRiskScore >= 71 &&
+    Boolean(detectedObject) &&
+    Boolean(effectiveDetectedIssue);
+
+  const confidence =
+    normalizedConfidence === "Low" &&
+    hasVisibleCriticalOverride
+      ? "Medium"
+      : normalizedConfidence;
+
   if (
-    analysisStatus === "LOW_CONFIDENCE" ||
-    confidence === "Low"
+    (
+      analysisStatus === "LOW_CONFIDENCE" ||
+      confidence === "Low"
+    ) &&
+    !hasVisibleCriticalOverride
   ) {
     return getLowConfidenceResult(
       aiResult,
@@ -1313,6 +1375,17 @@ const createNormalizedResult = (
     aiResult,
     visualEvidence
   );
+
+  console.log("[FixBee][AI] structured risk assessment", {
+    requestedRiskScore: aiResult?.riskScore ?? null,
+    finalRiskScore: riskScore,
+    urgency: getUrgencyFromRiskScore(riskScore),
+    corrosionExtent: visualEvidence.corrosionExtent,
+    leakSeverity: visualEvidence.leakSeverity,
+    damageExtent: visualEvidence.damageExtent,
+    pipeIntegrity: visualEvidence.pipeIntegrity,
+    waterDamageVisible: visualEvidence.waterDamageVisible,
+  });
 
   const cleanedActions =
     cleanRecommendedActions(
@@ -1551,6 +1624,11 @@ const analyzeImageWithAI = async (
         aiResult.visibleRiskSignals =
           gateResult?.abnormalEvidence;
       }
+
+      aiResult.visualEvidence = {
+        ...(gateResult?.visualEvidence || {}),
+        ...(aiResult?.visualEvidence || {}),
+      };
 
       return createNormalizedResult(
         aiResult,

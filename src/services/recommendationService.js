@@ -1,4 +1,5 @@
 import { estimateRepairCost } from "./costEstimationService.js";
+import { getUrgencyFromRiskScore } from "./plumbingRiskService.js";
 
 
 const highRiskKeywords = [
@@ -308,26 +309,6 @@ const hasHighRiskVisualEvidence = (
   return false;
 };
 
-const getUrgencyFromRiskScore = (riskScore) => {
-  if (riskScore === null) {
-    return null;
-  }
-
-  if (riskScore >= 71) {
-    return "High";
-  }
-
-  if (riskScore >= 31) {
-    return "Medium";
-  }
-
-  if (riskScore >= 1) {
-    return "Low";
-  }
-
-  return null;
-};
-
 const getUrgencyDescription = (urgency) => {
   if (urgency === "High") {
     return "This issue presents a serious risk of property damage or a possible safety hazard. Take safe damage-control steps and contact a qualified professional immediately.";
@@ -608,6 +589,23 @@ const assignUrgencyLevel = (
     };
   }
 
+  const riskScore = getRiskScore(
+    analysisResult
+  );
+
+  const scoreUrgency =
+    getUrgencyFromRiskScore(
+      riskScore
+    );
+
+  if (scoreUrgency) {
+    return {
+      urgency: scoreUrgency,
+      urgencyDescription:
+        getUrgencyDescription(scoreUrgency),
+    };
+  }
+
   const combinedText =
     getCombinedIssueText(analysisResult);
 
@@ -634,10 +632,6 @@ const assignUrgencyLevel = (
       urgencyDescription: getUrgencyDescription("High"),
     };
   }
-
-  const riskScore = getRiskScore(
-    analysisResult
-  );
 
   if (
     riskScore !== null &&
@@ -692,20 +686,6 @@ const assignUrgencyLevel = (
         "This appears to be a lower-risk issue, but it should still be monitored and repaired if it continues.",
     };
   }
-
-  const scoreUrgency =
-    getUrgencyFromRiskScore(
-      riskScore
-    );
-
-  if (scoreUrgency) {
-    return {
-      urgency: scoreUrgency,
-      urgencyDescription:
-        getUrgencyDescription(scoreUrgency),
-    };
-  }
-
 
   const existingUrgency =
     normalizeExistingUrgency(

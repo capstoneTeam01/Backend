@@ -1,7 +1,7 @@
 {
   "dataset": {
     "name": "FixBee Plumbing Issue Knowledge Base",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "locale": "Canada, with Vancouver and British Columbia defaults",
     "purpose": "Ground Groq, OpenAI, and Ollama responses used by FixBee for plumbing image analysis, urgency classification, safe temporary control, DIY guidance, repair estimates, and professional escalation.",
     "limitations": [
@@ -54,7 +54,9 @@
       "No issue requires a recognizable plumbing object, an assessable relevant area, dry and intact visible surfaces, and no abnormal visible evidence.",
       "Low risk requires at least one localized minor visible concern such as an isolated droplet, thin intermittent drip, small seepage without spread, light irregular mineral crust, minor surface corrosion, or a slightly loose accessible component without pooling.",
       "Medium risk requires visible continuous leakage, steady flow, localized pooling, overflow, blockage, visible cracking without spray, significant corrosion, or moisture damage requiring timely repair.",
-      "High risk requires a visible critical override such as pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, water near electrical equipment, scalding water or steam, or structural danger.",
+      "High risk requires a visible critical condition such as pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage, water near electrical equipment, scalding water or steam, structural danger, or heavy/extensive rust or corrosion showing visible pipe deterioration.",
+      "Always record corrosion extent, leak severity, damage extent, pipe integrity, and visible water damage as structured visual evidence.",
+      "Structured visual evidence is authoritative for risk scoring; descriptive wording must not downgrade a supported risk band.",
       "Confidence describes image reliability only and must not be used as issue severity.",
       "Do not increase severity because of a possible concealed cause, repair complexity, cost, or any condition not directly visible.",
       "If a defect is visible but its cause is uncertain, analyze the defect and label the cause as possible.",
@@ -66,10 +68,11 @@
       "0": "No issue detected: the visible plumbing area is clear, dry, intact, normally aligned, and free of abnormal evidence.",
       "1-30": "Low: minor visible concern such as an isolated drip, minor seepage, light staining, surface discoloration, minor corrosion, or a loose component without pooling or uncontrolled flow.",
       "31-70": "Medium: active or continuous leak, steady flow, localized pooling, overflow, blockage, significant corrosion, visible cracking, or damage requiring timely repair without an immediate major hazard.",
-      "71-100": "High: pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage exposure, water near electricity, or another immediate visible safety or property-damage hazard."
+      "71-100": "High: pressurized spray, gushing water, burst or ruptured pipe, major flooding, sewage exposure, water near electricity, heavy/extensive rust or corrosion showing visible pipe deterioration, or another immediate visible safety or property-damage hazard."
     },
     "criticalOverrides": [
       "Pressurized spraying, gushing, burst pipe, or major flooding",
+      "Heavy, extensive, severe, or advanced rust/corrosion visibly affecting a pipe or joint",
       "Water contacting or approaching outlets, panels, wiring, appliances, or energized equipment",
       "Raw sewage backup or contaminated floodwater",
       "Gas odour, sounding carbon-monoxide alarm, soot, combustion spillage, or damaged gas water-heater venting",
@@ -481,7 +484,7 @@
   "outputContracts": {
     "imageAnalysis": {
       "requiredFields": ["analysisStatus", "userMessage", "detectedObject", "detectedIssue", "heroTitle", "heroDescription", "issuesToFix", "riskScore", "visibleRiskSignals", "visualEvidence", "category", "confidence", "confidenceReason", "recommendedActions"],
-      "rules": ["Return valid JSON only", "category must be Plumbing", "heroTitle must be a complete meaningful issue title with no more than four words", "heroTitle should identify the visible issue and affected plumbing object when both fit naturally", "Never shorten heroTitle by cutting off a phrase", "Use riskScore null for LOW_CONFIDENCE", "Use riskScore 0 for NO_ISSUE_DETECTED", "Use riskScore 1 to 30 for Low risk, 31 to 70 for Medium risk, and 71 to 100 for High risk", "Require directly visible abnormal evidence before using ANALYZED", "Require a visible critical override before assigning High risk", "Do not use confidence as issue severity", "recommendedActions must be exactly three concise actions", "Use null instead of invented detail"]
+      "rules": ["Return valid JSON only", "category must be Plumbing", "heroTitle must be a complete meaningful issue title with no more than four words", "heroTitle should identify the visible issue and affected plumbing object when both fit naturally", "Never shorten heroTitle by cutting off a phrase", "visualEvidence must include corrosionExtent, leakSeverity, damageExtent, pipeIntegrity, and waterDamageVisible", "Use only the allowed structured evidence values", "Use riskScore null for LOW_CONFIDENCE", "Use riskScore 0 for NO_ISSUE_DETECTED", "Use riskScore 1 to 30 for Low risk, 31 to 70 for Medium risk, and 71 to 100 for High risk", "Require directly visible abnormal evidence before using ANALYZED", "Require a visible critical condition before assigning High risk", "Treat visibly heavy, extensive, severe, or advanced pipe rust/corrosion as a High-risk condition", "Do not treat light surface rust or minor discoloration as High risk", "Do not use confidence as issue severity", "recommendedActions must be exactly three concise actions", "Use null instead of invented detail"]
     },
     "diyGuidance": {
       "requiredFields": ["title", "summary", "difficulty", "estimatedTime", "toolsNeeded", "repairSteps", "safetyWarnings", "professionalAdvice"],

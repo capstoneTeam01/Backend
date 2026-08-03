@@ -511,7 +511,8 @@ picture {
 
   .hero-bee {
     width: 138px;
-    margin-left: 8px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .hero-copy h1,
@@ -529,6 +530,9 @@ picture {
   }
 
   .hero-project-links {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
     justify-content: flex-start !important;
   }
 

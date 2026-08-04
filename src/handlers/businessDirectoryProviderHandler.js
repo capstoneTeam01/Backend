@@ -65,7 +65,7 @@ const sendQuoteRequest = async (req, res) => {
       [];
 
    if (photoId) {
-  const feedbackRequestedAt = new Date(Date.now() + 60 * 1000);
+  const feedbackRequestedAt = new Date(Date.now() + 20 * 1000);
 
   await PhotoAnalysisModel.findOneAndUpdate(
     {

@@ -49,7 +49,7 @@ const sendProviderReplyReminder = async (
   userId,
   photoId,
   selectedProviders = [],
-  delayMs = 60 * 1000,
+  delayMs = 20 * 1000,
 ) => {
   if (!userId || !photoId) {
     console.error("sendProviderReplyReminder: missing required data");
